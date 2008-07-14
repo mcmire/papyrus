@@ -7,19 +7,19 @@
 
 class PageTemplate
 
-  # A Namespace object consists of three things:
+  # A Context object consists of three things:
   #
-  # parent: A parent object to get a value from if the namespace
+  # parent: A parent object to get a value from if the context
   # does not 'know' a value.
   #
   # object: An object is a hash or list that contains the values that
-  # this namespace will refer to. It may also be an object, in which
+  # this context will refer to. It may also be an object, in which
   # case, its methods are treated as a hash, with respond_to? and
   # send()
   #
   # Cache: A cache ensures that a method on an object will only be
   # called once.
-  module NamespaceItem
+  module ContextItem
     attr_accessor :parent, :object
 
     # Clears the cache
@@ -29,24 +29,24 @@ class PageTemplate
     alias_method :clear_cache, :clear
 
     # Saves a variable +key+ as the string +value+ in the global 
-    # namespace.
+    # context.
     def set(key, value)
       @values ||= {}
       @values[key] = value
     end
     alias_method :[]=, :set
 
-    # Returns the first value found for +key+ in the nested namespaces.
+    # Returns the first value found for +key+ in the nested contexts.
     # Returns nil if no value is found.
     #
-    # Values are checked for in this order through each level of namespace:
+    # Values are checked for in this order through each level of context:
     # 
     # * level.key
     # * level.key()
     # * level[key]
     #
-    # If a value is not found in any of the nested namespaces, get()
-    # searches for the key in the global namespace.
+    # If a value is not found in any of the nested contexts, get()
+    # searches for the key in the global context.
     #
     # If +val+ is a dot-separated list of words, then 'key' is the
     # first part of it.  The remainder of the words are sent to key
@@ -127,12 +127,12 @@ class PageTemplate
     end
     alias_method :[], :get
 
-    # Removes an entry from the Namespace
+    # Removes an entry from the Context
     def delete(key)
       @values.delete(key)
     end
 
-    # parser: most namespace objects won't be a parser, but pass this
+    # parser: most context objects won't be a parser, but pass this
     # query up to the parser object.
     def parser
       if @parent
@@ -143,7 +143,7 @@ class PageTemplate
     end
 
     # A convenience method to test whether a variable has a true
-    # value. Returns nil if +flag+ is not found in the namespace, 
+    # value. Returns nil if +flag+ is not found in the context, 
     # or +flag+ has a nil value attached to it.
     def true?(flag)
       args = parser.args
@@ -163,8 +163,8 @@ class PageTemplate
     end
   end
 
-  class Namespace
-    include NamespaceItem
+  class Context
+    include ContextItem
 
     def initialize(parent=nil,object=nil)
       @values = Hash.new
@@ -172,9 +172,9 @@ class PageTemplate
       @object = object
     end
 
-    # Create a new top-level Namespace with a Hash-like object
-    def Namespace.construct_from(arg)
-      ns = Namespace.new()
+    # Create a new top-level Context with a Hash-like object
+    def Context.construct_from(arg)
+      ns = Context.new()
       arg.each { |k, v|
         ns[k] = v
       }
@@ -282,18 +282,18 @@ class PageTemplate
     end
   end
 
-  # This is the dictionary of commands and the directive that Parser
+  # This is the dictionary of commands and the sub_regex that Parser
   # uses to compile a template into a tree of commands.
   #
-  # directive is the general format of a PageTemplate command.
+  # sub_regex is the general format of a PageTemplate command.
   # Default: /\[%(.+?)%\]/m
   #
-  # @glossary is a hash table of regexp->Command objects. These
+  # @lexicon is a hash table of regexp->Command objects. These
   # regexps should not contain PageTemplate command text. i.e:
   # /var \w+/i should be used instead of /[% var %]/
-  class SyntaxGlossary
+  class Lexicon
     class << self
-      attr_accessor :directive
+      attr_accessor :sub_regex
       attr_writer :default
       def default(&block)
         if block_given?
@@ -307,7 +307,7 @@ class PageTemplate
       # table, returning the instance of the command for it, or
       # an UnknownCommand if none match.
       def lookup(command)
-        @glossary.each do |key,val|
+        @lexicon.each do |key,val|
           if m = key.match(command)
             return val.call(m)
           end
@@ -324,8 +324,8 @@ class PageTemplate
       def define(rx,&block)
         raise ArgumentError, 'First argument to define must be a Regexp' unless rx.is_a?(Regexp)
         raise ArgumentError, 'Block expected' unless block
-        @glossary ||= {}
-        @glossary[rx] = block
+        @lexicon ||= {}
+        @lexicon[rx] = block
       end
 
       def modifier(sym,&block)
@@ -339,9 +339,9 @@ class PageTemplate
       # allows +key+ to be a string, converting it to a regexp before
       # adding it to the dictionary.
       def define_global_var(rx)
-        @glossary ||= {}
+        @lexicon ||= {}
         rx = /^(#{key.to_s}(?:\.\w+\??)*)(?:\s:(\w+))?$/ unless rx.is_a?(Regexp)
-        @glossary[rx] = lambda { |match|
+        @lexicon[rx] = lambda { |match|
           ValueCommand.new(match[1],match[2])
         }
       end
@@ -351,8 +351,8 @@ class PageTemplate
   # This is the regexp we tried using for grabbing an entire line
   # Good for everything but ValueCommand :-/.
   # /(?:^\s*\[%([^\]]+?)%\]\s*$\r?\n?|\[%(.+?)%\])/m,
-  class DefaultGlossary < SyntaxGlossary
-    @directive = /\[%(.+?)%\]/m
+  class DefaultLexicon < Lexicon
+    @sub_regex = /\[%(.+?)%\]/m
 
     default { |command|
       UnknownCommand.new(command)
@@ -491,8 +491,8 @@ class PageTemplate
   # Parser.new() accepts a hash as an argument, and looks for these
   # keys: (with defaults)
   #
-  #  'namespace' => A namespace object. (A new namespace)
-  #  'glossary'  => A SyntaxGlossary class singleton. (DefaultGlossary)
+  #  'context' => A context object. (A new context)
+  #  'lexicon'  => A Lexicon class singleton. (DefaultLexicon)
   #  'preprocessor' => The preprocessor. (DefaultPreprocessor)
   #  'default_processor' => The processor. (:process)
   #  'source' => The Source for templates. (FileSource)
@@ -509,7 +509,7 @@ class PageTemplate
   # loaded)
   class Parser
     attr_reader :preprocessor, :default_processor
-    attr_reader :glossary, :namespace, :source
+    attr_reader :lexicon, :context, :source
     attr_reader :args, :commands, :method_separators
 
     # This is corny, but recent_parser returns the most recently created
@@ -520,22 +520,22 @@ class PageTemplate
     # Parser.new() accepts a hash as an argument, and looks for these
     # keys: (with defaults)
     #
-    #  'namespace' => A namespace object. (A new namespace)
-    #  'glossary'  => A SyntaxGlossary object. (a dup of DEFAULTGLOSSARY)
+    #  'context' => A context object. (A new context)
+    #  'lexicon'  => A Lexicon object. (a dup of DefaultLexicon)
     #  'preprocessor' => The preprocessor. (DefaultPreprocessor)
     #  'default_processor' => The processor. (:process)
     #  'source' => The Source for templates. (FileSource)
     def initialize(args = {})
-      @namespace    = self
+      @context    = self
       @@recent_parser = self
       @args         = args # For sub-commands
-      @parent       = args['namespace'] || nil
+      @parent       = args['context'] || nil
       if @parent
-        unless @parent.is_a? Namespace then
-          @parent = Namespace.construct_from(args['namespace'])
+        unless @parent.is_a? Context then
+          @parent = Context.construct_from(args['context'])
         end
       end
-      @glossary     = args['glossary'] || DefaultGlossary
+      @lexicon     = args['lexicon'] || DefaultLexicon
       @preprocessor = args['preprocessor'] || DefaultPreprocessor
       @default_processor = args['default_processor'] || :unescaped
       @method_separators = args['method_separators'] || './'
@@ -566,7 +566,7 @@ class PageTemplate
     # Compile a Template (BlockCommand) from a string. Does not save
     # the commands.
     def parse(body)
-      rx = @glossary.directive
+      rx = @lexicon.sub_regex
       stack = [Template.new(self)]
       stack[0].parent = self
       last = stack.last
@@ -584,11 +584,11 @@ class PageTemplate
 
         # If the command at the top of the stack is a 'Stacker',
         # Does this command modify it? If so, just skip back.
-        next if modifier && @glossary.modifies?(modifier,last,command)
+        next if modifier && @lexicon.modifies?(modifier,last,command)
 
         # If it closes, we're done changing this. Pop it off the
         # Stack and add it to the one above it.
-        if closer and @glossary.modifies?(closer,last,command)
+        if closer and @lexicon.modifies?(closer,last,command)
           cmd = stack.pop
           last = stack.last
           last.add(cmd)
@@ -598,7 +598,7 @@ class PageTemplate
         end
 
         # Create the command
-        cmd = @glossary.lookup(command)
+        cmd = @lexicon.lookup(command)
         
         # If it's a stacking command, push it on the stack
         if cmd.is_a?(StackableCommand)
@@ -617,8 +617,8 @@ class PageTemplate
       stack[0]
     end
 
-    # Since a Parser is also a namespace object, include NamespaceItem
-    include NamespaceItem
+    # Since a Parser is also a context object, include ContextItem
+    include ContextItem
     # But redefine parser
     def parser
       self

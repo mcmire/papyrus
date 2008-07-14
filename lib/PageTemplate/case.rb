@@ -1,9 +1,9 @@
 # case.rb
 #
 # This is a demonstration of adding a non-default command to
-# PageTemplate's default glossary.
+# PageTemplate's default lexicon.
 #
-# Note that it adds itself to the glossary =).
+# Note that it adds itself to the lexicon =).
 
 class PageTemplate
   # CaseCommand provides switch-command functionality.
@@ -64,11 +64,11 @@ class PageTemplate
       str << " ]"
     end
   end
-  DefaultGlossary.define(/^case (\w+(?:\.\w+)*)$/) { |match,parser|
+  DefaultLexicon.define(/^case (\w+(?:\.\w+)*)$/) { |match,parser|
     CaseCommand.new(match[1])
   }
-  if PageTemplate.constants.include?('HTGlossary')
-    HTGlossary.define(/^tmpl_case (?:NAME=)?(\w+(?:\.\w+\?)*)$/) { |m,parser|
+  if PageTemplate.constants.include?('HTLexicon')
+    HTLexicon.define(/^tmpl_case (?:NAME=)?(\w+(?:\.\w+\?)*)$/) { |m,parser|
       CaseCommand.new(m[1])
     }
   end

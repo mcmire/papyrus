@@ -90,13 +90,13 @@ with empty strings. If you want a variable to be interpreted as
 
 
 	<p>PageTemplate uses arrays of objects for lists.  Each object provides a local 
-namespace which lasts only for the current iteration through the chunk of 
+context which lasts only for the current iteration through the chunk of 
 content. Otherwise, you&#8217;d have to manually set loop variables, and I don&#8217;t 
 like that idea!</p>
 
 
 	<p>The classic approach is to borrow from <span class="caps">HTML</span>::Template and use a list of hashes 
-for your namespaces.</p>
+for your contexts.</p>
 
 
 <pre class="code">
@@ -211,7 +211,7 @@ cgi.out { template.output }
 
 
 	<p>PageTemplate lets you insert text from other files. Even better: PageTemplate
-will parse those files as templates, using your current Namespace. The only
+will parse those files as templates, using your current Context. The only
 issue that you must be aware of as a developer is the search path used by
 PageTemplate.</p>
 

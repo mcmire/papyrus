@@ -2,7 +2,7 @@
 # Couldn't find class for name User
 #                 classname: asrt / meth =  ratio%
 # PageTemplate::DefaultPreprocessor:    0 /    5 =   0.00%
-#   PageTemplate::Namespace:    0 /    5 =   0.00%
+#   PageTemplate::Context:    0 /    5 =   0.00%
 # PageTemplate::CaseCommand:    0 /    6 =   0.00%
 # PageTemplate::LoopCommand:    0 /    6 =   0.00%
 #              PageTemplate:    0 /    1 =   0.00%
@@ -19,7 +19,7 @@
 # PageTemplate::BlockCommand:    0 /    7 =   0.00%
 # PageTemplate::StackableCommand:    0 /    3 =   0.00%
 #      PageTemplate::Parser:    0 /    9 =   0.00%
-# PageTemplate::SyntaxGlossary:    0 /    4 =   0.00%
+# PageTemplate::Lexicon:    0 /    4 =   0.00%
 
 require 'test/unit' unless defined? $ZENTEST and $ZENTEST
 
@@ -101,7 +101,7 @@ module TestPageTemplate
       @@cc.add(c_1)
       @@cc.when("2")
       @@cc.add(c_2)
-      ns = PageTemplate::Namespace.new()
+      ns = PageTemplate::Context.new()
       ns["foo"] = nil
       assert_equal(c_3.output, @@cc.output(ns))
       ns["foo"] = "1"
@@ -276,7 +276,7 @@ module TestPageTemplate
     end
 
     def test_elsif
-      ns = PageTemplate::Namespace.new
+      ns = PageTemplate::Context.new
       parser = PageTemplate::Parser.new
       tester = PageTemplate::IfCommand.new('if','redflag')
       tester.add(PageTemplate::TextCommand.new('Red Flag'))
@@ -297,7 +297,7 @@ module TestPageTemplate
     end
 
     def test_output
-      ns = PageTemplate::Namespace.new()
+      ns = PageTemplate::Context.new()
       c = PageTemplate::TextCommand.new("dude!")
       assert_equal("dude!", c.output())
       @@if.add(c)
@@ -384,7 +384,7 @@ module TestPageTemplate
 
     def test_output
       parser = PageTemplate::Parser.new()
-      ns = PageTemplate::Namespace.new()
+      ns = PageTemplate::Context.new()
       ns.parent = parser
       ns["list"] = [1, 2, 3]
 
@@ -456,48 +456,48 @@ module TestPageTemplate
     end
   end
 
-  class TestNamespace < Test::Unit::TestCase
+  class TestContext < Test::Unit::TestCase
     def setup
-      @@ns = PageTemplate::Namespace.new
+      @@ns = PageTemplate::Context.new
     end
 
-    def test_nested_namespaces
+    def test_nested_contexts
       @@ns.object = {'meat'=>'Caribou Eyes'}
-      p = PageTemplate::Namespace.new
+      p = PageTemplate::Context.new
       @@ns.parent = p
       p['soda'] = 'Ebola Cola' # Transmetropolitan! Read it!
       assert_equal(@@ns.get('meat'),'Caribou Eyes',
-          'Namespace#get(meat) did not return correct value!')
+          'Context#get(meat) did not return correct value!')
       assert_equal(@@ns.get('soda'),'Ebola Cola',
-          'Namespace#get(meat) did not return parent\'s correct value!')
+          'Context#get(meat) did not return parent\'s correct value!')
     end
 
     def test_clear_cache
       assert(@@ns.clear_cache,
-        "Use Namespace#clear_cache to reset a Namespace's values.")
+        "Use Context#clear_cache to reset a Context's values.")
     end
 
     def test_get
       assert_nil(@@ns.get("Santa Claus"),
-        "If a key is not set, Namespace#get returns nil")
+        "If a key is not set, Context#get returns nil")
       @@ns.set("Santa Claus", "Kris Kringle")
       assert_equal("Kris Kringle", @@ns.get("Santa Claus"),
-        "Use Namespace#get to access to Namespace value")
+        "Use Context#get to access to Context value")
 
       assert_equal(nil, @@ns.get("occupation"))
-      p = PageTemplate::Namespace.new()
+      p = PageTemplate::Context.new()
       p["occupation"] = "Foole"
       @@ns.parent = p
       assert_equal("Foole", @@ns.get("occupation"),
-        "Namespace#get will search parent Namespaces if they are available")
+        "Context#get will search parent Contexts if they are available")
 
       assert_equal(nil, @@ns.get("abs"))
       @@ns.object = -5
       assert_equal(5, @@ns.get("abs"),
-        "Namespace#get will send get requests to a contained object if it is available")
+        "Context#get will send get requests to a contained object if it is available")
 
       assert_equal(3,@@ns.get("succ.succ.abs"),
-        "Namespace#get will send get requests subsequently to accessors if available")
+        "Context#get will send get requests subsequently to accessors if available")
 
       @@ns.set("list", ['one','two','three'])
       assert_equal('two',@@ns.get('list.1'),
@@ -508,18 +508,18 @@ module TestPageTemplate
         "If an object has_key?(b), it checks get object['b'] rather than send(:b)")
       @@ns.set(:title, "xyz")
       assert_equal("xyz", @@ns.get("title"),
-                   "Symbols may be used as Namespace keys")
+                   "Symbols may be used as Context keys")
     end
 
     def test_index
       @@ns.set("Santa Claus", "Kris Kringle")
       assert_equal("Kris Kringle", @@ns["Santa Claus"],
-        "Use Namespace#get to access to Namespace value")
+        "Use Context#get to access to Context value")
     end
 
     def test_index_equals
       assert(@@ns["Dude"] = "Sweet!",
-        "Namespace#[]= is an alias for Namespace#set.")
+        "Context#[]= is an alias for Context#set.")
       assert_equal("Sweet!", @@ns["Dude"])
     end
 
@@ -527,52 +527,52 @@ module TestPageTemplate
       assert_equal(nil, @@ns.object)
       @@ns.object = -5
       assert_equal(-5, @@ns.object,
-        "Namespace#object is a getter for a Namespace's object")
+        "Context#object is a getter for a Context's object")
     end
 
     def test_object_equals
       obj = -5
       assert(@@ns.object = obj,
-        "Namespace#object= is a setter for a Namespace's object")
+        "Context#object= is a setter for a Context's object")
       assert_equal(-4, @@ns.get('succ'),
-        "Namespace#object= defines an object to search for synonyms")
+        "Context#object= defines an object to search for synonyms")
     end
 
     def test_parent
       assert_equal(nil, @@ns.parent)
-      p = PageTemplate::Namespace.new()
+      p = PageTemplate::Context.new()
       p["occupation"] = "Foole"
       @@ns.parent = p
       assert_equal(p, @@ns.parent,
-        "'parent' is a getter for a parent Namespace")
+        "'parent' is a getter for a parent Context")
     end
 
     def test_parent_equals
-      p = PageTemplate::Namespace.new()
+      p = PageTemplate::Context.new()
       p["occupation"] = "Foole"
       assert(@@ns.parent = p,
-        "'parent' is a setter for a parent Namespace")
+        "'parent' is a setter for a parent Context")
     end
 
     def test_set
       assert(@@ns.set("dude", "sweet!"),
-        "Use Namespace#set to set names to a value in your Namespace.")
+        "Use Context#set to set names to a value in your Context.")
       assert(@@ns["sweet"] = "dude",
-        "Namespace#[]= is an alias for Namespace#set.")
+        "Context#[]= is an alias for Context#set.")
     end
 
     def test_true_eh
       assert_equal(false, @@ns.true?("enlightenment"),
-        "If a flag doesn't exist, then Namespace#true? returns false.")
+        "If a flag doesn't exist, then Context#true? returns false.")
       @@ns["dude"] = false
       assert_equal(false, @@ns.true?("dude"),
-        "If a flag is set to false, then Namespace#true? returns false.")
+        "If a flag is set to false, then Context#true? returns false.")
       @@ns["dude"] = true
       assert_equal(true, @@ns.true?("dude"),
-        "If a flag is set to true, then Namespace#true? returns true.")
+        "If a flag is set to true, then Context#true? returns true.")
       @@ns["dude"] = "sweet!"
       assert_equal(true, @@ns.true?("dude"),
-        "If a flag is set to pretty much anything but false, then Namespace#true? returns true.")
+        "If a flag is set to pretty much anything but false, then Context#true? returns true.")
     end
 
     class Foo
@@ -609,17 +609,17 @@ module TestPageTemplate
       assert_equal({}, @@p.args)
     end
 
-    def test_namespace_arg
+    def test_context_arg
       require 'yaml'
-      ns = PageTemplate::Namespace.new()
+      ns = PageTemplate::Context.new()
       ns['oompa'] = 'loompa'
-      p = PageTemplate::Parser.new('namespace' => ns)
+      p = PageTemplate::Parser.new('context' => ns)
       assert_equal('loompa', p['oompa'])
-      p = PageTemplate::Parser.new('namespace' => { 'oompa' => 'loompa' })
+      p = PageTemplate::Parser.new('context' => { 'oompa' => 'loompa' })
       assert_equal('loompa', p['oompa'])
       # This assertion is just for my own peace of mind.
       y = YAML::load({ 'doompity' => 'doo' }.to_yaml)
-      p = PageTemplate::Parser.new('namespace' => y)
+      p = PageTemplate::Parser.new('context' => y)
       assert_equal('doo', p['doompity'])
     end
 
@@ -688,11 +688,11 @@ module TestPageTemplate
     end
   end
 
-  class TestSyntaxGlossary < Test::Unit::TestCase
+  class TestLexicon < Test::Unit::TestCase
     # Test modifications by gmillam
     def setup
-      @@g = Class.new(PageTemplate::SyntaxGlossary)
-      @@g.directive = /<(.+?)>/
+      @@g = Class.new(PageTemplate::Lexicon)
+      @@g.sub_regex = /<(.+?)>/
       @@g.define(/^--(.*)/) { |match|
         PageTemplate::CommentCommand.new(match[1])
       }
@@ -705,34 +705,34 @@ module TestPageTemplate
       # lookup() now returns instances, not classes
       # assert_equal(PageTemplate::UnknownCommand, @@g.lookup("foo"))
       assert_raises(ArgumentError,
-        "SyntaxGlossary#define requires a Regexp for its argument") {
+        "Lexicon#define requires a Regexp for its argument") {
           @@g.define("foo") {}
       }
       assert_raises(ArgumentError,
-        "SyntaxGlossary#define requires a block to be passed") {
+        "Lexicon#define requires a block to be passed") {
         @@g.define("foo")
       }
       assert(@@g.define(/^foo/) {|m,p|},
-        "Use SyntaxGlossary#define to add or change SyntaxGlossary entries")
+        "Use Lexicon#define to add or change Lexicon entries")
     end
 
     def test_define_global_var
       assert_equal(true, @@g.lookup("d").is_a?(PageTemplate::UnknownCommand))
       assert(@@g.define_global_var(/d/),
-        "Use SyntaxGlossary#define_global_var to create explicit ValueCommands")
+        "Use Lexicon#define_global_var to create explicit ValueCommands")
       assert_equal(true, @@g.lookup("d").is_a?(PageTemplate::ValueCommand))
     end
 
-    def test_directive
-      assert_equal(/<(.+?)>/, @@g.directive)
+    def test_sub_regex
+      assert_equal(/<(.+?)>/, @@g.sub_regex)
     end
 
-    def test_directive_equals
-      assert_equal(/<(.+?)>/, @@g.directive)
-      directive = /\[.+?\]/
-      assert(@@g.directive = directive)
-      assert_equal(directive, @@g.directive)
-      @@g.directive = /<(.+?)>/
+    def test_sub_regex_equals
+      assert_equal(/<(.+?)>/, @@g.sub_regex)
+      sub_regex = /\[.+?\]/
+      assert(@@g.sub_regex = sub_regex)
+      assert_equal(sub_regex, @@g.sub_regex)
+      @@g.sub_regex = /<(.+?)>/
     end
 
     def test_lookup
@@ -753,22 +753,22 @@ module TestPageTemplate
     def test_output
       parser = PageTemplate::Parser.new()
       uc = PageTemplate::UnknownCommand.new("waffle olive mango")
-      assert_equal("[ Unknown Command: waffle olive mango ]", uc.output(parser.namespace))
+      assert_equal("[ Unknown Command: waffle olive mango ]", uc.output(parser.context))
     end
   end
 
-  class TestHTGlossary < Test::Unit::TestCase
+  class TestHTLexicon < Test::Unit::TestCase
     def setup
       begin
-        require 'PageTemplate/htglossary'
-        @parser = PageTemplate::Parser.new('glossary' => PageTemplate::HTGlossary)
+        require 'PageTemplate/htlexicon'
+        @parser = PageTemplate::Parser.new('lexicon' => PageTemplate::HTLexicon)
       rescue Exception => er
         puts "error: #{er}"
         @parser = nil
       end
     end
     def test_comment_style
-      assert(@parser,'HTGlossary parser was not created')
+      assert(@parser,'HTLexicon parser was not created')
       tmpl = @parser.parse('<!-- TMPL_VAR foo -->')
       tmpl['foo'] = 'bar'
       assert_equal('bar',tmpl.output,'A TMPL_VAR command by itself')
@@ -779,7 +779,7 @@ module TestPageTemplate
       assert_equal('bar',tmpl.output,'TMPL_IF does not work in comment style')
     end
     def test_tag_style
-      assert(@parser,'HTGlossary parser was not created')
+      assert(@parser,'HTLexicon parser was not created')
       tmpl = @parser.parse('<TMPL_VAR foo>')
       tmpl['foo'] = 'bar'
       assert_equal('bar',tmpl.output,'A TMPL_VAR command by itself')
@@ -797,12 +797,12 @@ module TestPageTemplate
       p['x'] = 'y'
       v = PageTemplate::ValueCommand.new('x',nil)
       assert_equal('y', v.output())
-      assert_equal('y', v.output(p.namespace))
+      assert_equal('y', v.output(p.context))
       p['x'] = 1
       v = PageTemplate::ValueCommand.new('x.succ.foo', nil)
       w = PageTemplate::ValueCommand.new('x.succ.succ.succ', nil)
-      assert_equal('4',w.output(p.namespace))
-      assert_equal('',v.output(p.namespace))
+      assert_equal('4',w.output(p.context))
+      assert_equal('',v.output(p.context))
     end
 
     def test_raise_on_error

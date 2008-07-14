@@ -19,11 +19,11 @@ class PageTemplate
     end
 
     # Subclasses of Command use the output method to generate their text
-    # output.  +namespace+ is a Namespace object, which may be 
+    # output.  +context+ is a Context object, which may be 
     # required by a particular subclass.
     #
     # Command#output must return a string
-    def output(namespace = nil)
+    def output(context = nil)
       raise NotImplementedError, 
             "output() must be implemented by subclasses"
     end
@@ -41,7 +41,7 @@ class PageTemplate
   # PageTemplate-style comments as well.
   class CommentCommand < Command
     # output returns nothing.
-    def output(namespace=nil)
+    def output(context=nil)
       ''
     end
     # Save the +comment+ for to_s
@@ -61,13 +61,13 @@ class PageTemplate
   class UnknownCommand < Command
     # If the command that UnknownCommand is set to exists, find out if
     # the command exists in the Parser's glossary.
-    def output(namespace)
-      cls = namespace.parser.glossary.lookup(@command)
+    def output(context)
+      cls = context.parser.glossary.lookup(@command)
       case cls
       when UnknownCommand
         "[ Unknown Command: #{@command} ]"
       else
-        cls.output(namespace)
+        cls.output(context)
       end
     end
     # Save the +command+ and the +parser+, so we can look it
@@ -137,11 +137,11 @@ class PageTemplate
       @commandBlock << command
     end
 
-    # Calls Command#output(namespace) on each Command contained in this 
+    # Calls Command#output(context) on each Command contained in this 
     # object.  The output is returned as a single string.  If no output
     # is generated, returns an empty string.
-    def output(namespace = nil)
-      @commandBlock.map{|x| x.output(namespace)}.join('')
+    def output(context = nil)
+      @commandBlock.map{|x| x.output(context)}.join('')
     end
   end
 
@@ -155,7 +155,7 @@ class PageTemplate
     @modifier = nil
     @closer   = nil
     # Template must know about the parser so it can access its
-    # namespace.
+    # context.
     def initialize(parser)
       @parser = parser
       super()
@@ -164,29 +164,29 @@ class PageTemplate
       '[ Template: ' + @commandBlock.map{ |i| "[#{i.to_s}]" }.join(' ') + ']'
     end
 
-    # Template is also a NamespaceItem
-    include NamespaceItem
+    # Template is also a ContextItem
+    include ContextItem
 
     # Template#output is a special case for a Command. Because
     # Template is what's returned by Parser.load() or Parser.parse(),
     # the programmer may well call Template#output(anything).
     #
-    # If +object+ is a Namespace, then treat output as a typical
-    # BlockCommand. If +object+ is nil, then namespace is
-    # @parser. Otherwise, a new namespace is created, a
-    # child of @namespace, and is assigned +object+ as its namespace
+    # If +object+ is a Context, then treat output as a typical
+    # BlockCommand. If +object+ is nil, then context is
+    # @parser. Otherwise, a new context is created, a
+    # child of @context, and is assigned +object+ as its context
     def output(object=nil)
       @parent = @parser
       case
       when object.nil?
         super(self)
-      when object.is_a?(NamespaceItem)
+      when object.is_a?(ContextItem)
         @parent = object
         super(self)
       else
-        namespace = Namespace.new(self)
-        namespace.object = object
-        super(namespace)
+        context = Context.new(self)
+        context.object = object
+        super(context)
       end
     end
   end
@@ -204,12 +204,12 @@ class PageTemplate
     end
 
     # Returns the string provided during this object's creation.
-    def output(namespace = nil)
+    def output(context = nil)
       @text
     end
   end
 
-  # DefineCommand will set a variable within the enclosing namespace
+  # DefineCommand will set a variable within the enclosing context
   class DefineCommand < Command
     def initialize(name, value)
       @name = name
@@ -217,8 +217,8 @@ class PageTemplate
     end
 
     # Doesn't return any output
-    def output(namespace)
-      namespace[@name] = @value
+    def output(context)
+      context[@name] = @value
       return
     end
   end
@@ -237,14 +237,14 @@ class PageTemplate
       @text.push(line)
     end
 
-    def output(namespace=nil)
-      parser = namespace.parser if namespace
+    def output(context=nil)
+      parser = context.parser if context
       parser = Parser.recent_parser unless parser
-      namespace ||= parser
+      context ||= parser
       preprocessor = parser.preprocessor
       processor = @processor || parser.default_processor
       text = ""
-      @text.each { |c| text += c.output(namespace) }
+      @text.each { |c| text += c.output(context) }
       if preprocessor.respond_to?(processor)
         preprocessor.send(processor, text)
       else
@@ -258,9 +258,9 @@ class PageTemplate
   #
   # [% var variable [:processor] %]
   #
-  # +variable+ is first plucked out of the Namespace,
+  # +variable+ is first plucked out of the Context,
   #
-  # The to_s of the output from Namespace#get is passed through
+  # The to_s of the output from Context#get is passed through
   # parser's preprocessor. If :processor is defined, then 
   # parser.preprocessor.send(:processor,body) is called. This allows the
   # designer to choose a particular format for the output. If
@@ -277,16 +277,16 @@ class PageTemplate
     end
 
     # Requests the value of this object's saved value name from 
-    # +namespace+, and returns the string representation of that
+    # +context+, and returns the string representation of that
     # value to the caller, after passing it through the preprocessor.
-    def output(namespace = nil)
-      parser = namespace.parser if namespace
+    def output(context = nil)
+      parser = context.parser if context
       parser = Parser.recent_parser unless parser
-      namespace ||= parser
+      context ||= parser
       preprocessor = parser.preprocessor
       processor = @processor || parser.default_processor
       if preprocessor.respond_to?(processor)
-        preprocessor.send(processor,namespace.get(@value).to_s)
+        preprocessor.send(processor,context.get(@value).to_s)
       else
         "[ ValueCommand: unknown preprocessor #{@processor} ]"
       end
@@ -345,15 +345,15 @@ class PageTemplate
       @in_else = ! @in_else
       @switched = true
     end
-    # If @value is true within the context of +namespace+, then print
+    # If @value is true within the context of +context+, then print
     # the output of @trueCommands. Otherwise, print the output of
     # @falseCommands
-    def output(namespace=nil)
+    def output(context=nil)
       val = ''
       @trueCommands.each do |val,commands|
-        return commands.output(namespace) if namespace.true?(val)
+        return commands.output(context) if context.true?(val)
       end
-      @falseCommands.output(namespace)
+      @falseCommands.output(context)
     end
     def to_s
       str = '['
@@ -381,11 +381,11 @@ class PageTemplate
   # LoopCommand is a StackableCommand. It requires an opening:
   # [% if variable %] or [% unless variable %].
   #
-  # +variable+ is fetched from the namespace.
+  # +variable+ is fetched from the context.
   #
   # On execution, if +variable+ is true, and non-empty, then
   # @commands is printed once with each item in the list placed in
-  # its own namespace and passed to the loop commands.
+  # its own context and passed to the loop commands.
   # (a list is defined as an object that responds to :map)
   #
   # If +variable+ is true, but does not respond to :map, then
@@ -430,28 +430,28 @@ class PageTemplate
       end
     end
     # If +variable+ is true, and non-empty, then @commands is printed
-    # once with each item in the list placed in its own namespace and
+    # once with each item in the list placed in its own context and
     # passed to the loop commands.  (a list is defined as an object
     # that responds to :map)
     #
     # If +variable+ is true, but does not respond to :map, then
     # the list is called once
-    def output(namespace)
+    def output(context)
 
-      vals = namespace.get(@value)
+      vals = context.get(@value)
       ns = nil
-      return @elseCommands.output(namespace) unless vals
+      return @elseCommands.output(context) unless vals
       unless vals.respond_to?(:map) && vals.respond_to?(:length)
         vals = [vals]
       end
 
-      return @elseCommands.output(namespace) if vals.empty?
+      return @elseCommands.output(context) if vals.empty?
 
       # Unfortunately, no "map_with_index"
       len = vals.length
       i = 1
       odd = true
-      ns = Namespace.new(namespace)
+      ns = Context.new(context)
 
       # Print the output of all the objects joined together.
       case
@@ -513,8 +513,8 @@ class PageTemplate
   # [% include variable %] or [% include literal %]
   #
   # If +literal+ exists in parser.source, then it is called without
-  # passing it to its namespace. If it does not exist, then it is
-  # evaluated within the context of its namespace and then passed to
+  # passing it to its context. If it does not exist, then it is
+  # evaluated within the context of its context and then passed to
   # parser.source for fetching the body of the file/source.
   #
   # The body returned by the Source is then passed to Parser for
@@ -527,28 +527,28 @@ class PageTemplate
       "[ Include: #{@value} ]"
     end
     # If @value exists in parser.source, then it is called without
-    # passing it to its namespace. If it does not exist, then it is
-    # evaluated within the context of its namespace and then passed to
+    # passing it to its context. If it does not exist, then it is
+    # evaluated within the context of its context and then passed to
     # parser.source for fetching the body of the file/source.
     #
     # The body returned by the Source is then passed to Parser for
     # compilation.
-    def output(namespace)
+    def output(context)
       # We don't use parser.compile because we need to know when something
       # doesn't exist.
-      parser = namespace.parser
+      parser = context.parser
       fn = @value
       body = parser.source.get(fn)
       unless body
-        fn = namespace.get(@value)
+        fn = context.get(@value)
         body = parser.source.get(fn) if fn
       end
       if body.is_a?(Command)
-        body.output(namespace)
+        body.output(context)
       elsif body
         cmds = parser.parse(body)
         parser.source.cache(fn,cmds)
-        cmds.output(namespace)
+        cmds.output(context)
       else
         "[ Template '#{fn}' not found ]"
       end
