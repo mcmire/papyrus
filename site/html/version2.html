@@ -1,0 +1,103 @@
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en"><head>
+<title>PageTemplate Version 2: What's New?</title>
+<link rel="STYLESHEET" href="base.css" type="text/css" title="base.css">
+</head>
+<body>
+<h1>Yo!</h1>
+<hr />
+<p class="navbar">
+<a href="SiteMap.html">Sitemap</a> || <a href="index.html">PageTemplate</a>
+ / PageTemplate Version 2</p>
+<h1>PageTemplate Version 2</h1>
+<h2>What's New?</h2>
+<hr />
+
+<table width='100%' border='0'><tr>
+<td><p>&lt;- <a href='programmer.html'>The Programmer&#8217;s Perspective</a></p>
+</td>
+<td align='right'><p><a href='SiteMap.html'>SiteMap</a>- &gt;</p>
+</td>
+</tr></table>
+
+	<p>Thanks largely to Greg Millam there is a new release of PageTemplate.
+Thanks entirely to Greg Millam, it is a complete revamping of PT&#8217;s
+internal workings. While the basics of using PageTemplate as covered
+by the other pages on this site are pretty much the same, a few things
+have been added.</p>
+
+
+	<h2>New Features</h2>
+
+
+	<h3>The Preprocessor</h3>
+
+
+	<h4><code>reverse</code></h4>
+
+
+	<p>Amaze your friends! Baffle your enemies! Discover palindromes in your spare time!</p>
+
+
+	<p>This is a simple demonstration of the capabilities of PageTemplate&#8217;s preprocessor. It prints out the
+reversed string of the value being displayed.</p>
+
+
+<pre class="code">
+Hello, [%var name%]. Your name spelled backwards is [%var name :reverse%].
+</pre>
+
+<pre class="sample">
+Hello, Brian Wisti. Your name spelled backwards is itsiW nairB.
+</pre>
+
+	<h4>escapeHTML</h4>
+
+
+<pre class="code">
+Here comes some sample HTML escaped.
+
+[%var html :escapeHTML %]
+</pre>
+
+	<p>Here comes some sample <span class="caps">HTML</span> escaped.</p>
+
+
+	<p>&lt;p&gt;&lt;a href=&#8217;http://hack.your.email.ownzr.com/&#8217;&gt;Update your &lt;strong&gt;PayPal&lt;/strong&gt; account!&lt;/a&gt;&lt;/p&gt;</p>
+
+
+	<h4>escapeURI</h4>
+
+
+<pre>[%var url :escapeURI %]</pre>
+
+	<p>And here&#8217;s a <span class="caps">URI</span>-escaped string. Isn&#8217;t the preprocessor great?</p>
+
+
+	<p>Brian+Wisti+%28contact+at+brianwisti%40rubyforge.org%29</p>
+
+
+	<h3>Case Directive</h3>
+
+
+	<h3>Object-style Variable Access</h3>
+
+
+	<h3>Handling Templates &#8220;On the Fly&#8221;</h3>
+
+
+	<h2>Fixed Problems</h2>
+
+
+	<h2>Additional Syntax</h2>
+
+
+	<h3>More stuff for <em>in</em></h3><hr />
+
+<p class="navbar">
+<a href="SiteMap.html">Sitemap</a> || <a href="index.html">PageTemplate</a>
+ / PageTemplate Version 2</p>
+
+<h1>Yo!</h1>
+<hr />
+</body>
+</html>
