@@ -20,7 +20,18 @@
 
 ############################################################
 
+require 'PageTemplate/context'
+require 'PageTemplate/context_item'
+require 'PageTemplate/default_lexicon'
+require 'PageTemplate/default_preprocessor'
+require 'PageTemplate/file_source'
+require 'PageTemplate/lexicon'
 require 'PageTemplate/parser'
+require 'PageTemplate/preprocessor'
+require 'PageTemplate/source'
+require 'PageTemplate/string_source'
+require 'PageTemplate/template'
+
 require 'PageTemplate/commands'
 
 # PageTemplate is just the namespace for all of its real code, so as
