@@ -58,8 +58,5 @@ class PageTemplate
         str << " ]"
       end
     end
-    DefaultLexicon.define(/^case (\w+(?:\.\w+)*)$/) do |match, parser|
-      Command::Case.new(match[1])
-    end
   end
 end

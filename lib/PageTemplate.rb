@@ -32,7 +32,7 @@ require 'PageTemplate/source'
 require 'PageTemplate/string_source'
 require 'PageTemplate/template'
 
-require 'PageTemplate/commands'
+require 'PageTemplate/command'
 
 # PageTemplate is just the namespace for all of its real code, so as
 # not to caues confusion or clashes with the programmer's code.

@@ -41,6 +41,10 @@ class PageTemplate
       # Value
       Command::Include.new(match[1])
     }
+    
+    define(/^case (\w+(?:\.\w+)*)$/) { |match|
+      Command::Case.new(match[1])
+    }
 
     # Command#else's expect only to be called
     modifier(:else) { |cmd,command|
