@@ -1,0 +1,17 @@
+[% include sample2.txt %]
+
+Here is some sample text. Here's a line that you might typically find in some dinky old template and jazz.
+
+[% var foo %]
+
+I'm about to do some kewl logic, ready, go!
+
+[% if 42 %]
+  42 is the greatest number in the world.
+[% else %]
+  42 suXX0rs!!1
+[% endif %]
+
+[% loop words: word %]
+  This is my favorite word: [% var word %]
+[% endloop %]

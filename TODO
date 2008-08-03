@@ -1,0 +1,25 @@
+TODO
+
+Last updated: 26 Jul 2008
+
+- There are some Command subclasses whose output methods receive a required context parameter, and some for which that parameter is optional. What gives? (They should probably all be required, just to be consistent.)
+- Currently to add a filter, a method must be added to the DefaultPreprocessor. Add a 'filter' class method to Lexicon that automatically does this.
+- What's Processor for? Should this be more of an interface? (How do you inherit class methods?)
+- Rename instances of 'command' with 'sub' or 'token' as appropriate?
+  - Sub::Base < Token
+  - Macro < Sub::Base
+  - Sub::Variable < Sub::Base
+  - Command::Text -> Token::Text
+  - Command::{Base, Case, Comment, Define, Filter, If, Include, Loop, Unknown} -> Macro::{$1}
+  - Command::Value -> Sub::Variable
+  - Rename Stackable to Stacking -- it's not an interface!
+- I don't like the 'modifier' Lexicon macro -- we should really have like a :modifiers => [] option to 'define' (so define the modifier on the sub level)
+- Standardize behaviors of Command#add -- for instance, Filter#add supposedly just adds text, but then Filter#output calls #output on each of the items in the @text variable -- so they're actually commands. Shouldn't Command#add *always* add a command to a list of commands? (or at least for Stackable)
+- [% var foo :filter %] shouldn't create a Value commmand, it should actually create a Filter command with a Value command added to its list. That way we don't have two places where we're processing text through a filter.
+- What's up with Parser.recent_parser ? Why do even need this?
+- Symbolize keys of @args where necessary
+- Some commands' #output methods return an error message (e.g. Include). We don't
+  want this.
+- Certain places (e.g. Include command) refer to parser.source -- if this is a StringSource, then trying to load the file being included won't work because it needs to use a FileSource. Do we have to make use of parser.source or can we just say FileSource?
+- I don't actually like Lexicon that much. A raw command should just be split by whitespace, shift the first arg off which will become the command name, look for a class corresponding to that command. If it doesn't exist, throw an error, otherwise, create the command object. Also, the command arguments should allow for single or double quotes (or nothing at all). IOW, go by how Liquid does things. Oh, but if you want to restrict a command from being in the lexicon, you can specify that too.
+- [% foo %-] to remove line breaks (just like <%= foo -%>)
