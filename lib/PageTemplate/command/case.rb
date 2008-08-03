@@ -1,4 +1,4 @@
-class PageTemplate
+module PageTemplate
   module Command
     # A Case command provides switch-command functionality.
     # [% case variable %]
@@ -8,13 +8,15 @@ class PageTemplate
     # [% else %]
     # [% end %]
     class Case < Stackable
-      @modifier = :when
-      @closer   = :end
+      self.modifier = :when
+      self.closer   = :end
 
       attr_reader :current_case
-      # +command+ is a variable that is evaluated against the namespace
-      # on execution, and then tested against the literals of when. It
-      # must return a string literal.
+      
+      # +value+ should be a literal value or a variable that will be evaluated into a
+      # literal value within the context on execution. The literal value will be
+      # tested against the literals supplied for each 'when' command following
+      # (or an optional 'else' command).
       def initialize(value)
         @called_as = 'case'
         @value = value
@@ -22,33 +24,36 @@ class PageTemplate
         @current_case = nil
         @default = Block.new
       end
-      # Adds a command to the current case, or to the 'else'
-      def add(command)
-        unless @current_case
-          @default.add command
-        else
-          @blocks[@current_case].add command
-        end
+      
+      # Adds a command to the current case, or to the 'else' (default) case.
+      def add(cmd)
+        (@current_case ? @blocks[@current_case] : @default) << cmd
+        self
       end
-      # 'when' and 'else' modify this command.
+      
+      # modifier
       def when(value)
         @current_case = value
         @blocks[value] = Block.new unless @blocks.has_key?(value)
       end
+      
+      # modifier
       def else
         @current_case = nil
         return true
       end
-      # If namespace.get(@value) exists in the 'when' clauses, then
+      
+      # If context.get(@value) exists in the 'when' clauses, then
       # print out that block.
-      def output(namespace=nil)
-        val = namespace.get(@value,false)
+      def output(context)
+        val = context.get(@value, false)
         if @blocks.has_key?(val)
-          @blocks[val].output(namespace)
+          @blocks[val].output(context)
         else
-          @default.output(namespace)
+          @default.output(context)
         end
       end
+      
       def to_s
         str = "[ Case: "
         @blocks.each do |key,val|

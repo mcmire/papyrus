@@ -1,39 +1,51 @@
-class PageTemplate
+module PageTemplate
   module Command
     # Command::Block provides a single interface to multiple Command objects.
     # This should probably never be called by the designer or a programmer,
     # but by Stackables.
     class Block < Base
-      def initialize()
+      def initialize
         @command_block = []
       end
-
-      # Return Commands held, as a string
-      def to_s
-        '[ Blocks: ' + @command_block.map{ |i| "[#{i.to_s}]" }.join(' ') + ']'
+      
+      for meth in [ :length, :size, :first, :last, :empty? ]
+        class_eval <<-EOT, __FILE__, __LINE__
+          def #{meth}
+            @command_block.send(:#{meth})
+          end
+        EOT
       end
-
-      # Returns the number of Commands held in this Block
-      def length
-        @command_block.length
+      def [](i)
+        @command_block[i]
       end
 
       # Adds +command+ to the end of the Block's chain of Commands.
-      #
       # A TypeError is raised if the object being added is not a ((<Command>)).
-      def add(command)
-        unless command.is_a?(Command::Base)
-          raise TypeError, 'Command::Block#add: Attempt to add non-Command object'
-        end
-        @command_block << command
+      #
+      # This is also aliased as <<
+      def add(cmd)
+        raise TypeError, 'Command::Block#add: Attempt to add non-Command object' unless cmd.kind_of?(Base)
+        @command_block << cmd
+        self
+      end
+      def <<(cmd)
+        add(cmd)
       end
 
       # Calls Command#output(context) on each Command contained in this 
       # object.  The output is returned as a single string.  If no output
       # is generated, returns an empty string.
       def output(context = nil)
-        @command_block.map{|x| x.output(context)}.join('')
+        @command_block.map {|cmd| cmd.output(context) }.join('')
       end
+      
+      # Returns Commands held, as a string
+      def to_s
+        '[ Blocks: ' + @command_block.map {|cmd| "[#{cmd.to_s}]" }.join(' ') + ' ]'
+      end
+      
+    private
+      attr_reader :command_block
     end
   end
 end

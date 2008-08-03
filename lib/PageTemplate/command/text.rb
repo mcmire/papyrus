@@ -1,4 +1,4 @@
-class PageTemplate
+module PageTemplate
   module Command
     # Text is a very simple Command which outputs a static string of text
     class Text < Base
@@ -7,12 +7,12 @@ class PageTemplate
         @text = text
       end
 
-      def to_s
-        @text
-      end
-
       # Returns the string provided during this object's creation.
       def output(context = nil)
+        @text
+      end
+      
+      def to_s
         @text
       end
     end

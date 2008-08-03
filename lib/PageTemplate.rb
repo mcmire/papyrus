@@ -20,32 +20,36 @@
 
 ############################################################
 
-require 'PageTemplate/context'
-require 'PageTemplate/context_item'
-require 'PageTemplate/default_lexicon'
-require 'PageTemplate/default_preprocessor'
-require 'PageTemplate/file_source'
-require 'PageTemplate/lexicon'
-require 'PageTemplate/parser'
-require 'PageTemplate/preprocessor'
-require 'PageTemplate/source'
-require 'PageTemplate/string_source'
-require 'PageTemplate/template'
+require 'ruby_ext'
 
 require 'PageTemplate/command'
 
+require 'PageTemplate/context_item'
+require 'PageTemplate/context'
+
+require 'PageTemplate/lexicon'
+require 'PageTemplate/default_lexicon'
+
+require 'PageTemplate/preprocessor'
+require 'PageTemplate/default_preprocessor'
+
+require 'PageTemplate/source'
+require 'PageTemplate/file_source'
+require 'PageTemplate/string_source'
+
+require 'PageTemplate/parser'
+
+require 'PageTemplate/template'
+
 # PageTemplate is just the namespace for all of its real code, so as
 # not to caues confusion or clashes with the programmer's code.
-#
-# It is a class so that programmers are not confused by being able to
-# do .new on a module
-class PageTemplate
+module PageTemplate
   VERSION = "2.2.3"
 
   # Passes arguments straight to Parser.new
   #
   # returns: a Parser object.
-  def PageTemplate.new(*args)
+  def self.new(*args)
     Parser.new(*args)
   end
 end

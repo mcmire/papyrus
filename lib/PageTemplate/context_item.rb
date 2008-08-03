@@ -1,4 +1,4 @@
-class PageTemplate
+module PageTemplate
   # A Context object consists of three things:
   #
   # parent: A parent object to get a value from if the context
@@ -23,8 +23,7 @@ class PageTemplate
     # Saves a variable +key+ as the string +value+ in the global 
     # context.
     def set(key, value)
-      @values ||= {}
-      @values[key] = value
+      values[key.to_s] = value
     end
     alias_method :[]=, :set
 
@@ -40,76 +39,30 @@ class PageTemplate
     # If a value is not found in any of the nested contexts, get()
     # searches for the key in the global context.
     #
-    # If +val+ is a dot-separated list of words, then 'key' is the
+    # If +key+ is a dot-separated list of words, then 'first' is the
     # first part of it.  The remainder of the words are sent to key
-    # (and further results) to premit accessing attributes of objects.
-    def get(val,clean_rescue=true)
-      args = parser.args
-      @values ||= {}
-      @object ||= nil
+    # (and further results) to permit accessing attributes of objects.
+    def get(key, clean_rescue=false)
+      key = key.to_s
+      options = parser.options
+      clean_rescue = !options[:raise_on_error] if clean_rescue
+      regexp = parser.method_separator_regexp
+      key.gsub!(regexp, ".")
 
-      clean_rescue = !args['raise_on_error'] if clean_rescue
-
-      val.gsub!(/[#{Regexp.escape(parser.method_separators)}]/,'.')
-
-      key, rest = val.split(/\./, 2)
-
-      value = case
-      when @values.has_key?(key)
-        @values[key]
-      when @values.has_key?(key.to_sym)
-        @values[key.to_sym]
-      when !@object
-        if @parent
-          @parent.get(val)
-        else
-          nil
-        end
-      when @object.respond_to?(:has_key?)
-        if @object.has_key?(key)
-          @values[key] = @object[key]
-        else
-          return @parent.get(val) if @parent
-          nil
-        end
-      when @object.respond_to?(sym = key.to_sym)
-        @values[key] = @object.send(sym)
-      when key == '__ITEM__'
-        @object
-      when @parent
-        return @parent.get(val)
-      else
-        nil
+      first, rest = key.split(".", 2)
+      
+      value = get_primary_part(first, key)
+      return value.first if value.is_a?(Array) && value.last === true
+      return value unless rest
+      
+      key_parts = [first]
+      value_so_far = value
+      rest.split(regexp).each do |k|
+        key_parts << k
+        key_so_far = key_parts.join(".")
+        value_so_far = get_secondary_part(key_so_far, k, value_so_far)
       end
-
-      if rest
-        names = [key]
-        rest.split(/\./).each do |i|
-          names << i
-          name = names.join('.')
-          begin
-            value = if @values.has_key?(name)
-              @values[name]
-            else
-              @values[name] = value = case
-              when @values.has_key?(name)
-                @values[name]
-              when value.respond_to?(:has_key?) # Hash
-                value[i]
-              when value.respond_to?(:[]) && i =~ /^\d+$/ # Array
-                value[i.to_i]
-              when value.respond_to?(i) # Just a method
-                value.send(i)
-              else
-                nil
-              end
-            end
-          rescue NoMethodError => er
-            return nil
-          end
-        end
-      end
-      value
+      value_so_far
     rescue Exception => e
       if clean_rescue
         "[ Error: #{e.message} ]"
@@ -121,29 +74,26 @@ class PageTemplate
 
     # Removes an entry from the Context
     def delete(key)
-      @values.delete(key)
+      values.delete(key)
     end
 
     # parser: most context objects won't be a parser, but pass this
     # query up to the parser object.
     def parser
-      if @parent
-        @parent.parser
-      else
-        Parser.recent_parser
-      end
+      (parent && parent.parser) || Parser.recent_parser
     end
 
     # A convenience method to test whether a variable has a true
     # value. Returns nil if +flag+ is not found in the context, 
     # or +flag+ has a nil value attached to it.
+    # TODO: Clean up?
     def true?(flag)
-      args = parser.args
-      val = get(flag,false)
+      options = parser.options
+      val = get(flag, false)
       case
-      when ! val
+      when !val
         false
-      when args['empty_is_true']
+      when options[:empty_is_true]
         true
       when val.respond_to?(:empty?)
         ! val.empty?
@@ -152,6 +102,53 @@ class PageTemplate
       end
     rescue Exception => er
       false
+    end
+    
+  private
+    attr_writer :values
+    def values
+      @values ||= {}
+    end
+    
+    attr_reader :parent
+    
+    def get_primary_part(key, whole_key)
+      if values.has_key?(key)
+        values[key]
+      #elsif values.has_key?(key.to_sym)
+      #  values[key.to_sym]
+      elsif !object && parent
+        parent.get(whole_key)
+      elsif object.respond_to?(:has_key?)
+        if object.has_key?(key)
+          values[key] = object[key]
+        elsif parent
+          [parent.get(whole_key), true]
+        end
+      elsif object.respond_to?(sym = key.to_sym)
+        values[key] = object.send(sym)
+      elsif key == '__ITEM__'
+        object
+      elsif parent
+        [parent.get(whole_key), true]
+      end
+    end
+    
+    def get_secondary_part(key_so_far, key, value_so_far)
+      begin
+        values[key_so_far] =
+          if values.has_key?(key_so_far)
+            values[key_so_far]
+          elsif value_so_far.respond_to?(:has_key?) # Hash
+            value_so_far[key]
+          elsif value_so_far.respond_to?(:[]) && key =~ /^\d+$/ # Array
+            value_so_far[key.to_i]
+          elsif value_so_far.respond_to?(sym = key.to_sym) # Just a method
+            value_so_far.send(sym)
+          end
+      rescue NoMethodError
+        nil
+      end
     end
   end
 end

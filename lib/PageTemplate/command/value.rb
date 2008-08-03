@@ -1,4 +1,4 @@
-class PageTemplate
+module PageTemplate
   module Command
     # A Value command will print out a variable name, possibly passing its
     # value through a preprocessor.
@@ -14,34 +14,27 @@ class PageTemplate
     # :processor is not given, then parser's default processor is used.
     class Value < Base
 
-      # Creates the Value, with +value+ as the name of the variable
-      # to be inserted during output. +parser+ is the Parser object,
-      # which we save so we can access its Preprocessor and its default
-      # preprocessor
-      def initialize(value,preprocessor)
+      # Creates an instance of Command::Value.
+      #
+      # +value+ is the name of the variable whose value will be fetched from the
+      # context when the command is output; +processor+ is the name of the filter
+      # (specifically, the method in the Preprocessor tied to the context) that will
+      # be applied on the text.
+      def initialize(value, processor=nil)
         @value = value
-        @processor = preprocessor
+        @processor = processor
       end
 
       # Requests the value of this object's saved value name from 
       # +context+, and returns the string representation of that
       # value to the caller, after passing it through the preprocessor.
       def output(context = nil)
-        parser = context.parser if context
-        parser = Parser.recent_parser unless parser
-        context ||= parser
-        preprocessor = parser.preprocessor
-        processor = @processor || parser.default_processor
-        if preprocessor.respond_to?(processor)
-          preprocessor.send(processor,context.get(@value).to_s)
-        else
-          "[ Command::Value: unknown preprocessor #{@processor} ]"
-        end
+        Filter.filter(context, @processor, self.class) {|cxt| cxt[@value] }
       end
 
       def to_s
         str = "[ Value: #{@value} "
-        str << ":#{@processor} " if (@processor)
+        str << ":#{@processor} " if @processor
         str << ']'
         str
       end

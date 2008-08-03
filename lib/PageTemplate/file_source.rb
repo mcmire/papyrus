@@ -1,26 +1,23 @@
-class PageTemplate
+module PageTemplate
   # FileSource provides access to files within the 'include_paths'
   # argument.
   #
   # It attempts to be secure by not allowing any access outside of
-  # The directories detailed within include_paths
+  # the directories detailed within include_paths
   class FileSource < Source
     attr_accessor :paths
 
-    # initialize looks for the following in the args Hash:
+    # initialize looks for the following in the options Hash:
     #  * include_paths = a list of file paths
     #  * include_path  = a single file path string 
     #                    (kept for backwards compatibility)
-    def initialize(args = {})
-      @args  = args
-      if @args['include_paths']
-        @paths = @args['include_paths']
-      elsif @args['include_path']
-        @paths = [ @args['include_path'] ]
-      else
-        @paths = [Dir.getwd,'/']
-      end
-      @paths = @paths.compact
+    def initialize(options = {})
+      @options  = options.symbolize_keys
+      @paths = begin
+        if    paths = @options[:include_paths] then paths
+        elsif path  = @options[:include_path]  then [ path ]
+        else                                     [ Dir.getwd, '/' ] end
+      end.compact
       @cache = Hash.new(nil)
       @mtime = Hash.new(0)
     end
@@ -28,41 +25,34 @@ class PageTemplate
     # Return the contents of the file +name+, which must be within the
     # include_paths.
     def get(name)
-      fn = get_filename(name)
-      begin
-        case
-      when fn.nil?
-        nil
-      when @cache.has_key?(fn) && (@mtime[fn] > File.mtime(fn).to_i)
-        cmds = @cache[fn]
-        cmds.clear_cache
-        cmds
+      return unless fn = get_filename(name)
+      if @cache.has_key?(fn) && @mtime[fn] > File.mtime(fn).to_i
+        template = @cache[fn]
+        template.clear_cache
+        template
       else
         IO.read(fn)
       end
-      rescue Exception => er
-        return "[ Unable to open file #{fn} because of #{er.message} ]"
-      end
+    rescue Exception => er
+      return "[ Unable to open file #{fn} because of #{er.message} ]"
     end
-    def cache(name,cmds)
+    
+    # Stores the template with its filename in a hash, and the modified time
+    # of the template file in another hash.
+    def cache(name, template)
       fn = get_filename(name)
-      @cache[fn] = cmds.dup
+      @cache[fn] = template.dup
       @mtime[fn] = Time.now.to_i
     end
+    
     def get_filename(file)
       # Check for absolute filepaths
-      if file == File.expand_path(file)
-        if File.exists?(file)
-          return file
-        end
-      end
+      return file if File.exists?(file) && file == File.expand_path(file)
       file = file.gsub(/\.\.\//,'') 
       @paths.each do |path|
         fn = File.join(path,file)
         fn.untaint
-        if File.exists?(fn)
-          return fn
-        end
+        return fn if File.exists?(fn)
       end
       return nil
     end

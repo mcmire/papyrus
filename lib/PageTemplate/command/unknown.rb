@@ -1,29 +1,34 @@
-class PageTemplate
+module PageTemplate
   module Command
-    # An Unknown command is exactly that: A command we know nothing
-    # about.
-    #
-    # We keep this and save it for future use in case we will know
-    # something about it before output is called.
+    # An Unknown command is a command that could not be found in the parser's lexicon.
+    # We keep the raw version of the command that was called and save it for future
+    # use in case it becomes a real command before it is output.
     class Unknown < Base
-      # If the command that the Unknown command is set to exists, find out if
-      # the command exists in the Parser's lexicon.
+      # Creates a new Unknown command, storing the raw command that could not be
+      # found so that we can look it up later.
+      def initialize(raw_command)
+        @raw_command = raw_command
+      end
+      
+      # Looks up the unknown command in the lexicon of the parser tied to
+      # to the given context
+      def lookup(context)
+        context.parser.lexicon.lookup(@raw_command)
+      end
+      
+      # Looks up the unknown command in the parser's lexicon. If the command in fact
+      # exists, then returns the output of the command, otherwise returns an error string.
       def output(context)
-        cls = context.parser.lexicon.lookup(@command)
-        case cls
-        when Unknown
-          "[ Unknown Command: #{@command} ]"
+        cmd = lookup(context)
+        if cmd.is_a?(Unknown)
+          "[ Unknown Command: #{@raw_command} ]"
         else
-          cls.output(context)
+          cmd.output(context)
         end
       end
-      # Save the +command+ and the +parser+, so we can look it
-      # up and hopefully 
-      def initialize(command)
-        @command = command
-      end
+      
       def to_s
-        "[ Command::Unknown: #{@command} ]"
+        "[ Command::Unknown: #{@raw_command} ]"
       end
     end
   end

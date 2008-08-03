@@ -1,4 +1,4 @@
-class PageTemplate
+module PageTemplate
   class DefaultPreprocessor
     class << self
       # Default, unescaped string.

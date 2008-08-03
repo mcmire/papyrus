@@ -1,17 +1,19 @@
-class PageTemplate
+module PageTemplate
   # A StringSource is created with a raw string, which is returned on any
   # call to 'get'.
   class StringSource < Source
-    def initialize(args)
-      if args.class == String
-        @source = args
+    def initialize(options)
+      if options.is_a?(String)
+        @source = options
       else
-        @args = args
-        @source = args["source"]
+        options.symbolize_keys!
+        @options = options
+        @source = options[:source]
       end
     end
-    def get()
-      return @source
+    
+    def get(name)
+      @source
     end
   end
 end
