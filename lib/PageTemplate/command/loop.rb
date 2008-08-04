@@ -22,11 +22,11 @@ module PageTemplate
       # [% in variable %] or [% loop variable %]
       # Or [% in variable: name %]
       def initialize(called_as, value, block_params)
-        @called_as = called_as
-        @value     = value
+        super
+        @value = value
         @block_params = block_params && block_params.strip.gsub(/\s+/, ' ').split
-        @switched  = false
-        @commands  = Block.new
+        @switched = false
+        @commands = Block.new
         @else_commands = Block.new
         @in_else = false
       end

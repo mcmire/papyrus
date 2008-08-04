@@ -11,7 +11,8 @@ module PageTemplate
     # and compiled into a Template. Otherwise the 'include' tag is replaced with
     # an error message.
     class Include < Base
-      def initialize(value)
+      def initialize(called_as, value)
+        super
         @value = value
       end
       

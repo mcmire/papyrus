@@ -12,6 +12,10 @@ module PageTemplate
       
       self.modifier = nil
       self.closer   = nil
+      
+      def initialize(*args)
+        @called_as = args.first
+      end
 
       # Subclasses of Command::Base use the output method to generate their text
       # output.  +context+ is a Context object, which may be required by 

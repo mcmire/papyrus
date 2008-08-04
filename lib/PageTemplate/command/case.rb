@@ -17,8 +17,8 @@ module PageTemplate
       # literal value within the context on execution. The literal value will be
       # tested against the literals supplied for each 'when' command following
       # (or an optional 'else' command).
-      def initialize(value)
-        @called_as = 'case'
+      def initialize(called_as, value)
+        super
         @value = value
         @blocks = {}
         @current_case = nil

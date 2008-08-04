@@ -20,7 +20,8 @@ module PageTemplate
       # context when the command is output; +processor+ is the name of the filter
       # (specifically, the method in the Preprocessor tied to the context) that will
       # be applied on the text.
-      def initialize(value, processor=nil)
+      def initialize(called_as, value, processor=nil)
+        super
         @value = value
         @processor = processor
       end

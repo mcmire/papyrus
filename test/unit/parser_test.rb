@@ -294,7 +294,7 @@ Expectations do
       # @stack should be pop'ped
       expect 1 do
         parser = PageTemplate::Parser.new
-        parser.send(:stack=, [ parser.new_template, PageTemplate::Command::Filter.new(:unescaped) ])
+        parser.send(:stack=, [ parser.new_template, PageTemplate::Command::Filter.new("", :unescaped) ])
         parser.send(:closer=, :something)
         parser.lexicon.stubs(:modifies?).returns(true)
         parser.send(:command_closed_top_command?, "")
@@ -304,7 +304,7 @@ Expectations do
       expect [true, true] do
         parser = PageTemplate::Parser.new
         template = parser.new_template
-        filter = PageTemplate::Command::Filter.new(:unescaped)
+        filter = PageTemplate::Command::Filter.new("", :unescaped)
         stack = [ template, filter ]
         parser.send(:stack=, stack)
         parser.send(:top=, stack.last)

@@ -18,7 +18,7 @@ Expectations do
   # Template#parent
   expect true do
     template = PageTemplate::Template.new(nil)
-    template.parent.equal?(template)
+    template.send(:parent).equal?(template)
   end
   
   # Template#output

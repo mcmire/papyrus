@@ -12,7 +12,7 @@ module PageTemplate
       end
     end
     
-    def get(name)
+    def get(name=nil)
       @source
     end
   end

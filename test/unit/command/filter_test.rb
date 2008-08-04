@@ -3,6 +3,8 @@ require File.dirname(__FILE__)+'/../test_helper'
 require 'command/base'
 require 'command/stackable'
 require 'command/filter'
+require 'context_item'
+require 'parser'
 
 Expectations do
   
@@ -75,30 +77,26 @@ Expectations do
   
   # Filter#initialize
   begin
-    expect "filter" do
-      filter = PageTemplate::Command::Filter.new(nil)
-      filter.send(:instance_variable_get, "@called_as")
-    end
     expect :foo do
-      filter = PageTemplate::Command::Filter.new(:foo)
+      filter = PageTemplate::Command::Filter.new("", :foo)
       filter.send(:instance_variable_get, "@processor")
     end
     expect [] do
-      filter = PageTemplate::Command::Filter.new(nil)
+      filter = PageTemplate::Command::Filter.new("", nil)
       filter.send(:instance_variable_get, "@text")
     end
   end
   
   # Filter#add
   expect PageTemplate::Command::Base do
-    filter = PageTemplate::Command::Filter.new(nil)
+    filter = PageTemplate::Command::Filter.new("", nil)
     filter << PageTemplate::Command::Base.new
     filter.send(:instance_variable_get, "@text").last
   end
   
   # Filter#output
   expect PageTemplate::Command::Filter.to.receive(:filter).with(:context, :unescaped, PageTemplate::Command::Filter) do |filter_klass|
-    filter = filter_klass.new(nil)
+    filter = filter_klass.new("", nil)
     filter.send(:instance_variable_set, "@processor", :unescaped)
     filter.output(:context)
   end

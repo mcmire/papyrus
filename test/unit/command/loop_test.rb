@@ -19,10 +19,6 @@ Expectations do
   
   # Loop#initialize
   begin
-    expect "loop" do
-      loop_cmd = PageTemplate::Command::Loop.new("loop", "", "")
-      loop_cmd.send(:instance_variable_get, "@called_as")
-    end
     expect 42 do
       loop_cmd = PageTemplate::Command::Loop.new("", 42, "")
       loop_cmd.send(:instance_variable_get, "@value")
@@ -264,11 +260,11 @@ Expectations do
     loop_cmd = PageTemplate::Command::Loop.new("", "", "")
     loop_cmd.send(:instance_variable_set, "@value", %w(foo bar baz quux))
     main_block = PageTemplate::Command::Block.new
-    main_block << PageTemplate::Command::Filter.new(:unescaped)
+    main_block << PageTemplate::Command::Filter.new("filter", :unescaped)
     main_block << PageTemplate::Command::Text.new("blah blah")
     loop_cmd.send(:instance_variable_set, "@commands", main_block)
     else_block = PageTemplate::Command::Block.new
-    else_block << PageTemplate::Command::Filter.new(:unescaped)
+    else_block << PageTemplate::Command::Filter.new("filter", :unescaped)
     else_block << PageTemplate::Command::Text.new("blah blah")
     loop_cmd.send(:instance_variable_set, "@else_commands", else_block)
     loop_cmd.to_s

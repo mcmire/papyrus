@@ -4,7 +4,8 @@ module PageTemplate
     # This should probably never be called by the designer or a programmer,
     # but by Stackables.
     class Block < Base
-      def initialize
+      def initialize(*args)
+        super
         @command_block = []
       end
       

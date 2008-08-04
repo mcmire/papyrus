@@ -15,3 +15,18 @@ I'm about to do some kewl logic, ready, go!
 [% loop words: word %]
   This is my favorite word: [% var word %]
 [% endloop %]
+
+[% define michael jordan %]
+
+[% var michael %]
+
+[% filter :unescaped %]
+  Here is some unescaped text.
+[% end %]
+
+[% case wanker %]
+[% when Steve %]
+  I'm egregious
+[% else %]
+  I'm extemporaneous
+[% end %]

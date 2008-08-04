@@ -692,7 +692,7 @@ module TestPageTemplate
     # Test modifications by gmillam
     def setup
       @@g = Class.new(PageTemplate::Lexicon)
-      @@g.sub_regex = /<(.+?)>/
+      @@g.command_regexp = /<(.+?)>/
       @@g.define(/^--(.*)/) { |match|
         PageTemplate::CommentCommand.new(match[1])
       }
@@ -723,16 +723,16 @@ module TestPageTemplate
       assert_equal(true, @@g.lookup("d").is_a?(PageTemplate::ValueCommand))
     end
 
-    def test_sub_regex
-      assert_equal(/<(.+?)>/, @@g.sub_regex)
+    def test_command_regexp
+      assert_equal(/<(.+?)>/, @@g.command_regexp)
     end
 
-    def test_sub_regex_equals
-      assert_equal(/<(.+?)>/, @@g.sub_regex)
-      sub_regex = /\[.+?\]/
-      assert(@@g.sub_regex = sub_regex)
-      assert_equal(sub_regex, @@g.sub_regex)
-      @@g.sub_regex = /<(.+?)>/
+    def test_command_regexp_equals
+      assert_equal(/<(.+?)>/, @@g.command_regexp)
+      command_regexp = /\[.+?\]/
+      assert(@@g.command_regexp = command_regexp)
+      assert_equal(command_regexp, @@g.command_regexp)
+      @@g.command_regexp = /<(.+?)>/
     end
 
     def test_lookup

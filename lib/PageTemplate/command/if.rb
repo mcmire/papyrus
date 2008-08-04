@@ -68,7 +68,7 @@ module PageTemplate
       # ("if" or "unless"), and the value that will get evaluated when the
       # command is executed.
       def initialize(called_as, value)
-        @called_as = called_as
+        super
         @value = value
         @true_commands = [ [value, Block.new] ]
         @false_commands = Block.new

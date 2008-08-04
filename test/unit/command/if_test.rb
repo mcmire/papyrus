@@ -11,10 +11,6 @@ Expectations do
   
   # If#initialize
   begin
-    expect "if" do
-      if_cmd = PageTemplate::Command::If.new("if", "")
-      if_cmd.send(:instance_variable_get, "@called_as")
-    end
     expect 42 do
       if_cmd = PageTemplate::Command::If.new("", 42)
       if_cmd.send(:instance_variable_get, "@value")
@@ -136,7 +132,7 @@ Expectations do
       if_cmd = PageTemplate::Command::If.new("if", "")
       if_cmd.send(:instance_variable_set, "@true_commands", [
         [ 42,    (PageTemplate::Command::Block.new << PageTemplate::Command::Text.new("foo bar")) ],
-        [ 'foo', PageTemplate::Command::Filter.new(:unescaped) ]
+        [ 'foo', PageTemplate::Command::Filter.new("filter", :unescaped) ]
       ])
       if_cmd.send(:instance_variable_set, "@false_commands",
         (PageTemplate::Command::Block.new << PageTemplate::Command::Text.new("bar baz")) )

@@ -125,7 +125,7 @@ module PageTemplate
     attr_accessor :stack, :top, :modifier, :closer
   
     def tokenize(body)
-      regex = @lexicon.command_regex
+      regex = @lexicon.command_regexp
       while (m = regex.match(body))
         before_command = m.pre_match
         raw_command = m[1..-1].compact.first.strip.gsub(/\s+/, ' ')

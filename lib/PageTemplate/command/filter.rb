@@ -38,9 +38,9 @@ module PageTemplate
         end
       end
       
-      def initialize(filter)
-        @called_as = "filter"
-        @processor = filter
+      def initialize(called_as, processor)
+        super
+        @processor = processor
         @text = []
       end
 

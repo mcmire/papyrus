@@ -7,20 +7,18 @@ module PageTemplate
     # Stackable. We recommend setting @called_as, so all of Stackable's
     # ways of closing blocks work.
     class Stackable < Base
-      self.closer   = :end
+      self.closer = :end
 
       # @called_as is set to the command which this is called as. This
       # allows a number of [% end %], [% end name %], [% endname %] or
       # even [% /name %] to close Stackables.
-      #
-      # XXX: Why do we even have an argument here if no one is allowed to call this directly?
-      def initialize(called_as=nil)
-        raise ArgumentError, 'Command::Stackable.new should not be called directly'
+      def initialize(*args)
+        raise ArgumentError, 'Command::Stackable.new should not be called directly' if self.class == Stackable
+        super
       end
       
       def add(block)
         raise ArgumentError, 'Command::Stackable#add should not be called directly'
-        self
       end
       def <<(cmd)
         add(cmd)

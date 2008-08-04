@@ -3,61 +3,22 @@ module PageTemplate
   # Good for everything but a Value command :-/.
   # /(?:^\s*\[%([^\]]+?)%\]\s*$\r?\n?|\[%(.+?)%\])/m,
   class DefaultLexicon < Lexicon
-    @command_regex = /\[%(.+?)%\]/m
+    command_open  '[%'
+    command_close '%]'
+
+    adv_define %r/^--(.+)$/i, 'Comment'
     
-    # TODO: Unknown command should be the default in the Lexicon
-
-    default { |command_contents|
-      Command::Unknown.new(command_contents)
-    }
-    
-    # TODO: This should look more like:
-    #   define /.../, Command::Value
-    # The class should be automatic (although you can override it)
-    # All captures should be passed to the instance automatically
-    # (although you can override that too)
-
-    define(/^var ((?:\w+)(?:\.\w+\??)*)(?:\s+:(\w+))?$/i) { |match|
-      # Value, Preprocessor
-      Command::Value.new(match[1],match[2])
-    }
-
-    define(/^--(.+)$/i) { |match|
-    # The Comment
-      Command::Comment.new(match[1])
-    }
-
-    define(/^define (\w+)\s+?(.+)$/i) { |match|
-      Command::Define.new(match[1], match[2])
-    }
-
-    define(/^filter :(\w+)$/i) { |match|
-      Command::Filter.new(match[1])
-    }
-
-    define(/^(if|unless) ((\w+)(\.\w+\??)*)$/i) { |match|
-      # Called_As, Value
-      Command::If.new(match[1],match[2])
-    }
-
-    define(/^(in|loop) (\w+(?:\.\w+\??)*)(?:\:((?:\s+\w+)+))?$/i) { |match|
-      # Called_As, Value, Iterators
-      Command::Loop.new(match[1],match[2],match[3])
-    }
-
-    define(/^include ((\w+)(?:\.\w+\??)*)$/i) { |match|
-      # Value
-      Command::Include.new(match[1])
-    }
-    
-    define(/^case (\w+(?:\.\w+)*)$/) { |match|
-      Command::Case.new(match[1])
-    }
+    define :var,     /((?:\w+)(?:\.\w+\??)*)(?:\s+:(\w+))?/i, :class_name => 'Value'
+    define :define,  /(\w+)\s+?(.+)/
+    define :filter,  /:(\w+)/
+    define :if,      /(\w+(?:\.\w+\??)*)/, :also => :unless
+    define :loop,    /(\w+(?:\.\w+\??)*)(?:\:((?:\s+\w+)+))?/, :also => :in
+    define :include, /(\w+(?:\.\w+\??)*)/
+    define :case,    /(\w+(?:\.\w+)*)/
 
     # Command#else's expect only to be called
-    modifier(:else) { |modifiee,command_contents|
-      puts "Uh, whoops? #{command_contents}" if command_contents =~ /tmpl/mi
-      case command_contents
+    modifier(:else) {|modifiee, raw_command|
+      case raw_command
       when /^(else|no|empty)$/i
         modifiee.else
         true
@@ -67,8 +28,8 @@ module PageTemplate
     }
 
     # elsif: accepts else and elsif
-    modifier(:elsif) { |modifiee,command_contents|
-      case command_contents
+    modifier(:elsif) {|modifiee, raw_command|
+      case raw_command
       when /^(?:elsif|elseif|else if) (.+)$/i
         modifiee.elsif($1)
         true
@@ -82,8 +43,8 @@ module PageTemplate
 
     # Command#end
     # accepts 'end', 'end(name)' and 'end (name)'
-    modifier(:end) { |modifiee,command_contents|
-      case command_contents
+    modifier(:end) {|modifiee, raw_command|
+      case raw_command
       when /^end\s*(#{modifiee.called_as})?$/i
         modifiee.end
         true
@@ -92,8 +53,8 @@ module PageTemplate
       end
     }
     # For case statements.
-    modifier(:when) { |modifiee,command_contents|
-      case command_contents
+    modifier(:when) {|modifiee, raw_command|
+      case raw_command
       when /^when\s+(\w(?:.\w+\??)*)$/i
         modifiee.when($1)
         true

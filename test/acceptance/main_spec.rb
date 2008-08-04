@@ -6,6 +6,7 @@ describe PageTemplate do
     template = PageTemplate.new(:include_path => File.dirname(__FILE__))
     template.load('sample.txt')
     template[:words] = %w(red blue orange green yellow)
+    template[:wanker] = "Steve"
     expected_content = File.open(File.dirname(__FILE__)+'/sample_compiled.txt') {|f| f.read }
     template.output.should == expected_content
   end
