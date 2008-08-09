@@ -38,7 +38,7 @@ module PageTemplate
         end
       end
       
-      def initialize(called_as, processor)
+      def initialize(lexicon, called_as, processor)
         super
         @processor = processor
         @text = []

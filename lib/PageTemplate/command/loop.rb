@@ -21,7 +21,7 @@ module PageTemplate
 
       # [% in variable %] or [% loop variable %]
       # Or [% in variable: name %]
-      def initialize(called_as, value, block_params)
+      def initialize(lexicon, called_as, value, block_params)
         super
         @value = value
         @block_params = block_params && block_params.strip.gsub(/\s+/, ' ').split
@@ -37,6 +37,7 @@ module PageTemplate
         raise ArgumentError, "More than one 'else' to Command::If" if @switched
         @in_else = !@in_else
         @switched = true
+        true
       end
       
       # Adds the given command to @commands if we're inside a 'loop' block,

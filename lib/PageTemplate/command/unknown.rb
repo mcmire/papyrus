@@ -6,20 +6,15 @@ module PageTemplate
     class Unknown < Base
       # Creates a new Unknown command, storing the raw command that could not be
       # found so that we can look it up later.
-      def initialize(raw_command)
+      def initialize(lexicon, raw_command)
+        @lexicon = lexicon
         @raw_command = raw_command
-      end
-      
-      # Looks up the unknown command in the lexicon of the parser tied to
-      # to the given context
-      def lookup(context)
-        context.parser.lexicon.lookup(@raw_command)
       end
       
       # Looks up the unknown command in the parser's lexicon. If the command in fact
       # exists, then returns the output of the command, otherwise returns an error string.
       def output(context)
-        cmd = lookup(context)
+        cmd = lexicon.lookup(@raw_command)
         if cmd.is_a?(Unknown)
           "[ Unknown Command: #{@raw_command} ]"
         else

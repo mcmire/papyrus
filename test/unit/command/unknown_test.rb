@@ -5,31 +5,29 @@ require 'command/unknown'
 
 Expectations do
   
+  # Unknown#initialize
   expect "foo bar" do
-    unknown = PageTemplate::Command::Unknown.new("foo bar")
+    unknown = PageTemplate::Command::Unknown.new(nil, "foo bar")
     unknown.send(:instance_variable_get, "@raw_command")
   end
   
-  expect stub('lexicon').to.receive(:lookup).with("foo bar") do |lexicon|
-    unknown = PageTemplate::Command::Unknown.new("foo bar")
-    unknown.lookup stub('context', :parser => stub('parser', :lexicon => lexicon))
-  end
-  
+  # Unknown#output
   begin
     expect "[ Unknown Command: foo bar ]" do
-      unknown = PageTemplate::Command::Unknown.new("foo bar")
-      unknown.stubs(:lookup).returns PageTemplate::Command::Unknown.new("")
+      unknown = PageTemplate::Command::Unknown.new(nil, "foo bar")
+      unknown.stubs(:lexicon).returns stub('lexicon', :lookup => PageTemplate::Command::Unknown.new(nil, ""))
       unknown.output(nil)
     end
     expect PageTemplate::Command::Base.new.to.receive(:output) do |cmd|
-      unknown = PageTemplate::Command::Unknown.new("")
-      unknown.stubs(:lookup).returns(cmd)
+      unknown = PageTemplate::Command::Unknown.new(nil, "")
+      unknown.stubs(:lexicon).returns stub('lexicon', :lookup => cmd)
       unknown.output(nil)
     end
   end
   
+  # Unknown#to_s
   expect "[ Command::Unknown: foo bar ]" do
-    unknown = PageTemplate::Command::Unknown.new("foo bar")
+    unknown = PageTemplate::Command::Unknown.new(nil, "foo bar")
     unknown.to_s
   end
   

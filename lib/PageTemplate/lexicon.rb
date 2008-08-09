@@ -1,58 +1,63 @@
 module PageTemplate
-  # This is the lexicon of commands and the command regex that Parser
-  # uses to compile a template into a tree of commands.
+  # A base class used to define the lexicon of commands that you want to be used
+  # in your templates.
   #
-  # command_regexp is the general format of a PageTemplate command.
-  # Default: /\[%(.+?)%\]/m
-  #
-  # @lexicon is a hash table of regexp->Command objects. These
-  # regexps should not contain PageTemplate command text. i.e:
-  # /var \w+/i should be used instead of /[% var %]/
+  # In *your* lexicon, at a minimum, you should define the token that opens a command,
+  # the token that closes a command, and the commands themselves. Read the
+  # documentation on +bra+, +ket+, +define+ and +adv_define+ for more.
   class Lexicon
     class << self
-      attr_writer :command_open
-      # If a string is given, sets @command_open to the string, otherwise returns
-      # the value of @command_open.
-      def command_open(str=nil)
+      
+      def commands
+        @commands ||= {}
+      end
+      
+      def modifiers
+        @modifiers ||= {}
+      end
+      
+      attr_writer :bra
+      # @bra represents the start token of a command
+      def bra(str=nil)
         if str
-          @command_open = str
+          @bra = str
         else
-          @command_open
+          @bra
         end
       end
       
-      attr_writer :command_close
-      # If a string is given, sets @command_close to the string, otherwise returns
-      # the value of @command_close.
-      def command_close(str=nil)
+      attr_writer :ket
+      # @ket represents the end token of a command
+      def ket(str=nil)
         if str
-          @command_close = str
+          @ket = str
         else
-          @command_close
+          @ket
         end
       end
       
-      # Takes @command_open and @command_close and creates the regexp that matches
+      # Takes @bra and @ket and creates the regexp that matches
       # an entire command.
       def command_regexp
-        raise "command_open not defined"  unless @command_open
-        raise "command_close not defined" unless @command_close
-        Regexp.new(Regexp.escape(@command_open) + "(.*)" + Regexp.escape(@command_close))
+        raise "bra not defined" unless @bra
+        raise "ket not defined" unless @ket
+        Regexp.new(Regexp.escape(@bra) + "(.*)" + Regexp.escape(@ket))
       end
       
       attr_writer :default
-      # If a symbol is given, sets @default to the symbol. If not, returns the value
-      # of @default. If @default is not set, returns :unknown.
+      # If a symbol is given, looks up the camelized version of the symbol in the
+      # Command module and sets @default to the class name. If not, returns the value
+      # of @default. If @default is not set, returns Command::Unknown.
       def default(sym=nil)
         if sym
-          @default = sym.to_sym
+          @default = Command.const_get(sym.to_s.camelize)
         else
-          @default ||= :unknown
+          @default ||= Command::Unknown
         end
       end
 
       # Looks up the given raw command in the hash of commands by testing each regex
-      # stored in the @lexicon against the raw command. If a regex matches then we'll
+      # stored in the @commands against the raw command. If a regex matches then we'll
       # have some Command class name and a block. We first yield the block, passing
       # the captures from the match, then we take the return value of the block
       # (a subset of those captures) and pass them to a new instance of the Command,
@@ -61,29 +66,49 @@ module PageTemplate
       # If no regex matches, the command is not in the lexicon, so we just return
       # an instance of the designated default command, passing the raw command.
       def lookup(raw_command)
-        lexicon.each do |regexp, cmd|
-          if match = regexp.match(raw_command)
-            captures = cmd[:block].call(match)
-            return cmd[:klass].new(*captures)
+        commands.each do |klass, cmd|
+          if match = cmd[:regexp].match(raw_command)
+            args = cmd[:block].call(match)
+            return klass.new(self, *args)
           end
         end
-        return Command.const_get(default.to_s.camelize).new(raw_command)
+        default.new(self, raw_command)
       end
       
-      # Looks up +modifier+ (a symbol designating the type of modification, e.g. :end)
-      # in the +modifiers+ hash and (if found) calls the resulting block stored for
-      # that modifier, passing the given command object being modified and the given
-      # raw command.
-      #
-      # Should have been named <tt>command_is_modifier_of?</tt>
-      #--
-      # TODO: I would much rather prefer this be defined in the Command class
-      def modifies?(modifier, modifiee, raw_command)
-        modifiers[modifier.to_sym].call(modifiee, raw_command)
+      # Checks to see whether the given command object is a Stackable and if
+      # +raw_command+ is a valid modifier of the given command, or is contained in the
+      # global hash of modifiers. If so, returns the name of the modifier (a symbol)
+      # and a MatchData object, otherwise nil.
+      def modifier_on(raw_command, modifiee)
+        return unless modifiee.is_a?(Command::Stackable)
+        if cmd = commands[modifiee.class]
+          cmd[:modifiers].each do |modifier, regexp|
+            if match = regexp.match(raw_command)
+              return [modifier, match]
+            end
+          end
+        end
+        modifiers.each do |modifier, block|
+          regexp = block.call(modifiee)
+          if match = regexp.match(raw_command)
+            return [modifier, match]
+          end
+        end
+        nil
+      end
+      
+      # Checks to see whether the given command object is a Stackable and if
+      # +raw_command+ is contained in the global hash of closers. If so, returns the
+      # name of the closer (a symbol) and a MatchData object, otherwise nil.
+      def closer_on(raw_command, modifiee)
+        if modifiee.is_a?(Command::Stackable) and \
+        closer = self.closer and regexp = closer[:block].call(modifiee) and match = regexp.match(raw_command)
+          [ closer[:name], match ]
+        end
       end
     
       # Associates a regexp with a class in the Command module and a block, storing
-      # the association in the @lexicon hash.
+      # the association in the @commands hash.
       #
       # When a command is looked up, the regexp used here will be tested against the
       # command, and if it matches, the block will be yielded, receiving the
@@ -94,7 +119,9 @@ module PageTemplate
       # start-of-line and end-of-line assertions (^ and $, respectively); these will
       # be added automatically.
       #
-      # There are two options you can pass:
+      # There are three options you can pass:
+      # * +modifiers+ - Lets you specify other commands that modify this command
+      #   when called inside it (only effective if this command is a Block or Stackable)
       # * +class_name+ - Lets you specify the name of the class in the Command module
       #    that will be used to create the Command. By default this is derived from
       #    the +command_name+.
@@ -113,54 +140,78 @@ module PageTemplate
         source.gsub!(/^\^/, '')
         source.gsub!(/\$$/, '')
         class_name = options[:class_name] || command_name.to_s.camelize
-        ([command_name] + aliases).each do |name|
-          regexp = Regexp.new("^(#{Regexp.escape(name.to_s)}) #{source}$", Regexp::IGNORECASE)
-          adv_define(regexp, class_name, &block)
-        end
+        modifiers = options[:modifiers] || {}
+        command_names = ([command_name] + aliases).map {|name| Regexp.escape(name.to_s) }.join("|")
+        regexp = Regexp.new("^(#{command_names}) #{source}$", Regexp::IGNORECASE)
+        adv_define(regexp, class_name, modifiers, &block)
       end
       
-      # A more advanced version of +define+. Here you have to set the class name
-      # yourself, the regexp is unmodified, and there are no options to specify.
+      # A more advanced, manual version of +define+.
       #
       # When a command is looked up, the regexp used here will be tested against the
       # command, and if it matches, the block will be yielded, receiving the
       # MatchData object. To be useful, the block should return whichever captures
       # you want to be passed on to the Command instance.
-      def adv_define(regexp, class_name, &block)
+      #
+      # +modifiers+ is an optional hash that lets you define local modifiers on
+      # the command, where keys are symbols and values are regexps. You can leave
+      # a value nil if the regexp is the same as the symbol.
+      #
+      # If you do not supply a block then by default all captures from the regexp
+      # will be passed on to the Command.
+      def adv_define(regexp, class_name, modifiers={}, &block)
         raise ArgumentError, 'First argument to adv_define must be a Regexp' unless regexp.is_a?(Regexp)
-        block ||= proc {|match| match.captures }
+        block ||= proc {|match| (match.captures.empty? ? match.to_a : match.captures) }
         klass = Command.const_get(class_name)
-        lexicon[regexp] = { :klass => klass, :block => block }
-      end
-
-      # Associates a type of command modification (a symbol) with a block, storing the
-      # association in the @modifiers hash. The block will be executed in a call to
-      # #modifies? and passed a Command and the contents of another command, so to
-      # be useful, it should return true or false depending on its decision whether
-      # or not the latter command modifies the former. 
-      #--
-      # TODO: I would much rather prefer this be defined in the Command class
-      def modifier(sym, &block)
-        raise ArgumentError, 'First argument to modifier must be a String or Symbol' unless sym.is_a?(Symbol) or sym.is_a?(String)
-        raise ArgumentError, 'Block expected' unless block
-        modifiers[sym.to_sym] = block
+        modifiers.keys.each {|modifier| modifiers[modifier] ||= /^#{modifier}$/ }
+        commands[klass] = { :regexp => regexp, :block => block, :modifiers => modifiers }
       end
 
       # This lets you write e.g. [% foo %] to refer to a 'foo' variable instead of
       # having to say [% var foo %]
-      def define_global_var(regexp)
+      def global_var(regexp)
         regexp = /^(#{Regexp.escape(regexp.to_s)}(?:\.\w+\??)*)(?:\s:(\w+))?$/ unless regexp.is_a?(Regexp)
         adv_define(regexp, 'Value')
       end
       
-    private
-      def lexicon
-        @lexicon ||= {}
+      # Defines a command that can be used to modify all commands in the lexicon.
+      #
+      # First argument is a symbol, the name of the modifier. You can either pass a
+      # regexp or a block as the second argument; if you pass a regexp it gets
+      # converted to a block. In either case #modifies? ends up calling this block,
+      # passing whichever command object was passed to it to the block itself, so you
+      # can use the command object in the regexp if you need to.
+      #
+      # Note that if a local modifier with the same name as a global modifier is
+      # defined, then it takes precedence to the global modifier.
+      def global_modifier(modifier, regexp=nil, &block)
+        unless regexp.nil? ^ block.nil?
+          raise ArgumentError, "Second argument to global_modifier must be either a regexp or a block (but not both)"
+        end
+        block = proc {|modifiee| regexp } if regexp
+        modifiers[modifier.to_sym] = block
       end
       
-      def modifiers
-        @modifiers ||= Hash.new(lambda { false })
+      # If passed with arguments, defines a command that can be used to close all
+      # (Stackable) commands in the lexicon. Arguments are same for .global_modifier.
+      # Note: whereas you can define multiple global modifiers, there can only be one
+      # global closer defined, since there is no closers hash. Usually the closer will
+      # be 'end'.
+      #
+      # If passed with no arguments, returns the closer.
+      def closer(*args, &block)
+        if args.empty?
+          @closer
+        else
+          name, regexp = *args
+          unless regexp.nil? ^ block.nil?
+            raise ArgumentError, "Second argument to closer must be either a regexp or a block (but not both)"
+          end
+          block = proc {|modifiee| regexp } if regexp
+          @closer = { :name => name.to_sym, :block => block }
+        end
       end
+      
     end
   end
 end

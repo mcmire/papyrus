@@ -17,7 +17,7 @@ module PageTemplate
       # literal value within the context on execution. The literal value will be
       # tested against the literals supplied for each 'when' command following
       # (or an optional 'else' command).
-      def initialize(called_as, value)
+      def initialize(lexicon, called_as, value)
         super
         @value = value
         @blocks = {}
@@ -35,12 +35,13 @@ module PageTemplate
       def when(value)
         @current_case = value
         @blocks[value] = Block.new unless @blocks.has_key?(value)
+        true
       end
       
       # modifier
       def else
         @current_case = nil
-        return true
+        true
       end
       
       # If context.get(@value) exists in the 'when' clauses, then

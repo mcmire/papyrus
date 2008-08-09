@@ -27,7 +27,7 @@ module PageTemplate
     attr_reader :preprocessor, :default_processor
     attr_reader :lexicon, :context, :source
     attr_reader :options, :commands, :method_separator_regexp
-
+    
     # This is corny, but recent_parser returns the most recently created
     # Parser.
     def self.recent_parser
@@ -56,6 +56,13 @@ module PageTemplate
         @parent = context.is_a?(Context) ? context : Context.construct_from(context)
       end
       @lexicon = options.delete(:lexicon) || DefaultLexicon
+      
+      #puts "lexicon.commands:"
+      #puts lexicon.commands.pretty_inspect
+      #puts "lexicon.modifiers:"
+      #puts lexicon.modifiers.pretty_inspect
+      #exit
+      
       @preprocessor = options.delete(:preprocessor) || DefaultPreprocessor
       @default_processor = options.delete(:default_processor) || :unescaped
       @method_separator_regexp = if seps = options.delete(:method_separators)
@@ -94,14 +101,11 @@ module PageTemplate
     # Compile a Template (Command::Block) from a string.
     # Does not save the commands.
     def parse(body)
-      @stack = [ new_template ]
-      @top = stack.last
-      @modifier = nil
-      @closer = nil
+      stack = [ new_template ]
       # Find all commands in body, convert text to Text commands,
       # add them to a Template
-      tokenize(body)
-      @stack.first
+      tokenize(body, stack)
+      stack.first
     end
     
     # Creates a new Template which knows this Parser instance as its parser.
@@ -121,75 +125,71 @@ module PageTemplate
     end
     
   private
-    # for testing purposes
-    attr_accessor :stack, :top, :modifier, :closer
-  
-    def tokenize(body)
-      regex = @lexicon.command_regexp
+    def tokenize(body, stack)
+      regex = lexicon.command_regexp
       while (m = regex.match(body))
         before_command = m.pre_match
         raw_command = m[1..-1].compact.first.strip.gsub(/\s+/, ' ')
-        handle_command(before_command, raw_command)
+        handle_command(before_command, raw_command, stack)
         body = m.post_match  # update search area
       end
       
       # All subs should be in the stack. Shove any remaining text in a Text command
-      # and add it to the command on top of the stack.
-      add_text_as_command_to_top(body)
+      # and add it to the command on active of the stack.
+      add_text_as_command_to_active_cmd(body, stack)
+      
+      #puts "Stack: " + stack.map {|x| x.class }.inspect
       
       # Sanity check - stack should only have one element at this point
-      raise ArgumentError, 'Mismatched command closures in template' if @stack.size > 1
+      raise ArgumentError, 'Mismatched command closures in template' if stack.size > 1
     end
     
-    def handle_command(before_command, raw_command)
-      # Shove all text before the command into a Text command and add it to the
-      # command on top of the stack.
-      add_text_as_command_to_top(before_command)
-
-      # Assuming the command on top of the stack is Stackable, does this command
-      # modify it? If so, just skip back.
-      return if command_modifies_top_command?(raw_command)
-
-      # If the command on top of the stack closes, we're done modifying this.
-      # Pop it off the stack and add it to the one above it.
-      return if command_closed_top_command?(raw_command)
-      
-      # Look up this command in the lexicon and get the command object.
-      # If the command is Stackable, then add it to the stack, otherwise add it
-      # to the command on top of the stack.
-      add_command_to_stack(raw_command)
+    def handle_command(before_command, raw_command, stack)
+      add_text_as_command_to_active_cmd(before_command, stack)
+      modify_active_cmd(raw_command, stack) || close_active_cmd(raw_command, stack) || add_command_to_stack(raw_command, stack)
     end
     
-    def add_text_as_command_to_top(text)
-      @stack.last << Command::Text.new(text) unless text.blank?
+    # Shoves all text before the command into a Text command and adds it to the
+    # command on active of the stack.
+    def add_text_as_command_to_active_cmd(text, stack)
+      stack.last << Command::Text.new(text) unless text.blank?
     end
     
-    def command_modifies_top_command?(raw_command)
-      (@modifier && @lexicon.modifies?(@modifier, @top, raw_command)) || false
+    # Determines whether or not @modifier is a modifier of the active command,
+    # and if so, modifies the command.
+    def modify_active_cmd(raw_command, stack)
+      active_cmd = stack.last
+      #puts "Parser#modify_active_cmd: Active command is a: #{active_cmd.class}"
+      #puts "Parser#modify_active_cmd: Raw command: #{raw_command}"
+      active_cmd.modified_by?(raw_command) || false
     end
     
-    def command_closed_top_command?(raw_command)
-      if @closer and @lexicon.modifies?(@closer, @top, raw_command)
-        cmd = @stack.pop
-        @top = @stack.last
-        @top << cmd
-        @modifier = @top.class.modifier
-        @closer = @top.class.closer
+    # Determines whether or not @closer is a closer of the active command, and if so,
+    # modifies the command, then pops it off the stack and adds it to the one above it.
+    def close_active_cmd(raw_command, stack)
+      active_cmd = stack.last
+      #puts "Parser#close_active_cmd: Active command is a: #{active_cmd.class}"
+      #puts "Parser#close_active_cmd: Raw command: #{raw_command}"
+      #puts "Parser#close_active_cmd: Stack: " + stack.map {|x| x.class }.inspect
+      if active_cmd.closed_by?(raw_command)
+        cmd = stack.pop
+        stack.last << cmd
         true
       else
         false
       end
     end
     
-    def add_command_to_stack(raw_command)
-      cmd = @lexicon.lookup(raw_command)
+    # Looks up the given command in the lexicon and gets the command object.
+    # If the command is a Stackable, then we add to the stack, otherwise we add it
+    # to the command on top of the stack.
+    def add_command_to_stack(raw_command, stack)
+      cmd = lexicon.lookup(raw_command)
       if cmd.kind_of?(Command::Stackable)
-        @modifier = cmd.class.modifier
-        @closer   = cmd.class.closer
-        @stack << cmd
-        @top = cmd
+        #puts "Parser#add_command_to_stack: Command is a: #{cmd.class}"
+        stack << cmd
       else
-        @top << cmd
+        stack.last << cmd
       end
     end
   end

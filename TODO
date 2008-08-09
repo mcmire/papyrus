@@ -2,12 +2,12 @@ TODO
 
 Last updated: 3 Aug 2008
 
-- Add ability to refer to variables without 'var' prefix (variables take precedence to function calls). This requires fundamentally changing how commands are resolved, and possibly how commands are defined
-- Simplify how commands are defined in lexicon. You shouldn't have to include the command name in the regex, except for comments. All commands have a @called_as variable. For simple commands, all captures from the regex are passed straight to the Command (although you can specify which captures go through).
+- Add ability to refer to variables without 'var' prefix (variables take precedence to function calls). This requires fundamentally changing how commands are resolved, and possibly how commands are defined.
 - Add nested commands
-- Add ability to wrap arguments in single or double quotes
-- Add constants for common regex patterns (quotes, variables, etc.)
-
+- Add ability to wrap arguments in single or double quotes (see Liquid)
+- Add constants for common regex patterns (quotes, variables, etc.) (see Liquid)
+- Support [/for] as well as [endfor]
+- Put modifiers on the command level (except for 'end', which will be automatic for Blocks)
 
 
 - There are some Command subclasses whose output methods receive a required context parameter, and some for which that parameter is optional. What gives? (They should probably all be required, just to be consistent.)
@@ -27,3 +27,4 @@ Last updated: 3 Aug 2008
 - Some commands' #output methods return an error message (e.g. Include). We don't
   want this.
 - [% foo %-] to remove line breaks (just like <%= foo -%>)
+- Should certain classes like Block and Stackable inherit from Array or maybe include Addable or something?

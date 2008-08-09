@@ -11,19 +11,19 @@ Expectations do
   begin
     # @value
     expect "foo" do
-      PageTemplate::Command::Case.new("", "foo").send(:instance_variable_get, "@value")
+      PageTemplate::Command::Case.new(nil, "", "foo").send(:instance_variable_get, "@value")
     end
     # @blocks
     expect({}) do
-      PageTemplate::Command::Case.new("", "").send(:instance_variable_get, "@blocks")
+      PageTemplate::Command::Case.new(nil, "", "").send(:instance_variable_get, "@blocks")
     end
     # @current_case
     expect nil do
-      PageTemplate::Command::Case.new("", "").send(:instance_variable_get, "@current_case")
+      PageTemplate::Command::Case.new(nil, "", "").send(:instance_variable_get, "@current_case")
     end
     # @default
     expect PageTemplate::Command::Block do
-      PageTemplate::Command::Case.new("", "").send(:instance_variable_get, "@default")
+      PageTemplate::Command::Case.new(nil, "", "").send(:instance_variable_get, "@default")
     end
   end
    
@@ -32,7 +32,7 @@ Expectations do
     # when @current_case defined
     expect true do
       cmd = PageTemplate::Command::Base.new
-      case_cmd = PageTemplate::Command::Case.new("", "")
+      case_cmd = PageTemplate::Command::Case.new(nil, "", "")
       case_cmd.send(:instance_variable_set, "@current_case", "foo")
       blocks = case_cmd.send(:instance_variable_get, "@blocks")
       blocks["foo"] = PageTemplate::Command::Block.new
@@ -42,7 +42,7 @@ Expectations do
     # when @current_case not defined
     expect true do
       cmd = PageTemplate::Command::Base.new
-      case_cmd = PageTemplate::Command::Case.new("", "")
+      case_cmd = PageTemplate::Command::Case.new(nil, "", "")
       case_cmd.add(cmd)
       case_cmd.send(:instance_variable_get, "@default").last.equal?(cmd)
     end
@@ -51,13 +51,13 @@ Expectations do
   # Case#when
   begin
     expect "foo" do
-      case_cmd = PageTemplate::Command::Case.new("", "")
+      case_cmd = PageTemplate::Command::Case.new(nil, "", "")
       case_cmd.when("foo")
       case_cmd.current_case
     end
     # @blocks[value] should be set when not @blocks.has_key?(value)
     expect PageTemplate::Command::Block do
-      case_cmd = PageTemplate::Command::Case.new("", "")
+      case_cmd = PageTemplate::Command::Case.new(nil, "", "")
       case_cmd.when("foo")
       case_cmd.send(:instance_variable_get, "@blocks")["foo"]
     end
@@ -66,11 +66,11 @@ Expectations do
   # Case#else
   begin
     expect true do
-      case_cmd = PageTemplate::Command::Case.new("", "")
+      case_cmd = PageTemplate::Command::Case.new(nil, "", "")
       case_cmd.else
     end
     expect nil do
-      case_cmd = PageTemplate::Command::Case.new("", "")
+      case_cmd = PageTemplate::Command::Case.new(nil, "", "")
       case_cmd.else
       case_cmd.current_case
     end
@@ -78,7 +78,7 @@ Expectations do
   
   # Case#output
   expect "Output of block" do
-    case_cmd = PageTemplate::Command::Case.new("", "")
+    case_cmd = PageTemplate::Command::Case.new(nil, "", "")
     case_cmd.send(:instance_variable_set, "@blocks", {
       'foo' => stub('block1', :output => "Output of block"),
       'bar' => stub('block2', :output => "Output of block")
@@ -88,7 +88,7 @@ Expectations do
   
   # Case#to_s
   expect "[ Case:  foo: [Foo as string] bar: [Bar as string] else Default case ]" do
-    case_cmd = PageTemplate::Command::Case.new("", "")
+    case_cmd = PageTemplate::Command::Case.new(nil, "", "")
     case_cmd.send(:instance_variable_set, "@blocks", {
       'foo' => stub('block1', :to_s => "Foo as string"),
       'bar' => stub('block2', :to_s => "Bar as string")

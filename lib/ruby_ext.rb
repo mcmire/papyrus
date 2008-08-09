@@ -1,3 +1,5 @@
+require 'pp'
+
 class String
   def constantize
     unless /\A(?:::)?([A-Z]\w*(?:::[A-Z]\w*)*)\z/ =~ self
@@ -17,6 +19,9 @@ end
 class Object
   def blank?
     (respond_to?(:empty?) && empty?) || nil?
+  end
+  def pretty_inspect
+    PP.pp(self, '')
   end
 end
 

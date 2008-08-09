@@ -25,6 +25,7 @@ module PageTemplate
       end
       
       def end
+        true
       end
       
       def to_s

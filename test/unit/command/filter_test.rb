@@ -78,25 +78,25 @@ Expectations do
   # Filter#initialize
   begin
     expect :foo do
-      filter = PageTemplate::Command::Filter.new("", :foo)
+      filter = PageTemplate::Command::Filter.new(nil, "", :foo)
       filter.send(:instance_variable_get, "@processor")
     end
     expect [] do
-      filter = PageTemplate::Command::Filter.new("", nil)
+      filter = PageTemplate::Command::Filter.new(nil, "", nil)
       filter.send(:instance_variable_get, "@text")
     end
   end
   
   # Filter#add
   expect PageTemplate::Command::Base do
-    filter = PageTemplate::Command::Filter.new("", nil)
+    filter = PageTemplate::Command::Filter.new(nil, "", nil)
     filter << PageTemplate::Command::Base.new
     filter.send(:instance_variable_get, "@text").last
   end
   
   # Filter#output
   expect PageTemplate::Command::Filter.to.receive(:filter).with(:context, :unescaped, PageTemplate::Command::Filter) do |filter_klass|
-    filter = filter_klass.new("", nil)
+    filter = filter_klass.new(nil, "", nil)
     filter.send(:instance_variable_set, "@processor", :unescaped)
     filter.output(:context)
   end

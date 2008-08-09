@@ -5,7 +5,7 @@ module PageTemplate
     # PageTemplate-style comments as well.
     class Comment < Base
       # Save the +comment+ for to_s
-      def initialize(called_as, comment='')
+      def initialize(lexicon, called_as, comment='')
         super
         @comment = comment
       end

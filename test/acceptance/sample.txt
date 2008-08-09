@@ -10,11 +10,11 @@ I'm about to do some kewl logic, ready, go!
   42 is the greatest number in the world.
 [% else %]
   42 suXX0rs!!1
-[% endif %]
+[% end %]
 
 [% loop words: word %]
   This is my favorite word: [% var word %]
-[% endloop %]
+[% end %]
 
 [% define michael jordan %]
 

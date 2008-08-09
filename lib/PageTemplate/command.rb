@@ -17,8 +17,3 @@ require this_dir+'/command/if'
 require this_dir+'/command/loop'
 
 require this_dir+'/command/unknown'
-
-# TODO: Add Modifiable and Closable (included by Stackable, ...?)
-# TODO: Should certain classes like Block and Stackable inherit from Array or maybe
-#       include Addable or something?
-# TODO: Rename Stackable to Stacking

@@ -67,7 +67,7 @@ module PageTemplate
       # Creates a new If command, storing what the command was called_as
       # ("if" or "unless"), and the value that will get evaluated when the
       # command is executed.
-      def initialize(called_as, value)
+      def initialize(lexicon, called_as, value)
         super
         @value = value
         @true_commands = [ [value, Block.new] ]
@@ -96,6 +96,7 @@ module PageTemplate
       def elsif(value)
         raise ArgumentError, "'elsif' cannot be passed after 'else' or in an 'unless'" if @switched || @in_else
         @true_commands << [ value, Block.new ]
+        true
       end
       
       # Switches the list to which new commands will be added (@true_commands or
@@ -108,6 +109,7 @@ module PageTemplate
         raise ArgumentError, "More than one 'else' to Command::If" if @switched
         @in_else = !@in_else
         @switched = true
+        true
       end
       
       # Returns the output for the first block in @true_commands for which its
