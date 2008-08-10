@@ -1,2 +1,0 @@
-I am a simple text file for testing FileSource#get_filename.
-

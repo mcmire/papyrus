@@ -1,8 +1,0 @@
-# 'renderers' = ['SitemapRenderer', 'StandardRenderer', 'RelativeRenderer', 'HeaderRenderer', 'FooterRenderer']
-
-/index.html
-/install.html
-/designer.html
-/programmer.html
-/version2.html
-/SiteMap.html

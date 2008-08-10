@@ -1,4 +1,0 @@
-'renderers' = ['PageNavRenderer', 'MySubpageRenderer', 'MetadataRenderer', 'RedClothRenderer', 'XhtmlTemplateRenderer', 'FooterRenderer', 'RelativeRenderer', 'HeaderRenderer']
-'footer' = File.open('footer.txt').read()
-'header' = File.open('header.txt').read()
-'stylesheet' = 'base.css'
