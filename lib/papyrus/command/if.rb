@@ -1,4 +1,4 @@
-module PageTemplate
+module Papyrus
   module Command
     # An If command is a Stackable command. It requires an opening:
     # [% if +variable+ %] or [% unless +variable+ %].
@@ -16,7 +16,7 @@ module PageTemplate
     #
     # If the command was called as 'if', then 'if' and 'elsif' blocks will be stored
     # in @true_commands with their corresponding values to be evaluated, and the
-    # 'else' block will be stored in @false_commands. So this PageTemplate code:
+    # 'else' block will be stored in @false_commands. So this Papyrus code:
     #
     #  [% if foo %]
     #    ...
@@ -29,10 +29,10 @@ module PageTemplate
     # is codified as follows:
     #
     #  @true_commands = [
-    #    ['foo', PageTemplate::Block.new ],
-    #    ['bar', PageTemplate::Block.new ]
+    #    ['foo', Papyrus::Block.new ],
+    #    ['bar', Papyrus::Block.new ]
     #  ]
-    #  @false_commands = PageTemplate::Block.new
+    #  @false_commands = Papyrus::Block.new
     #
     # The output of the whole command, as you would expect, will be the output of the
     # 'if' block if its value evaluates to true, otherwise the output of the 'elsif'
@@ -41,7 +41,7 @@ module PageTemplate
     # If the command was called as 'unless', then the 'unless' block will be stored
     # in @false_commands, and the 'else' @true_commands is used to store
     # just the 'else' statement, and the value stored with the block is the 'unless'
-    # value. So this PageTemplate code:
+    # value. So this Papyrus code:
     #
     #  [% unless foo %]
     #    ...
@@ -52,9 +52,9 @@ module PageTemplate
     # would be stored as follows:
     #
     #  @true_commands = [
-    #    [ 'foo', PageTemplate::Block.new ]
+    #    [ 'foo', Papyrus::Block.new ]
     #  ]
-    #  @false_commands = PageTemplate::Block.new
+    #  @false_commands = Papyrus::Block.new
     #
     # In this case, the output of the whole command will be the output of the 'else'
     # block if foo evaluates to true, otherwise it's the output of the 'unless'

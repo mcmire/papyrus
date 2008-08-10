@@ -1,9 +1,9 @@
 require File.dirname(__FILE__)+'/spec_helper'
 
-describe PageTemplate do
+describe Papyrus do
 
   it "should successfully parse a template from a file" do
-    template = PageTemplate.new(:include_path => File.dirname(__FILE__))
+    template = Papyrus.new(:include_path => File.dirname(__FILE__))
     template.load('sample.txt')
     template[:words] = %w(red blue orange green yellow)
     template[:wanker] = "Steve"

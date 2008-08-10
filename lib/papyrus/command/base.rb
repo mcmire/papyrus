@@ -1,4 +1,4 @@
-module PageTemplate
+module Papyrus
   module Command
     # Command classes generate text output based on conditions which vary
     # between each class. Command::Base provides an abstract base class to show

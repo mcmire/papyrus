@@ -1,4 +1,4 @@
-module PageTemplate
+module Papyrus
   module Command
     # A Value command will print out a variable name, possibly passing its
     # value through a preprocessor.

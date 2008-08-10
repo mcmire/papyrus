@@ -1,4 +1,4 @@
-module PageTemplate
+module Papyrus
   # The big ass parser that does all the dirty work of turning
   # templates into compiled commands.
   #

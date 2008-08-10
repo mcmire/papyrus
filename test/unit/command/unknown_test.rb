@@ -7,19 +7,19 @@ Expectations do
   
   # Unknown#initialize
   expect "foo bar" do
-    unknown = PageTemplate::Command::Unknown.new(nil, "foo bar")
+    unknown = Papyrus::Command::Unknown.new(nil, "foo bar")
     unknown.send(:instance_variable_get, "@raw_command")
   end
   
   # Unknown#output
   begin
     expect "[ Unknown Command: foo bar ]" do
-      unknown = PageTemplate::Command::Unknown.new(nil, "foo bar")
-      unknown.stubs(:lexicon).returns stub('lexicon', :lookup => PageTemplate::Command::Unknown.new(nil, ""))
+      unknown = Papyrus::Command::Unknown.new(nil, "foo bar")
+      unknown.stubs(:lexicon).returns stub('lexicon', :lookup => Papyrus::Command::Unknown.new(nil, ""))
       unknown.output(nil)
     end
-    expect PageTemplate::Command::Base.new.to.receive(:output) do |cmd|
-      unknown = PageTemplate::Command::Unknown.new(nil, "")
+    expect Papyrus::Command::Base.new.to.receive(:output) do |cmd|
+      unknown = Papyrus::Command::Unknown.new(nil, "")
       unknown.stubs(:lexicon).returns stub('lexicon', :lookup => cmd)
       unknown.output(nil)
     end
@@ -27,7 +27,7 @@ Expectations do
   
   # Unknown#to_s
   expect "[ Command::Unknown: foo bar ]" do
-    unknown = PageTemplate::Command::Unknown.new(nil, "foo bar")
+    unknown = Papyrus::Command::Unknown.new(nil, "foo bar")
     unknown.to_s
   end
   

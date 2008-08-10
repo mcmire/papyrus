@@ -9,17 +9,17 @@ Expectations do
   begin
     # when options is a String
     expect "Some raw string" do
-      source = PageTemplate::StringSource.new("Some raw string")
+      source = Papyrus::StringSource.new("Some raw string")
       source.send(:instance_variable_get, "@source")
     end
     # when options is not a string
     begin
       expect "Some raw string" do
-        source = PageTemplate::StringSource.new(:source => "Some raw string")
+        source = Papyrus::StringSource.new(:source => "Some raw string")
         source.send(:instance_variable_get, "@source")
       end
       expect(:source => "Some raw string") do
-        source = PageTemplate::StringSource.new(:source => "Some raw string")
+        source = Papyrus::StringSource.new(:source => "Some raw string")
         source.send(:instance_variable_get, "@options")
       end
     end
@@ -27,7 +27,7 @@ Expectations do
   
   # StringSource#get
   expect "Some raw string" do
-    source = PageTemplate::StringSource.new("")
+    source = Papyrus::StringSource.new("")
     source.send(:instance_variable_set, "@source", "Some raw string")
     source.get
   end

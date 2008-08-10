@@ -1,6 +1,6 @@
 #!/usr/local/bin/ruby -w
 
-# Use PageTemplate.rb to create output based on template pages and the
+# Use Papyrus.rb to create output based on template pages and the
 # code of your program. This package is inspired by, but not quite
 # like, Perl's HTML::Template package. Its main intent is to separate
 # design and code for CGI programs, but it could be useful in other
@@ -8,7 +8,7 @@
 #
 # See the README.txt file for the real documentation, such as it is
 #
-# As a sidenote: if you are are using PageTemplate in your projects,
+# As a sidenote: if you are are using Papyrus in your projects,
 # or add features to your copy, we'd love to hear about it.
 #
 # Project home:
@@ -22,28 +22,28 @@
 
 require 'ruby_ext'
 
-require 'PageTemplate/command'
+require 'papyrus/command'
 
-require 'PageTemplate/context_item'
-require 'PageTemplate/context'
+require 'papyrus/context_item'
+require 'papyrus/context'
 
-require 'PageTemplate/lexicon'
-require 'PageTemplate/default_lexicon'
+require 'papyrus/lexicon'
+require 'papyrus/default_lexicon'
 
-require 'PageTemplate/preprocessor'
-require 'PageTemplate/default_preprocessor'
+require 'papyrus/preprocessor'
+require 'papyrus/default_preprocessor'
 
-require 'PageTemplate/source'
-require 'PageTemplate/file_source'
-require 'PageTemplate/string_source'
+require 'papyrus/source'
+require 'papyrus/file_source'
+require 'papyrus/string_source'
 
-require 'PageTemplate/parser'
+require 'papyrus/parser'
 
-require 'PageTemplate/template'
+require 'papyrus/template'
 
-# PageTemplate is just the namespace for all of its real code, so as
+# Papyrus is just the namespace for all of its real code, so as
 # not to caues confusion or clashes with the programmer's code.
-module PageTemplate
+module Papyrus
   VERSION = "2.2.3"
 
   # Passes arguments straight to Parser.new
@@ -56,7 +56,7 @@ end
 
 =begin
 
-PageTemplate.rb is distributed under the MIT License, which is included
+Papyrus.rb is distributed under the MIT License, which is included
 within this document.
 
 The MIT License

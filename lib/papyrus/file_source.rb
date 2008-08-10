@@ -1,4 +1,4 @@
-module PageTemplate
+module Papyrus
   # FileSource provides access to files within the 'include_paths'
   # argument.
   #

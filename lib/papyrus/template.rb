@@ -1,4 +1,4 @@
-module PageTemplate
+module Papyrus
   # Template is the top-level Block object.
   # It is what is returned on Parser#load or Parser#parse.
   #

@@ -1,4 +1,4 @@
-module PageTemplate
+module Papyrus
   # Preprocessor is a parent class for preprocessors.
   # A preprocessor is used to process or otherwise prepare output for
   # printing by a Value command

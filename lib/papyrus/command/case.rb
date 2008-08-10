@@ -1,4 +1,4 @@
-module PageTemplate
+module Papyrus
   module Command
     # A Case command provides switch-command functionality.
     # [% case variable %]

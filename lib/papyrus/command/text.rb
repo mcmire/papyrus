@@ -1,4 +1,4 @@
-module PageTemplate
+module Papyrus
   module Command
     # Text is a very simple Command which outputs a static string of text
     class Text < Base

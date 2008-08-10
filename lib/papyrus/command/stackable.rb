@@ -1,4 +1,4 @@
-module PageTemplate
+module Papyrus
   module Command
     # Command::Stackable is the parent class of any command that creates a
     # branch in the logic: such as If, Loop, etcetera.

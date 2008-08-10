@@ -1,4 +1,4 @@
-module PageTemplate
+module Papyrus
   # A Source is a source from which templates are drawn.
   #
   # Source#get(name) must return the body of the template that is to

@@ -1,4 +1,4 @@
-module PageTemplate
+module Papyrus
   # A StringSource is created with a raw string, which is returned on any
   # call to 'get'.
   class StringSource < Source

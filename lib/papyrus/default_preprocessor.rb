@@ -1,4 +1,4 @@
-module PageTemplate
+module Papyrus
   class DefaultPreprocessor
     class << self
       # Default, unescaped string.

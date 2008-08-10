@@ -1,4 +1,4 @@
-module PageTemplate
+module Papyrus
   class Context
     
     include ContextItem

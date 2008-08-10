@@ -1,4 +1,4 @@
-module PageTemplate
+module Papyrus
   module Command
     # A Loop command is a Stackable command. It requires an opening:
     # [% in variable %] or [% loop variable %].
@@ -73,7 +73,7 @@ module PageTemplate
       # unpairable values are ignored. (Try it.)
       #
       # Otherwise, we set context.object to the item. This means that if a user
-      # accesses a variable inside the loop block PageTemplate will check to see
+      # accesses a variable inside the loop block Papyrus will check to see
       # whether the "variable" is really a method on the item.
       #
       # Note that if the object we're enumerating over is a hash, then each item

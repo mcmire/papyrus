@@ -1,4 +1,4 @@
-module PageTemplate
+module Papyrus
   # A Context object consists of three things:
   #
   # parent: A parent object to get a value from if the context

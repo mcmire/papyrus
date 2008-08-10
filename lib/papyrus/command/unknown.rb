@@ -1,4 +1,4 @@
-module PageTemplate
+module Papyrus
   module Command
     # An Unknown command is a command that could not be found in the parser's lexicon.
     # We keep the raw version of the command that was called and save it for future

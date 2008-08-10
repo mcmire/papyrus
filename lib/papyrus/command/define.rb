@@ -1,4 +1,4 @@
-module PageTemplate
+module Papyrus
   module Command
     # A Define command will set a variable within the enclosing context
     class Define < Base

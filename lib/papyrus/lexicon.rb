@@ -1,4 +1,4 @@
-module PageTemplate
+module Papyrus
   # A base class used to define the lexicon of commands that you want to be used
   # in your templates.
   #

@@ -1,4 +1,4 @@
-module PageTemplate
+module Papyrus
   module Command
     # A Filter command filters its block through a preprocessor
     #  [% filter :processor %]

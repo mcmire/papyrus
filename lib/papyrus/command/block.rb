@@ -1,4 +1,4 @@
-module PageTemplate
+module Papyrus
   module Command
     # Command::Block provides a single interface to multiple Command objects.
     # This should probably never be called by the designer or a programmer,
