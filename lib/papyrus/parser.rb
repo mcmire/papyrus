@@ -90,11 +90,11 @@ module Papyrus
     
     # lexicon  => A Lexicon object. (a dup of DefaultLexicon)
     # context  => A context object. (A new context)
-    def initialize(lexicon, context=nil)
+    def initialize(lexicon, parent=nil)
       @@recent_parser = self
       @context = self
-      if context
-        @parent = context.is_a?(ContextItem) ? context : Context.construct_from(context)
+      if parent
+        @parent = parent.is_a?(ContextItem) ? parent : Context.construct_from(parent)
       end
       @parser = self
       @lexicon = lexicon

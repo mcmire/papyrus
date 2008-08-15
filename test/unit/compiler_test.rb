@@ -70,26 +70,9 @@ Expectations do
       compiler.compile("")
     end
     # when body is not an instance of Command::Base
-    begin
-      expect Parser.any_instance.to.receive(:parse) do#.with("some content", DefaultLexicon, nil) do
-        compiler = Compiler.new
-        compiler.source.stubs(:get).returns("some content")
-        compiler.source.stubs(:cache)
-        compiler.compile("")
-      end
-      expect stub('source').to.receive(:cache).with("foo", :command) do |source|
-        compiler = Compiler.new
-        source.stubs(:get).returns("")
-        compiler.stubs(:source).returns(source)
-        Parser.any_instance.stubs(:parse).returns(:command)
-        compiler.compile("foo")
-      end
-      expect :template do
-        compiler = Compiler.new
-        compiler.source.stubs(:cache)
-        Parser.any_instance.stubs(:parse).returns(:template)
-        compiler.compile("")
-      end
+    expect Compiler.new.to.receive(:parse) do |compiler|
+      compiler.source.stubs(:get).returns("some content")
+      compiler.compile("")
     end
     # when body is nil
     expect [RuntimeError, "Template 'foo' not found!"] do
@@ -97,6 +80,27 @@ Expectations do
       compiler.source.stubs(:get).returns(nil)
       begin; compiler.compile("foo"); rescue => e; end
       [e.class, e.message]
+    end
+  end
+  
+  # Compiler#parse
+  begin
+    expect Parser.any_instance.to.receive(:parse) do
+      compiler = Compiler.new
+      compiler.source.stubs(:cache)
+      compiler.parse("", "")
+    end
+    expect stub('source').to.receive(:cache).with("foo", :command) do |source|
+      compiler = Compiler.new
+      compiler.stubs(:source).returns(source)
+      Parser.any_instance.stubs(:parse).returns(:command)
+      compiler.parse("foo", "")
+    end
+    expect :template do
+      compiler = Compiler.new
+      compiler.source.stubs(:cache)
+      Parser.any_instance.stubs(:parse).returns(:template)
+      compiler.parse("", "")
     end
   end
   

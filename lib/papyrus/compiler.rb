@@ -63,9 +63,7 @@ module Papyrus
         if content.kind_of?(Command::Base)
           content
         else
-          template = Parser.new(@lexicon, @context).parse(content)
-          source.cache(name, template) if source.respond_to?(:cache)
-          template
+          parse(filename, content)
         end
       else
         #template = Template.new(@options)
@@ -74,58 +72,12 @@ module Papyrus
         raise "Template '#{name}' not found!"
       end
     end
-
-    # Not really of any point, but clears the saved commands.
-    def clear_commands
-      @commands = nil
-    end
     
-    # If any commands are loaded and saved, return a string of it.
-    def output(*args)
-      return '' unless @commands
-      @commands.output(*args)
+    def parse(name, content)
+      template = Parser.new(@lexicon).parse(content)
+      source.cache(name, template) if source.respond_to?(:cache)
+      template
     end
-    
-  private
-=begin
-    # returns the output of the command, or the whole command if the conversion
-    # was unsuccessful 
-    def handle_command(input, output)
-      unless input.exist?(/\]/)
-        # command never ends, so stop parsing
-        output += input.rest
-        return
-      end
-      name = input.scan(/\w+/)
-      call = CommandCall.new(@lexicon, name)
-      if call.invalid_command?
-        # stop parsing command
-        output += input.scan_until(/\]/)
-        return
-      end
-      while input.getch
-        if c == "]"
-          # done with command, so evaluate
-          output += call.to_command
-          break
-        end
-        call.whole_command += c
-        case c
-        when " "
-          call.args << ""
-        when "'", '"'
-          unless rest = input.scan_until(/#{c}/)
-            # invalid command, so stop parsing command
-            output += input.scan_until(/\]/)
-            return
-          end
-          call.args << c + rest
-        when "["
-          handle_command(input, arg)
-        else
-          call.args.last += c
-        end
-=end        
  
   end
 end

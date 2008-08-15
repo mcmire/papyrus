@@ -1,30 +1,12 @@
 TODO
 
-Last updated: 3 Aug 2008
-
-- Add ability to refer to variables without 'var' prefix (variables take precedence to function calls). This requires fundamentally changing how commands are resolved, and possibly how commands are defined.
-- Add nested commands
-- Add ability to wrap arguments in single or double quotes (see Liquid)
-- Add constants for common regex patterns (quotes, variables, etc.) (see Liquid)
-- Support [/for] as well as [endfor]
-- Put modifiers on the command level (except for 'end', which will be automatic for Blocks)
-
-
-- There are some Command subclasses whose output methods receive a required context parameter, and some for which that parameter is optional. What gives? (They should probably all be required, just to be consistent.)
-- Currently to add a filter, a method must be added to the DefaultPreprocessor. Add a 'filter' class method to Lexicon that automatically does this.
-- What's Processor for? Should this be more of an interface? (How do you inherit class methods?)
-- Rename instances of 'command' with 'sub' or 'token' as appropriate?
-  - Sub::Base < Token
-  - Macro < Sub::Base
-  - Sub::Variable < Sub::Base
-  - Command::Text -> Token::Text
-  - Command::{Base, Case, Comment, Define, Filter, If, Include, Loop, Unknown} -> Macro::{$1}
-  - Command::Value -> Sub::Variable
-  - Rename Stackable to Stacking -- it's not an interface!
-- I don't like the 'modifier' Lexicon macro -- we should really have like a :modifiers => [] option to 'define' (so define the modifier on the sub level)
-- Standardize behaviors of Command#add -- for instance, Filter#add supposedly just adds text, but then Filter#output calls #output on each of the items in the @text variable -- so they're actually commands. Shouldn't Command#add *always* add a command to a list of commands? (or at least for Stackable)
-- What's up with Parser.recent_parser ? Why do even need this?
-- Some commands' #output methods return an error message (e.g. Include). We don't
-  want this.
-- [% foo %-] to remove line breaks (just like <%= foo -%>)
-- Should certain classes like Block and Stackable inherit from Array or maybe include Addable or something?
+* Modify all Command subclasses to accept three args: lexicon, command_name, args
+* Get rid of method_separator_regexp (Compiler, ContextItem#get)
+* Lexicon
+  * define can be a lot simpler - no regexp option, no aliases - just keep an array
+    of available commands
+  * Remove closer_on, adv_define, global_var, global_modifier, closer
+* DefaultLexicon - do we even need this anymore? Maybe we need just a YAML file...
+* Remove :source option for Compiler. #compile should accept a filename; #parse should
+  accept raw template content. That's it.
+* DefaultPreprocessor - rename to Filters or something
