@@ -31,7 +31,7 @@ module Papyrus
       if object.nil?
         super(self)
       elsif object.is_a?(ContextItem)
-        self.parent = object
+        @parent = object
         super(self)
       else
         context = Context.new(self)
@@ -41,7 +41,7 @@ module Papyrus
     end
     
     def to_s
-      '[ Template: ' + @command_block.map{ |i| "[#{i.to_s}]" }.join(' ') + ' ]'
+      '[ Template: ' + @commands.map{ |i| "[#{i.to_s}]" }.join(' ') + ' ]'
     end
   end
 end

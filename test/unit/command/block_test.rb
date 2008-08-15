@@ -8,47 +8,47 @@ require 'command/block'
 Expectations do
   
   expect [] do
-    Papyrus::Command::Block.new.send(:instance_variable_get, "@command_block")
+    Papyrus::Command::Block.new.send(:instance_variable_get, "@commands")
   end
   
   locally do
     block = Papyrus::Command::Block.new
-    expect block.send(:command_block).to.receive(:length) do
+    expect block.send(:commands).to.receive(:length) do
       block.length
     end
   end
   
   locally do
     block = Papyrus::Command::Block.new
-    expect block.send(:command_block).to.receive(:size) do
+    expect block.send(:commands).to.receive(:size) do
       block.size
     end
   end
   
   locally do
     block = Papyrus::Command::Block.new
-    expect block.send(:command_block).to.receive(:first) do
+    expect block.send(:commands).to.receive(:first) do
       block.first
     end
   end
   
   locally do
     block = Papyrus::Command::Block.new
-    expect block.send(:command_block).to.receive(:last) do
+    expect block.send(:commands).to.receive(:last) do
       block.last
     end
   end
   
   locally do
     block = Papyrus::Command::Block.new
-    expect block.send(:command_block).to.receive(:empty?) do
+    expect block.send(:commands).to.receive(:empty?) do
       block.empty?
     end
   end
   
   locally do
     block = Papyrus::Command::Block.new
-    expect block.send(:command_block).to.receive(:[]).with(0) do
+    expect block.send(:commands).to.receive(:[]).with(0) do
       block[0]
     end
   end
@@ -64,7 +64,7 @@ Expectations do
       block = Papyrus::Command::Block.new
       cmd = Papyrus::Command::Base.new
       block.add(cmd)
-      block.send(:command_block).include?(cmd)
+      block.send(:commands).include?(cmd)
     end
   end
   

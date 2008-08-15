@@ -4,20 +4,22 @@ module Papyrus
     # This should probably never be called by the designer or a programmer,
     # but by Stackables.
     class Block < Base
+      attr_reader :commands
+      
       def initialize(*args)
         super
-        @command_block = []
+        @commands = []
       end
       
       for meth in [ :length, :size, :first, :last, :empty? ]
         class_eval <<-EOT, __FILE__, __LINE__
           def #{meth}
-            @command_block.send(:#{meth})
+            @commands.send(:#{meth})
           end
         EOT
       end
       def [](i)
-        @command_block[i]
+        @commands[i]
       end
 
       # Adds +command+ to the end of the Block's chain of Commands.
@@ -26,7 +28,7 @@ module Papyrus
       # This is also aliased as <<
       def add(cmd)
         raise TypeError, 'Command::Block#add: Attempt to add non-Command object' unless cmd.kind_of?(Base)
-        @command_block << cmd
+        @commands << cmd
         self
       end
       def <<(cmd)
@@ -37,16 +39,13 @@ module Papyrus
       # object.  The output is returned as a single string.  If no output
       # is generated, returns an empty string.
       def output(context = nil)
-        @command_block.map {|cmd| cmd.output(context) }.join('')
+        @commands.map {|cmd| cmd.output(context) }.join('')
       end
       
       # Returns Commands held, as a string
       def to_s
-        '[ Blocks: ' + @command_block.map {|cmd| "[#{cmd.to_s}]" }.join(' ') + ' ]'
+        '[ Blocks: ' + @commands.map {|cmd| "[#{cmd.to_s}]" }.join(' ') + ' ]'
       end
-      
-    private
-      attr_reader :command_block
     end
   end
 end

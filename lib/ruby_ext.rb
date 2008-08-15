@@ -47,3 +47,9 @@ class Hash
     replace(symbolize_keys)
   end
 end
+
+class StringScanner
+  def scan_until_before(pattern)
+    search_full(pattern, true, false)
+  end
+end

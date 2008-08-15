@@ -5,7 +5,11 @@ module Papyrus
   # In *your* lexicon, at a minimum, you should define the token that opens a command,
   # the token that closes a command, and the commands themselves. Read the
   # documentation on +bra+, +ket+, +define+ and +adv_define+ for more.
+  #---
+  # TODO: Update docs
   class Lexicon
+    class CommandNotFoundError < StandardError; end
+    
     class << self
       
       def commands
@@ -14,46 +18,6 @@ module Papyrus
       
       def modifiers
         @modifiers ||= {}
-      end
-      
-      attr_writer :bra
-      # @bra represents the start token of a command
-      def bra(str=nil)
-        if str
-          @bra = str
-        else
-          @bra
-        end
-      end
-      
-      attr_writer :ket
-      # @ket represents the end token of a command
-      def ket(str=nil)
-        if str
-          @ket = str
-        else
-          @ket
-        end
-      end
-      
-      # Takes @bra and @ket and creates the regexp that matches
-      # an entire command.
-      def command_regexp
-        raise "bra not defined" unless @bra
-        raise "ket not defined" unless @ket
-        Regexp.new(Regexp.escape(@bra) + "(.*)" + Regexp.escape(@ket))
-      end
-      
-      attr_writer :default
-      # If a symbol is given, looks up the camelized version of the symbol in the
-      # Command module and sets @default to the class name. If not, returns the value
-      # of @default. If @default is not set, returns Command::Unknown.
-      def default(sym=nil)
-        if sym
-          @default = Command.const_get(sym.to_s.camelize)
-        else
-          @default ||= Command::Unknown
-        end
       end
 
       # Looks up the given raw command in the hash of commands by testing each regex
@@ -65,14 +29,16 @@ module Papyrus
       #
       # If no regex matches, the command is not in the lexicon, so we just return
       # an instance of the designated default command, passing the raw command.
-      def lookup(raw_command)
-        commands.each do |klass, cmd|
-          if match = cmd[:regexp].match(raw_command)
-            args = cmd[:block].call(match)
-            return klass.new(self, *args)
-          end
+      #---
+      # TODO: Update tests, docs
+      def lookup(command_name, args)
+        raise CommandNotFoundError unless commands.include?(command_name)
+        begin
+          klass = Command.const_get(command_name.camelize)
+          klass.new(self, command_name, args)
+        rescue NameError
+          raise CommandNotFoundError
         end
-        default.new(self, raw_command)
       end
       
       # Checks to see whether the given command object is a Stackable and if
@@ -100,6 +66,8 @@ module Papyrus
       # Checks to see whether the given command object is a Stackable and if
       # +raw_command+ is contained in the global hash of closers. If so, returns the
       # name of the closer (a symbol) and a MatchData object, otherwise nil.
+      #---
+      # TODO: Don't need this anymore?
       def closer_on(raw_command, modifiee)
         if modifiee.is_a?(Command::Stackable) and \
         closer = self.closer and regexp = closer[:block].call(modifiee) and match = regexp.match(raw_command)
@@ -127,6 +95,8 @@ module Papyrus
       #    the +command_name+.
       # * +also+ - Lets you specify aliases for the command. For instance, in the
       #   DefaultLexicon, +if+ is aliased as +unless+.
+      #---
+      # TODO: Simplify?
       def define(command_name, regexp, options = {}, &block)
         unless command_name.is_a?(String) or command_name.is_a?(Symbol)
           raise ArgumentError, 'First argument to define must be a symbol or string'
@@ -159,6 +129,8 @@ module Papyrus
       #
       # If you do not supply a block then by default all captures from the regexp
       # will be passed on to the Command.
+      #---
+      # TODO: Don't need this anymore?
       def adv_define(regexp, class_name, modifiers={}, &block)
         raise ArgumentError, 'First argument to adv_define must be a Regexp' unless regexp.is_a?(Regexp)
         block ||= proc {|match| (match.captures.empty? ? match.to_a : match.captures) }
@@ -169,6 +141,8 @@ module Papyrus
 
       # This lets you write e.g. [% foo %] to refer to a 'foo' variable instead of
       # having to say [% var foo %]
+      #---
+      # TODO: Don't need this anymore?
       def global_var(regexp)
         regexp = /^(#{Regexp.escape(regexp.to_s)}(?:\.\w+\??)*)(?:\s:(\w+))?$/ unless regexp.is_a?(Regexp)
         adv_define(regexp, 'Value')
@@ -184,6 +158,8 @@ module Papyrus
       #
       # Note that if a local modifier with the same name as a global modifier is
       # defined, then it takes precedence to the global modifier.
+      #---
+      # TODO: Don't need this anymore?
       def global_modifier(modifier, regexp=nil, &block)
         unless regexp.nil? ^ block.nil?
           raise ArgumentError, "Second argument to global_modifier must be either a regexp or a block (but not both)"
@@ -199,6 +175,8 @@ module Papyrus
       # be 'end'.
       #
       # If passed with no arguments, returns the closer.
+      #---
+      # TODO: Don't need this anymore?
       def closer(*args, &block)
         if args.empty?
           @closer

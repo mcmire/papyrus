@@ -1,328 +1,503 @@
 require File.dirname(__FILE__)+'/test_helper'
 
-require 'Papyrus'
+require 'papyrus'
 
-# TODO: Should we convert @stack, @active_cmd, etc. to method calls?
-# Setting the instance variable through a private mutator here is kind of unwieldy...
+include Papyrus
 
 Expectations do
+  
+  # Parser.new
+  begin
+    # set @@recent_parser
+    expect true do
+      parser = Parser.new(nil)
+      recent_parser = Parser.send(:class_variable_get, "@@recent_parser")
+      parser.equal?(recent_parser)
+    end
+    begin
+      # @parent is not set
+      expect nil do
+        parser = Parser.new(nil)
+        parser.send(:instance_variable_get, "@parent")
+      end
+      # @parent == given context
+      expect true do
+        context = Context.new
+        parser = Parser.new(nil, context)
+        parser.send(:instance_variable_get, "@parent").equal?(context)
+      end
+      expect Context.to.receive(:construct_from).with(:context) do
+        Parser.new(nil, :context)
+      end
+    end
+    # @parser
+    expect true do
+      parser = Parser.new(nil)
+      parser.parser.equal?(parser)
+    end
+    # @stack
+    expect true do
+      parser = Parser.new(nil)
+      parser.stack.is_a?(Array) && parser.stack.first.is_a?(Template)
+    end
+  end
   
   # Parser.recent_parser
   begin
     # when @@recent_parser defined
-    expect Mocha::Mock do
-      Papyrus::Parser.send(:class_variable_set, "@@recent_parser", stub('parser'))
-      Papyrus::Parser.recent_parser
+    expect :recent_parser do
+      Parser.send(:class_variable_set, "@@recent_parser", :recent_parser)
+      Parser.recent_parser
     end
     # when @@recent_parser not defined
     expect nil do
-      Papyrus::Parser.send(:class_variable_set, "@@recent_parser", nil)
-      Papyrus::Parser.recent_parser
+      Parser.send(:class_variable_set, "@@recent_parser", nil)
+      Parser.recent_parser
     end
   end
-  
-  # Parser.new
-  begin
-    expect true do
-      parser = Papyrus::Parser.new
-      context = parser.send(:instance_variable_get, "@context")
-      parser.equal?(context)
-    end
-    expect true do
-      parser = Papyrus::Parser.new
-      recent_parser = Papyrus::Parser.send(:class_variable_get, "@@recent_parser")
-      parser.equal?(recent_parser)
-    end
-    expect(:foo => 'bar') do
-      parser = Papyrus::Parser.new(:foo => 'bar')
-      parser.send(:instance_variable_get, "@options")
-    end
-    begin
-      expect nil do
-        parser = Papyrus::Parser.new
-        parser.send(:instance_variable_get, "@parent")
-      end
-      expect true do
-        context = Papyrus::Context.new
-        parser = Papyrus::Parser.new(:context => context)
-        parser.send(:instance_variable_get, "@parent").equal?(context)
-      end
-      expect Papyrus::Context.to.receive(:construct_from).with(:context) do
-        Papyrus::Parser.new(:context => :context)
-      end
-    end
-    expect Papyrus::DefaultLexicon do
-      parser = Papyrus::Parser.new
-      parser.send(:instance_variable_get, "@lexicon")
-    end
-    expect Papyrus::DefaultPreprocessor do
-      parser = Papyrus::Parser.new
-      parser.send(:instance_variable_get, "@preprocessor")
-    end
-    expect :unescaped do
-      parser = Papyrus::Parser.new
-      parser.send(:instance_variable_get, "@default_processor")
-    end
-    expect %r|[./]| do
-      parser = Papyrus::Parser.new
-      parser.send(:instance_variable_get, "@method_separator_regexp")
-    end
-    begin
-      expect Papyrus::FileSource do
-        parser = Papyrus::Parser.new
-        parser.send(:instance_variable_get, "@source")
-      end
-      expect Papyrus::StringSource do
-        parser = Papyrus::Parser.new(:source => Papyrus::StringSource)
-        parser.send(:instance_variable_get, "@source")
-      end
-    end
-    expect nil do
-      parser = Papyrus::Parser.new
-      parser.send(:instance_variable_get, "@commands")
-    end
-  end
-  
-  # Parser#load
-  begin
-    expect Papyrus::Parser.new.to.receive(:compile).with("foo") do |parser|
-      parser.load("foo")
-    end
-    expect Mocha::Mock do
-      parser = Papyrus::Parser.new
-      parser.stubs(:compile).returns stub('template')
-      parser.load("")
-    end
-    expect true do
-      parser = Papyrus::Parser.new
-      parser.stubs(:compile).returns stub('template')
-      template = parser.load("")
-      parser.commands.equal?(template)
-    end
-  end
-  
-  # Parser#compile
-  begin
-    locally do
-      parser = Papyrus::Parser.new
-      expect parser.source.to.receive(:get).with("foo") do
-        parser.compile("foo")
-      end
-    end
-    # when body is a instance of Command::Base
-    expect Papyrus::Command::Base do
-      parser = Papyrus::Parser.new
-      parser.source.stubs(:get).returns(Papyrus::Command::Base.new)
-      parser.compile("")
-    end
-    # when body is not an instance of Command::Base
-    begin
-      expect Papyrus::Parser.new.to.receive(:parse).with("some content") do |parser|
-        parser.source.stubs(:get).returns("some content")
-        parser.source.stubs(:cache)
-        parser.compile("")
-      end
-      locally do
-        parser = Papyrus::Parser.new
-        command = stub('command')
-        expect parser.source.to.receive(:cache).with("foo", command) do
-          parser.source.stubs(:get).returns("")
-          parser.stubs(:parse).returns(command)
-          parser.compile("foo")
-        end
-      end
-      expect Mocha::Mock do
-        parser = Papyrus::Parser.new
-        parser.stubs(:parse).returns stub('template')
-        parser.compile("")
-      end
-    end
-    # when body is nil
-    begin
-      expect Papyrus::Template do
-        parser = Papyrus::Parser.new
-        parser.source.stubs(:get).returns(nil)
-        parser.compile("")
-      end
-      expect "[ Template 'foo' not found ]" do
-        parser = Papyrus::Parser.new
-        parser.source.stubs(:get).returns(nil)
-        template = parser.compile("foo")
-        template.send(:instance_variable_get, "@command_block").first.to_s
-      end
-    end
-  end
-  
-  # Parser#parse
-  begin
-    expect Papyrus::Parser.new.to.receive(:tokenize).with("This is the body", instance_of(Array)) do |parser|
-      parser.parse("This is the body")
-    end
-    expect Papyrus::Template do
-      Papyrus::Parser.new.parse("")
-    end
-  end
-  
-  #----
   
   # Parser#tokenize
   begin
-    expect Papyrus::Parser.new.to.receive(:handle_command).with("This is some text ", "foo bar", []) do |parser|
-      parser.stubs(:add_text_as_command_to_active_cmd)
-      parser.send(:tokenize, "This is some text [% foo bar %]", [])
+    expect [
+      Token::Text, Token::LeftBracket, Token::Text, Token::Whitespace,
+      Token::DoubleQuote, Token::Text, Token::DoubleQuote, Token::RightBracket,
+      Token::Text, Token::LeftBracket, Token::Slash, Token::Text,
+      Token::RightBracket, Token::Text
+    ] do
+      parser = Parser.new(nil)
+      parser.tokenize('This \'and\' stuff [if "ok"] foo [/if] woo hoo')
+      parser.tokens.map {|token| token.class }
     end
-    expect Papyrus::Parser.new.to.receive(:handle_command).times(2) do |parser|
-      parser.stubs(:add_text_as_command_to_active_cmd)
-      parser.send(:tokenize, "Blah blah [% foo %]\nSome more text [% bar baz foo %]", [])
+  end
+  
+  # Parser#commandify
+  begin
+    # left bracket present: handle_command
+    expect Parser.new("", nil).to.receive(:handle_command) do |parser|
+      parser.stubs(:tokens).returns TokenList.new([Token::LeftBracket.new])
+      parser.commandify
     end
-    expect ArgumentError do
-      parser = Papyrus::Parser.new
-      parser.stubs(:add_text_as_command_to_active_cmd)
-      parser.send(:tokenize, "", [ :one, :two, :three ])
+    # left bracket present, but handle_command doesn't return a command
+    expect true do
+      parser = Parser.new("", nil)
+      parser.stubs(:tokens).returns TokenList.new([Token::LeftBracket.new])
+      parser.stubs(:handle_command)
+      stack = parser.stack
+      parser.commandify
+      parser.stack == stack
     end
+    # left bracket present and handle_command returns Stackable
+    expect Command::If do
+      parser = Parser.new("", nil)
+      parser.stubs(:tokens).returns TokenList.new([Token::LeftBracket.new])
+      parser.stubs(:handle_command).returns Command::If.new(nil, 'if', nil)
+      parser.commandify
+      parser.stack.last
+    end
+    # left bracket present and handle_command doesn't return Stackable
+    expect Command::Base do
+      parser = Parser.new("", nil)
+      parser.stubs(:tokens).returns TokenList.new([Token::LeftBracket.new])
+      parser.stubs(:handle_command).returns Command::Base.new
+      parser.commandify
+      parser.stack.last.last
+    end
+    # text present
+    expect [Command::Text, Command::Text] do
+      parser = Parser.new("", nil)
+      parser.stubs(:tokens).returns TokenList.new([Token::Text.new("foo"), Token::LeftBracket.new, Token::Text.new("bar") ])
+      parser.stubs(:handle_command)
+      parser.commandify
+      parser.stack.last.commands.map {|cmd| cmd.class }
+    end
+    # stack is too big
+    #expect RuntimeError do
+    #  parser = Parser.new("", nil)
+    #  parser.stubs(:tokens).returns(TokenList.new)
+    #  parser.send(:instance_variable_set, "@stack", [ :template, :something_else ])
+    #  parser.commandify
+    #end
   end
   
   # Parser#handle_command
   begin
-    # ordinarily all four methods have the possibility of being called...
-    begin
-      expect Papyrus::Parser.new.to.receive(:add_text_as_command_to_active_cmd).with("This is some text", []) do |parser|
-        parser.stubs(:modify_active_cmd)
-        parser.stubs(:close_active_cmd)
-        parser.stubs(:add_command_to_stack)
-        parser.send(:handle_command, "This is some text", "", [])
-      end
-      expect Papyrus::Parser.new.to.receive(:modify_active_cmd).with("foo bar", []) do |parser|
-        parser.stubs(:add_text_as_command_to_active_cmd)
-        parser.stubs(:close_active_cmd)
-        parser.stubs(:add_command_to_stack)
-        parser.send(:handle_command, "", "foo bar", [])
-      end
-      expect Papyrus::Parser.new.to.receive(:close_active_cmd).with("foo bar", []) do |parser|
-        parser.stubs(:add_text_as_command_to_active_cmd)
-        parser.stubs(:modify_active_cmd)
-        parser.stubs(:add_command_to_stack)
-        parser.send(:handle_command, "", "foo bar", [])
-      end
-      expect Papyrus::Parser.new.to.receive(:add_command_to_stack).with("foo bar", []) do |parser|
-        parser.stubs(:add_text_as_command_to_active_cmd)
-        parser.stubs(:modify_active_cmd)
-        parser.stubs(:close_active_cmd)
-        parser.send(:handle_command, "", "foo bar", [])
-      end
+    # valid command
+    expect :command do
+      parser = Parser.new("", nil)
+      parser.stubs(:gather_command_name_and_args)
+      parser.stubs(:modify_active_cmd).returns(false)
+      parser.stubs(:close_active_cmd).returns(false)
+      parser.stubs(:lookup_command).returns(:command)
+      parser.handle_command
     end
-    # ...but if modify_active_cmd returns true...
-    begin
-      # ...then close_active_cmd won't be called...
-      expect Papyrus::Parser.new.to.receive(:close_active_cmd).never do |parser|
-        parser.stubs(:add_text_as_command_to_active_cmd)
-        parser.stubs(:modify_active_cmd).returns(true)
-        parser.stubs(:add_command_to_stack)
-        parser.send(:handle_command, "", "", [])
-      end
-      # ...and neither will add_command_to_stack
-      expect Papyrus::Parser.new.to.receive(:add_command_to_stack).never do |parser|
-        parser.stubs(:add_text_as_command_to_active_cmd)
-        parser.stubs(:modify_active_cmd).returns(true)
-        parser.stubs(:close_active_cmd)
-        parser.send(:handle_command, "", "", [])
-      end
+    # unknown command
+    expect Command::Text do
+      parser = Parser.new("", nil)
+      parser.stubs(:gather_command_name_and_args).raises(Lexicon::CommandNotFoundError)
+      parser.handle_command
     end
-    # ...and add_command_to_stack won't be called if close_active_cmd returns true as well
-    expect Papyrus::Parser.new.to.receive(:add_command_to_stack).never do |parser|
-      parser.stubs(:add_text_as_command_to_active_cmd)
-      parser.stubs(:modify_active_cmd)
+    # modifier
+    expect nil do
+      parser = Parser.new("", nil)
+      parser.stubs(:gather_command_name_and_args)
+      parser.stubs(:modify_active_cmd).returns(true)
+      parser.handle_command
+    end
+    # closer
+    expect nil do
+      parser = Parser.new("", nil)
+      parser.stubs(:gather_command_name_and_args)
+      parser.stubs(:modify_active_cmd).returns(false)
       parser.stubs(:close_active_cmd).returns(true)
-      parser.send(:handle_command, "", "", [])
+      parser.handle_command
+    end
+    # reached end of list before end of command
+    expect Command::Text do
+      parser = Parser.new("", nil)
+      parser.stubs(:gather_command_name_and_args).raises(TokenList::EndOfListError)
+      parser.handle_command
+    end
+    # unmatched single quote
+    expect Command::Text do
+      parser = Parser.new("", nil)
+      parser.stubs(:gather_command_name_and_args).raises(Parser::UnmatchedSingleQuoteError)
+      parser.handle_command
+    end
+    # unmatched double quote
+    expect Command::Text do
+      parser = Parser.new("", nil)
+      parser.stubs(:gather_command_name_and_args).raises(Parser::UnmatchedDoubleQuoteError)
+      parser.handle_command
     end
   end
   
-  # Parser#add_text_as_command_to_active_cmd
-  begin
-    # if text is blank, don't do anything
-    expect true do
-      parser = Papyrus::Parser.new
-      stack = [ Papyrus::Command::Block.new ]
-      parser.send(:add_text_as_command_to_active_cmd, "", stack)
-      stack.last.empty?
-    end
-    # if text is not blank, add it to the @command_block of the block command on active_cmd of the stack
-    expect "some text" do
-      parser = Papyrus::Parser.new
-      stack = [ Papyrus::Command::Block.new ]
-      parser.send(:add_text_as_command_to_active_cmd, "some text", stack)
-      stack.last.first.to_s
-    end
-  end
-
   # Parser#modify_active_cmd
   begin
-    # when active command modified by given command
-    expect true do
-      parser = Papyrus::Parser.new
-      stack = [ stub('cmd', :modified_by? => true) ]
-      parser.send(:modify_active_cmd, "", stack)
-    end
-    # when active command not modified by given command
+    # active command is not a Command
     expect false do
-      parser = Papyrus::Parser.new
-      stack = [ stub('cmd', :modified_by? => false) ]
-      parser.send(:modify_active_cmd, "", stack)
+      parser = Parser.new("", nil)
+      parser.stubs(:stack).returns([ :not_a_command ])
+      parser.modify_active_cmd("")
+    end
+    # active command is a Command but is not modified by given command
+    expect false do
+      parser = Parser.new("", nil)
+      cmd = Command::Base.new
+      cmd.stubs(:modified_by?).returns(false)
+      parser.stubs(:stack).returns([ cmd ])
+      parser.modify_active_cmd("")
+    end
+    # active command is a Command and is modified by given command
+    expect true do
+      parser = Parser.new("", nil)
+      cmd = Command::Base.new
+      cmd.stubs(:modified_by?).returns(true)
+      parser.stubs(:stack).returns([ cmd ])
+      parser.modify_active_cmd("")
     end
   end
-
+  
   # Parser#close_active_cmd
   begin
-    # when active command modified by given command
+    # active command is not a Command
+    expect false do
+      parser = Parser.new("", nil)
+      parser.stubs(:stack).returns([ :not_a_command ])
+      parser.close_active_cmd("")
+    end
+    # active command is a Command but is not closed by given command
+    expect false do
+      parser = Parser.new("", nil)
+      cmd = Command::Base.new
+      cmd.stubs(:closed_by?).returns(false)
+      parser.stubs(:stack).returns([ cmd ])
+      parser.close_active_cmd("")
+    end
+    # active command is a Command and is closed by given command
     begin
       # stack should be popped
       expect 1 do
-        parser = Papyrus::Parser.new
-        stack = [ [], stub('cmd', :closed_by? => true) ]
-        parser.send(:close_active_cmd, "", stack)
-        stack.size
+        parser = Parser.new("", nil)
+        cmd = Command::Base.new
+        cmd.stubs(:closed_by?).returns(true)
+        parser.stubs(:stack).returns([ [], cmd ])
+        parser.close_active_cmd("")
+        parser.stack.size
       end
       # active command should be moved to the one before it
       expect true do
-        parser = Papyrus::Parser.new
-        cmd = stub('cmd', :closed_by? => true)
-        stack = [ [], cmd ]
-        parser.send(:close_active_cmd, "", stack)
-        stack.first == [cmd]
+        parser = Parser.new("", nil)
+        cmd = Command::Base.new
+        cmd.stubs(:closed_by?).returns(true)
+        parser.stubs(:stack).returns([ [], cmd ])
+        parser.close_active_cmd("")
+        parser.stack.first == [cmd]
       end
       # return value
       expect true do
-        parser = Papyrus::Parser.new
-        stack = [ [], stub('cmd', :closed_by? => true) ]
-        parser.send(:close_active_cmd, "", stack)
+        parser = Parser.new("", nil)
+        cmd = Command::Base.new
+        cmd.stubs(:closed_by?).returns(true)
+        parser.stubs(:stack).returns([ [], cmd ])
+        parser.close_active_cmd("")
       end
-    end
-    # when active command not modified by given command
-    expect false do
-      parser = Papyrus::Parser.new
-      stack = [ stub('cmd', :closed_by? => false) ]
-      parser.send(:close_active_cmd, "", stack)
     end
   end
   
-  # Parser#add_command_to_stack
+  # Parser#gather_command_and_args
   begin
-    # if the command is Stackable, command should be added to stack
-    expect Papyrus::Command::Case do
-      parser = Papyrus::Parser.new
-      stack = [ :command1 ]
-      parser.lexicon.stubs(:lookup).returns Papyrus::Command::Case.new(nil, "", "")
-      parser.send(:add_command_to_stack, "", stack)
-      stack.last
+    # successfully parsed command: raw
+    expect "[foo bar baz]" do
+      parser = Parser.new("", nil)
+      list = [
+        Token::LeftBracket.new("["),
+        Token::Text.new("foo"),
+        Token::Whitespace.new(" "),
+        Token::Text.new("bar"),
+        Token::Whitespace.new(" "),
+        Token::Text.new("baz"),
+        Token::RightBracket.new("]")
+      ]
+      tokens = TokenList.new(list); tokens.next
+      parser.stubs(:tokens).returns(tokens)
+      cmd_call = { :full => "", :raw => "", :name => nil, :args => [] }
+      parser.gather_command_name_and_args(cmd_call)
+      cmd_call[:raw]
     end
-    # otherwise, command should be added to active command
-    expect [[:command]] do
-      parser = Papyrus::Parser.new
-      stack = [ [] ]
-      parser.lexicon.stubs(:lookup).returns(:command)
-      parser.send(:add_command_to_stack, "", stack)
-      stack
+    # successfully parsed command: full
+    expect "foo bar baz" do
+      parser = Parser.new("", nil)
+      list = [
+        Token::LeftBracket.new("["),
+        Token::Text.new("foo"),
+        Token::Whitespace.new(" "),
+        Token::Text.new("bar"),
+        Token::Whitespace.new(" "),
+        Token::Text.new("baz"),
+        Token::RightBracket.new("]")
+      ]
+      tokens = TokenList.new(list); tokens.next
+      parser.stubs(:tokens).returns(tokens)
+      cmd_call = { :full => "", :raw => "", :name => nil, :args => [] }
+      parser.gather_command_name_and_args(cmd_call)
+      cmd_call[:full]
+    end
+    # successfully parsed command: args
+    expect ['bar', 'baz'] do
+      parser = Parser.new("", nil)
+      list = [
+        Token::LeftBracket.new("["),
+        Token::Text.new("foo"),
+        Token::Whitespace.new(" "),
+        Token::Text.new("bar"),
+        Token::Whitespace.new(" "),
+        Token::Text.new("baz"),
+        Token::RightBracket.new("]")
+      ]
+      tokens = TokenList.new(list); tokens.next
+      parser.stubs(:tokens).returns(tokens)
+      cmd_call = { :full => "", :raw => "", :name => nil, :args => [] }
+      parser.gather_command_name_and_args(cmd_call)
+      cmd_call[:args]
+    end
+    # single quote found
+    expect Parser.new("", nil).to.receive(:handle_quoted_arg).times(2) do |parser|
+      list = [
+        Token::LeftBracket.new("["),
+        Token::Text.new("foo"),
+        Token::SingleQuote.new,
+        Token::Text.new("bar"),
+        Token::SingleQuote.new,
+        Token::RightBracket.new("]")
+      ]
+      tokens = TokenList.new(list); tokens.next
+      parser.stubs(:tokens).returns(tokens)
+      cmd_call = { :full => "", :raw => "", :name => nil, :args => [] }
+      parser.gather_command_name_and_args(cmd_call)
+    end
+    # double quote found
+    expect Parser.new("", nil).to.receive(:handle_quoted_arg).times(2) do |parser|
+      list = [
+        Token::LeftBracket.new("["),
+        Token::Text.new("foo"),
+        Token::DoubleQuote.new,
+        Token::Text.new("bar"),
+        Token::DoubleQuote.new,
+        Token::RightBracket.new("]")
+      ]
+      tokens = TokenList.new(list); tokens.next
+      parser.stubs(:tokens).returns(tokens)
+      cmd_call = { :full => "", :raw => "", :name => nil, :args => [] }
+      parser.gather_command_name_and_args(cmd_call)
+    end
+    # we reach end of token list before command ends
+    expect TokenList::EndOfListError do
+      parser = Parser.new("", nil)
+      list = [
+        Token::LeftBracket.new("["),
+        Token::Text.new("foo"),
+        Token::Whitespace.new(" "),
+        Token::Text.new("bar")
+      ]
+      tokens = TokenList.new(list); tokens.next
+      parser.stubs(:tokens).returns(tokens)
+      cmd_call = { :full => "", :raw => "", :name => nil, :args => [] }
+      parser.gather_command_name_and_args(cmd_call)
+    end
+    # UnmatchedSingleQuoteError is caught and re-thrown
+    expect Parser::UnmatchedSingleQuoteError do
+      parser = Parser.new("", nil)
+      list = [
+        Token::LeftBracket.new("["),
+        Token::Text.new("foo"),
+        Token::Whitespace.new(" "),
+        Token::SingleQuote.new("'"),
+        Token::Text.new("bar"),
+        Token::RightBracket.new("]")
+      ]
+      tokens = TokenList.new(list); tokens.next
+      parser.stubs(:tokens).returns(tokens)
+      cmd_call = { :full => "", :raw => "", :name => nil, :args => [] }
+      parser.stubs(:handle_quoted_arg).raises(Parser::UnmatchedSingleQuoteError)
+      parser.gather_command_name_and_args(cmd_call)
+    end
+    # UnmatchedDoubleQuoteError is caught and re-thrown
+    expect Parser::UnmatchedDoubleQuoteError do
+      parser = Parser.new("", nil)
+      list = [
+        Token::LeftBracket.new("["),
+        Token::Text.new("foo"),
+        Token::Whitespace.new(" "),
+        Token::SingleQuote.new("'"),
+        Token::Text.new("bar"),
+        Token::RightBracket.new("]")
+      ]
+      tokens = TokenList.new(list); tokens.next
+      parser.stubs(:tokens).returns(tokens)
+      cmd_call = { :full => "", :raw => "", :name => nil, :args => [] }
+      parser.stubs(:handle_quoted_arg).raises(Parser::UnmatchedDoubleQuoteError)
+      parser.gather_command_name_and_args(cmd_call)
     end
   end
-
+  
+  # Parser#handle_quoted_arg
+  begin
+    # we reach closing single quote
+    expect ['bar'] do
+      parser = Parser.new("", nil)
+      list = [
+        Token::LeftBracket.new("["),
+        Token::Text.new("foo"),
+        Token::Whitespace.new(" "),
+        Token::SingleQuote.new("'"),
+        Token::Text.new("bar"),
+        Token::SingleQuote.new("'"),
+        Token::Whitespace.new(" "),
+        Token::Text.new("baz"),
+        Token::RightBracket.new("]")
+      ]
+      tokens = TokenList.new(list)
+      tokens.pos = 3
+      parser.stubs(:tokens).returns(tokens)
+      parser.handle_quoted_arg(Token::SingleQuote)
+    end
+    # we reach closing double quote
+    expect ['bar'] do
+      parser = Parser.new("", nil)
+      list = [
+        Token::LeftBracket.new("["),
+        Token::Text.new("foo"),
+        Token::Whitespace.new(" "),
+        Token::DoubleQuote.new('"'),
+        Token::Text.new("bar"),
+        Token::DoubleQuote.new('"'),
+        Token::RightBracket.new("]")
+      ]
+      tokens = TokenList.new(list)
+      tokens.pos = 3
+      parser.stubs(:tokens).returns(tokens)
+      parser.handle_quoted_arg(Token::DoubleQuote)
+    end
+    # we reach right bracket before we find closing single quote
+    expect Parser::UnmatchedSingleQuoteError do
+      parser = Parser.new("", nil)
+      list = [
+        Token::LeftBracket.new("["),
+        Token::Text.new("foo"),
+        Token::Whitespace.new(" "),
+        Token::DoubleQuote.new("'"),
+        Token::Text.new("bar"),
+        Token::RightBracket.new("]")
+      ]
+      tokens = TokenList.new(list)
+      tokens.pos = 3
+      parser.stubs(:tokens).returns(tokens)
+      parser.handle_quoted_arg(Token::SingleQuote)
+    end
+    # we reach right bracket before we find closing double quote
+    expect Parser::UnmatchedDoubleQuoteError do
+      parser = Parser.new("", nil)
+      list = [
+        Token::LeftBracket.new("["),
+        Token::Text.new("foo"),
+        Token::Whitespace.new(" "),
+        Token::DoubleQuote.new('"'),
+        Token::Text.new("bar"),
+        Token::RightBracket.new("]")
+      ]
+      tokens = TokenList.new(list)
+      tokens.pos = 3
+      parser.stubs(:tokens).returns(tokens)
+      parser.handle_quoted_arg(Token::DoubleQuote)
+    end
+    # we reach end of token list before we find closing single quote
+    expect Parser::UnmatchedSingleQuoteError do
+      parser = Parser.new("", nil)
+      list = [
+        Token::LeftBracket.new("["),
+        Token::Text.new("foo"),
+        Token::Whitespace.new(" "),
+        Token::SingleQuote.new("'"),
+      ]
+      tokens = TokenList.new(list)
+      tokens.pos = 3
+      parser.stubs(:tokens).returns(tokens)
+      parser.handle_quoted_arg(Token::SingleQuote)
+    end
+    # we reach end of token list before we find closing single quote
+    expect Parser::UnmatchedDoubleQuoteError do
+      parser = Parser.new("", nil)
+      list = [
+        Token::LeftBracket.new("["),
+        Token::Text.new("foo"),
+        Token::Whitespace.new(" "),
+        Token::DoubleQuote.new('"'),
+      ]
+      tokens = TokenList.new(list)
+      tokens.pos = 3
+      parser.stubs(:tokens).returns(tokens)
+      parser.handle_quoted_arg(Token::DoubleQuote)
+    end
+    # left bracket reached
+    expect Parser.new("", nil).to.receive(:handle_command) do |parser|
+      list = [
+        Token::LeftBracket.new("["),
+        Token::Text.new("foo"),
+        Token::Whitespace.new(" "),
+        Token::DoubleQuote.new('"'),
+        Token::LeftBracket.new("["),
+        Token::Text.new("bar"),
+        Token::RightBracket.new("]"),
+        Token::DoubleQuote.new('"'),
+        Token::RightBracket.new("]")
+      ]
+      tokens = TokenList.new(list)
+      tokens.pos = 3
+      parser.stubs(:tokens).returns(tokens)
+      begin
+        parser.handle_quoted_arg(Token::DoubleQuote)
+      rescue Parser::UnmatchedDoubleQuoteError
+      end
+    end
+  end
 end

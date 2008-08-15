@@ -1,8 +1,8 @@
 module Papyrus
   class DefaultLexicon < Lexicon
-    bra '[%'
-    ket '%]'
-
+    
+    # TODO: These should probably not be here anymore?
+    
     adv_define %r/^--(.+)$/i, 'Comment'
     
     define :var,     /((?:\w+)(?:\.\w+\??)*)(?:\s+:(\w+))?/i, :class_name => 'Value'
