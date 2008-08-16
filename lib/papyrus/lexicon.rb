@@ -42,21 +42,21 @@ module Papyrus
       end
       
       # Checks to see whether the given command object is a Stackable and if
-      # +raw_command+ is a valid modifier of the given command, or is contained in the
+      # +full_command+ is a valid modifier of the given command, or is contained in the
       # global hash of modifiers. If so, returns the name of the modifier (a symbol)
       # and a MatchData object, otherwise nil.
-      def modifier_on(raw_command, modifiee)
+      def modifier_on(full_command, modifiee)
         return unless modifiee.is_a?(Command::Stackable)
         if cmd = commands[modifiee.class]
           cmd[:modifiers].each do |modifier, regexp|
-            if match = regexp.match(raw_command)
+            if match = regexp.match(full_command)
               return [modifier, match]
             end
           end
         end
         modifiers.each do |modifier, block|
           regexp = block.call(modifiee)
-          if match = regexp.match(raw_command)
+          if match = regexp.match(full_command)
             return [modifier, match]
           end
         end
@@ -64,13 +64,13 @@ module Papyrus
       end
       
       # Checks to see whether the given command object is a Stackable and if
-      # +raw_command+ is contained in the global hash of closers. If so, returns the
+      # +full_command+ is contained in the global hash of closers. If so, returns the
       # name of the closer (a symbol) and a MatchData object, otherwise nil.
       #---
       # TODO: Don't need this anymore?
-      def closer_on(raw_command, modifiee)
+      def closer_on(full_command, modifiee)
         if modifiee.is_a?(Command::Stackable) and \
-        closer = self.closer and regexp = closer[:block].call(modifiee) and match = regexp.match(raw_command)
+        closer = self.closer and regexp = closer[:block].call(modifiee) and match = regexp.match(full_command)
           [ closer[:name], match ]
         end
       end

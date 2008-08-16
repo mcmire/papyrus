@@ -6,24 +6,24 @@ module Papyrus
     class Unknown < Base
       # Creates a new Unknown command, storing the raw command that could not be
       # found so that we can look it up later.
-      def initialize(lexicon, raw_command)
+      def initialize(lexicon, full_command)
         @lexicon = lexicon
-        @raw_command = raw_command
+        @full_command = full_command
       end
       
       # Looks up the unknown command in the parser's lexicon. If the command in fact
       # exists, then returns the output of the command, otherwise returns an error string.
       def output(context)
-        cmd = lexicon.lookup(@raw_command)
+        cmd = lexicon.lookup(@full_command)
         if cmd.is_a?(Unknown)
-          "[ Unknown Command: #{@raw_command} ]"
+          "[ Unknown Command: #{@full_command} ]"
         else
           cmd.output(context)
         end
       end
       
       def to_s
-        "[ Command::Unknown: #{@raw_command} ]"
+        "[ Command::Unknown: #{@full_command} ]"
       end
     end
   end

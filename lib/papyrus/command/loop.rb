@@ -30,7 +30,7 @@ module Papyrus
       
       # An 'else' defines a list of commands to call when the loop is
       # empty.
-      def else
+      modifier(:else) do |args|
         raise ArgumentError, "More than one 'else' to Command::If" if @switched
         @in_else = !@in_else
         @switched = true

@@ -8,7 +8,7 @@ Expectations do
   # Unknown#initialize
   expect "foo bar" do
     unknown = Papyrus::Command::Unknown.new(nil, "foo bar")
-    unknown.send(:instance_variable_get, "@raw_command")
+    unknown.send(:instance_variable_get, "@full_command")
   end
   
   # Unknown#output

@@ -90,8 +90,9 @@ module Papyrus
       # An ArgumentError will be thrown if @switched or @in_else is set to true,
       # which will be the case if you try to put an 'elsif' command following an
       # 'else' or 'unless' command.
-      def elsif(value)
+      modifier(:elsif) do |args|
         raise ArgumentError, "'elsif' cannot be passed after 'else' or in an 'unless'" if @switched || @in_else
+        value = args.first
         @true_commands << [ value, Block.new ]
         true
       end
@@ -102,7 +103,7 @@ module Papyrus
       # An ArgumentError will be thrown if @switched is set to true, which will be
       # the case if you try to put an 'else' command following an already existing
       # 'else' command.
-      def else
+      modifier(:else) do |args|
         raise ArgumentError, "More than one 'else' to Command::If" if @switched
         @in_else = !@in_else
         @switched = true

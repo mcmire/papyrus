@@ -28,15 +28,14 @@ module Papyrus
         self
       end
       
-      # modifier
-      def when(value)
+      modifier(:when) do |args|
+        value = args.first
         @current_case = value
         @blocks[value] = Block.new unless @blocks.has_key?(value)
         true
       end
       
-      # modifier
-      def else
+      modifier(:else) do |args|
         @current_case = nil
         true
       end

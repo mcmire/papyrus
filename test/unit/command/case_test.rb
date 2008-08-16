@@ -52,13 +52,13 @@ Expectations do
   begin
     expect "foo" do
       case_cmd = Papyrus::Command::Case.new("", [])
-      case_cmd.when("foo")
+      case_cmd.when(["foo"])
       case_cmd.current_case
     end
     # @blocks[value] should be set when not @blocks.has_key?(value)
     expect Papyrus::Command::Block do
       case_cmd = Papyrus::Command::Case.new("", [])
-      case_cmd.when("foo")
+      case_cmd.when(["foo"])
       case_cmd.send(:instance_variable_get, "@blocks")["foo"]
     end
   end
@@ -67,11 +67,11 @@ Expectations do
   begin
     expect true do
       case_cmd = Papyrus::Command::Case.new("", [])
-      case_cmd.else
+      case_cmd.else([])
     end
     expect nil do
       case_cmd = Papyrus::Command::Case.new("", [])
-      case_cmd.else
+      case_cmd.else([])
       case_cmd.current_case
     end
   end

@@ -19,10 +19,6 @@ module Papyrus
         add(cmd)
       end
       
-      def end
-        true
-      end
-      
       def to_s
         "[ #{@name} ]"
       end
