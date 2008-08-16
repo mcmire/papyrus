@@ -60,7 +60,7 @@ module Papyrus
     # it through the tokenizer/compiler.
     def compile(name)
       if content = source.get(name)
-        if content.kind_of?(Command::Base)
+        if content.kind_of?(Command)
           content
         else
           parse(filename, content)

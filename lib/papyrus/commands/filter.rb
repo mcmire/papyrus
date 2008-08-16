@@ -1,5 +1,5 @@
 module Papyrus
-  module Command
+  module Commands
     # A Filter command filters its block through a preprocessor
     #  [% filter :processor %]
     #    This text will be filtered through the :processor filter

@@ -3,7 +3,9 @@ module Papyrus
   # It is what is returned on Parser#load or Parser#parse.
   #
   # A Template should only be created by the Parser, and never by anything else.
-  class Template < Command::Block
+  #---
+  # Should this be a NodeList instead of a BlockCommand?
+  class Template < BlockCommand
     
     # Template is a context object
     include ContextItem
@@ -41,7 +43,7 @@ module Papyrus
     end
     
     def to_s
-      '[ Template: ' + @commands.map{ |i| "[#{i.to_s}]" }.join(' ') + ' ]'
+      '[ Template: ' + @nodes.map {|node| "[#{node.to_s}]" }.join(' ') + ' ]'
     end
   end
 end

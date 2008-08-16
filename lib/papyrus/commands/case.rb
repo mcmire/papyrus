@@ -19,7 +19,7 @@ module Papyrus
         @value = @args.first
         @blocks = {}
         @current_case = nil
-        @default = CommandBlock.new
+        @default = NodeList.new
       end
       
       # Adds a command to the current case, or to the 'else' (default) case.
@@ -31,7 +31,7 @@ module Papyrus
       modifier(:when) do |args|
         value = args.first
         @current_case = value
-        @blocks[value] = CommandBlock.new unless @blocks.has_key?(value)
+        @blocks[value] = NodeList.new unless @blocks.has_key?(value)
         true
       end
       

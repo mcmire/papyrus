@@ -1,7 +1,6 @@
 module Papyrus
-  # A BlockCommand (not to be confused with a CommandBlock) is a command that has a
-  # start tag, an end tag, and possibly modifier tags. The content between tags may
-  # span multiple lines.
+  # A BlockCommand is a command that has a start tag, an end tag, and possibly
+  # modifier tags. The content between tags may span multiple lines.
   class BlockCommand < Command
     def initialize(*args)
       raise ArgumentError, 'BlockCommand.new should not be called directly' if self.class == BlockCommand

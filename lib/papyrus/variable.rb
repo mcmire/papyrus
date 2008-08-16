@@ -20,15 +20,17 @@ module Papyrus
     # (specifically, the method in the Preprocessor tied to the context) that will
     # be applied on the text.
     def initialize(name, processor)
-      @name = value
+      @name = name
       @processor = processor
     end
 
     # Requests the value of this object's saved value name from 
     # +context+, and returns the string representation of that
     # value to the caller, after passing it through the preprocessor.
+    #---
+    # Update to use Preprocessor instead of Commands::Filter?
     def output(context = nil)
-      Filter.filter(context, @processor, self.class) {|cxt| cxt[@name] }
+      Commands::Filter.filter(context, @processor, self.class) {|cxt| cxt[@name] }
     end
 
     def to_s

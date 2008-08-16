@@ -1,45 +1,43 @@
-require File.dirname(__FILE__)+'/../test_helper'
+require File.dirname(__FILE__)+'/test_helper'
 
-require 'command/base'
-require 'command/value'
-require 'command/stackable'
-require 'command/filter'
+require 'node'
+require 'command'
+require 'variable'
+require 'block_command'
+require 'commands/filter'
+
+include Papyrus
 
 Expectations do
   
   # Value#initialize
   begin
     expect "foobar" do
-      value = Papyrus::Variable.new("foobar", "unescaped")
-      value.send(:instance_variable_get, "@value")
+      value = Variable.new("foobar", "unescaped")
+      value.send(:instance_variable_get, "@name")
     end
     expect "unescaped" do
-      value = Papyrus::Variable.new("foobar", "unescaped")
+      value = Variable.new("foobar", "unescaped")
       value.send(:instance_variable_get, "@processor")
     end
   end
   
   # Value#output
-  expect Papyrus::Command::Filter.to.receive(:filter).with(:context, "unescaped", Papyrus::Command::Value) do |filter|
-    value = Papyrus::Variable.new("", "")
-    value.send(:instance_variable_set, "@processor", "unescaped")
+  expect Commands::Filter.to.receive(:filter).with(:context, "unescaped", Variable) do |filter|
+    value = Variable.new("", "unescaped")
     value.output(:context)
   end
   
   # Value#to_s
   begin
     # when @processor present
-    expect "[ Value: foobar :unescaped ]" do
-      value = Papyrus::Variable.new("", "")
-      value.send(:instance_variable_set, "@value", "foobar")
-      value.send(:instance_variable_set, "@processor", "unescaped")
+    expect "[ Variable: foobar :unescaped ]" do
+      value = Variable.new("foobar", "unescaped")
       value.to_s
     end
-    # when @processor nil
-    expect "[ Value: foobar ]" do
-      value = Papyrus::Variable.new("", "")
-      value.send(:instance_variable_set, "@value", "foobar")
-      value.send(:instance_variable_set, "@processor", "")
+    # when @processor blank
+    expect "[ Variable: foobar ]" do
+      value = Variable.new("foobar", "")
       value.to_s
     end
   end

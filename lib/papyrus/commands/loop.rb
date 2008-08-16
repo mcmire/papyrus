@@ -23,8 +23,8 @@ module Papyrus
         @value, @block_params = @args
         @block_params = @block_params.strip.gsub(/\s+/, ' ').split if @block_params
         @switched = false
-        @commands = CommandBlock.new
-        @else_commands = CommandBlock.new
+        @commands = NodeList.new
+        @else_commands = NodeList.new
         @in_else = false
       end
       

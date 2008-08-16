@@ -1,3 +1,7 @@
+#
+# FIXME
+#
+
 require File.dirname(__FILE__)+'/test_helper'
 
 require 'papyrus'
@@ -63,13 +67,13 @@ Expectations do
     #  compiler.stubs(:source).returns(source)
     #  compiler.compile("foo")
     #end
-    # when body is a instance of Command::Base
-    expect Command::Base do
+    # when body is a instance of Command
+    expect Command do
       compiler = Compiler.new
-      compiler.source.stubs(:get).returns(Command::Base.new)
+      compiler.source.stubs(:get).returns(Command.new)
       compiler.compile("")
     end
-    # when body is not an instance of Command::Base
+    # when body is not an instance of Command
     expect Compiler.new.to.receive(:parse) do |compiler|
       compiler.source.stubs(:get).returns("some content")
       compiler.compile("")

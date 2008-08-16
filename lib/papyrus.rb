@@ -5,12 +5,12 @@
 
 ##############################################################################
 
-$LOAD_PATH.unshift Dir.dirname(__FILE__)
+$LOAD_PATH.unshift File.dirname(__FILE__)
 
 require 'ruby_ext'
 
 require 'papyrus/node'
-require 'papyrus/command_block'
+require 'papyrus/node_list'
 require 'papyrus/text'
 require 'papyrus/variable'
 require 'papyrus/command'

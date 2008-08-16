@@ -31,17 +31,17 @@ Expectations do
   begin
     # when @current_case defined
     expect true do
-      cmd = Papyrus::Command::Base.new("", [])
+      cmd = Papyrus::Command.new("", [])
       case_cmd = Papyrus::Command::Case.new("", [])
       case_cmd.send(:instance_variable_set, "@current_case", "foo")
       blocks = case_cmd.send(:instance_variable_get, "@blocks")
-      blocks["foo"] = Papyrus::Command::CommandBlock.new
+      blocks["foo"] = Papyrus::NodeList.new
       case_cmd.add(cmd)
       blocks["foo"].last.equal?(cmd)
     end
     # when @current_case not defined
     expect true do
-      cmd = Papyrus::Command::Base.new("", [])
+      cmd = Papyrus::Command.new("", [])
       case_cmd = Papyrus::Command::Case.new("", [])
       case_cmd.add(cmd)
       case_cmd.send(:instance_variable_get, "@default").last.equal?(cmd)

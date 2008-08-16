@@ -1,23 +1,30 @@
+#
+# FIXME when Template is a NodeList
+#
+
 require File.dirname(__FILE__)+'/test_helper'
 
-require 'command/base'
-require 'command/block'
-require 'command/text'
+require 'node'
+require 'command'
+require 'block_command'
+require 'text'
 require 'context_item'
 require 'context'
 require 'template'
+
+include Papyrus
 
 Expectations do
   
   # Template#initialize
   expect "whatever" do
-    template = Papyrus::Template.new("whatever")
+    template = Template.new("whatever")
     template.send(:instance_variable_get, "@parser")
   end
   
   # Template#parent
   expect true do
-    template = Papyrus::Template.new(nil)
+    template = Template.new(nil)
     template.send(:parent).equal?(template)
   end
   
@@ -27,14 +34,14 @@ Expectations do
     begin
       # @parent should be set to @parser
       expect "parser" do
-        template = Papyrus::Template.new("parser")
+        template = Template.new("parser")
         template.class.superclass.any_instance.stubs(:output)
         template.output(nil)
         template.send(:instance_variable_get, "@parent")
       end
       # super(self) should be called
       locally do
-        template = Papyrus::Template.new("parser")
+        template = Template.new("parser")
         expect template.class.superclass.any_instance.to.receive(:output).with(template) do
           template.output(nil)
         end
@@ -43,24 +50,24 @@ Expectations do
     # when object is a ContextItem
     begin
       # @parent should be set to object
-      expect Papyrus::Context do
-        template = Papyrus::Template.new("parser")
+      expect Context do
+        template = Template.new("parser")
         template.class.superclass.any_instance.stubs(:output)
-        template.output(Papyrus::Context.new)
+        template.output(Context.new)
         template.send(:instance_variable_get, "@parent")
       end
       # super(self) should be called
       locally do
-        template = Papyrus::Template.new("parser")
+        template = Template.new("parser")
         expect template.class.superclass.any_instance.to.receive(:output).with(template) do
-          template.output(Papyrus::Context.new)
+          template.output(Context.new)
         end
       end
     end
     # when object is not nil and not a ContextItem: super(instance of Context) should be called
     locally do
-      template = Papyrus::Template.new("parser")
-      expect template.class.superclass.any_instance.to.receive(:output) do#.with(Papyrus::Context.any_instance) do
+      template = Template.new("parser")
+      expect template.class.superclass.any_instance.to.receive(:output) do#.with(Context.any_instance) do
         template.output("something else")
       end
     end
@@ -68,9 +75,9 @@ Expectations do
   
   # Template#to_s
   expect "[ Template: [[ Blocks:  ]] [blah] ]" do
-    template = Papyrus::Template.new("parser")
-    template << Papyrus::Command::CommandBlock.new
-    template << Papyrus::Text.new("blah")
+    template = Template.new("parser")
+    template << NodeList.new
+    template << Text.new("blah")
     template.to_s
   end
   

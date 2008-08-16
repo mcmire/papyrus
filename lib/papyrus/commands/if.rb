@@ -29,10 +29,10 @@ module Papyrus
     # is codified as follows:
     #
     #  @true_commands = [
-    #    ['foo', Papyrus::CommandBlock.new ],
-    #    ['bar', Papyrus::CommandBlock.new ]
+    #    ['foo', Papyrus::NodeList.new ],
+    #    ['bar', Papyrus::NodeList.new ]
     #  ]
-    #  @false_commands = Papyrus::CommandBlock.new
+    #  @false_commands = Papyrus::NodeList.new
     #
     # The output of the whole command, as you would expect, will be the output of the
     # 'if' block if its value evaluates to true, otherwise the output of the 'elsif'
@@ -52,9 +52,9 @@ module Papyrus
     # would be stored as follows:
     #
     #  @true_commands = [
-    #    [ 'foo', Papyrus::CommandBlock.new ]
+    #    [ 'foo', Papyrus::NodeList.new ]
     #  ]
-    #  @false_commands = Papyrus::CommandBlock.new
+    #  @false_commands = Papyrus::NodeList.new
     #
     # In this case, the output of the whole command will be the output of the 'else'
     # block if foo evaluates to true, otherwise it's the output of the 'unless'
@@ -67,8 +67,8 @@ module Papyrus
       def initialize(*args)
         super
         @value = @args.first
-        @true_commands = [ [@value, CommandBlock.new] ]
-        @false_commands = CommandBlock.new
+        @true_commands = [ [@value, NodeList.new] ]
+        @false_commands = NodeList.new
         @in_else = (@name == 'unless')
         @switched = false
       end
@@ -93,7 +93,7 @@ module Papyrus
       modifier(:elsif) do |args|
         raise ArgumentError, "'elsif' cannot be passed after 'else' or in an 'unless'" if @switched || @in_else
         value = args.first
-        @true_commands << [ value, CommandBlock.new ]
+        @true_commands << [ value, NodeList.new ]
         true
       end
       

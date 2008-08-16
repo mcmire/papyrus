@@ -150,7 +150,7 @@ module Papyrus
         case token
         when Token::LeftBracket
           cmd = handle_command
-          if cmd.kind_of?(Command::Base)
+          if cmd.kind_of?(Command)
             # create new Context if BlockCommand command
             (cmd.kind_of?(Command::BlockCommand) ? stack : stack.last) << cmd
           end
@@ -183,12 +183,12 @@ module Papyrus
     
     def modify_active_cmd(full_command)
       active_cmd = stack.last
-      (active_cmd.is_a?(Command::Base) && active_cmd.modified_by?(full_command)) || false
+      (active_cmd.is_a?(Command) && active_cmd.modified_by?(full_command)) || false
     end
     
     def close_active_cmd(full_command)
       active_cmd = stack.last
-      if active_cmd.is_a?(Command::Base) && active_cmd.closed_by?(full_command)
+      if active_cmd.is_a?(Command) && active_cmd.closed_by?(full_command)
         cmd = stack.pop
         stack.last << cmd
         true
@@ -238,7 +238,7 @@ module Papyrus
       # BlockCommand and we come across, say, 'else' - we don't want that
       # interpreted as a modifier
       # TODO: Test?
-      stack.last << Command::Base.new
+      stack.last << Command.new
       reached_eoq = false
       unmatched_error = (quote_klass == Token::SingleQuote) ? UnmatchedSingleQuoteError : UnmatchedDoubleQuoteError
       while token = tokens.next

@@ -1,9 +1,12 @@
-require File.dirname(__FILE__)+'/../test_helper'
+require File.dirname(__FILE__)+'/test_helper'
 
-require 'command/base'
-require 'command/stackable'
+require 'node'
+require 'command'
+require 'block_command'
 
-class BlockCommandChild < Papyrus::Command::BlockCommand
+include Papyrus
+
+class BlockCommandChild < Papyrus::BlockCommand
   def initialize
   end
 end
@@ -11,7 +14,7 @@ end
 Expectations do
   
   expect ArgumentError do
-    Papyrus::Command::BlockCommand.new("", [])
+    BlockCommand.new("", [])
   end
   
   expect ArgumentError do

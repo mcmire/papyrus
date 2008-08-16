@@ -88,9 +88,9 @@ Expectations do
   end
   
   # Filter#add
-  expect Papyrus::Command::Base do
+  expect Papyrus::Command do
     filter = Papyrus::Command::Filter.new("", [])
-    filter << Papyrus::Command::Base.new("", [])
+    filter << Papyrus::Command.new("", [])
     filter.text.last
   end
   

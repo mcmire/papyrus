@@ -67,16 +67,16 @@ Expectations do
   
   # Loop#add
   begin
-    expect Command::Base do
+    expect Command do
       loop_cmd = Command::Loop.new("", [])
       loop_cmd.send(:instance_variable_set, "@in_else", true)
-      loop_cmd << Command::Base.new("", [])
+      loop_cmd << Command.new("", [])
       loop_cmd.send(:instance_variable_get, "@else_commands").last
     end
-    expect Command::Base do
+    expect Command do
       loop_cmd = Command::Loop.new("", [])
       loop_cmd.send(:instance_variable_set, "@in_else", false)
-      loop_cmd << Command::Base.new("", [])
+      loop_cmd << Command.new("", [])
       loop_cmd.send(:instance_variable_get, "@commands").last
     end
   end
@@ -259,11 +259,11 @@ Expectations do
   expect "[ Loop: foobarbazquux [ Blocks: [[ filter ]] [blah blah] ] Else: [ Blocks: [[ filter ]] [blah blah] ] ]" do
     loop_cmd = Command::Loop.new("", [])
     loop_cmd.send(:instance_variable_set, "@value", %w(foo bar baz quux))
-    main_block = Command::CommandBlock.new
+    main_block = NodeList.new
     main_block << Command::Filter.new("filter", %w(unescaped))
     main_block << Text.new("blah blah")
     loop_cmd.send(:instance_variable_set, "@commands", main_block)
-    else_block = Command::CommandBlock.new
+    else_block = NodeList.new
     else_block << Command::Filter.new("filter", %w(unescaped))
     else_block << Text.new("blah blah")
     loop_cmd.send(:instance_variable_set, "@else_commands", else_block)

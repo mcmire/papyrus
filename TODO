@@ -13,7 +13,7 @@ TODO
 
 * Currently we don't support [foo] variables
   
-* Remove Command::Base#closed_by? - [/for] notation should be hard-coded in parser
+* Remove Command#closed_by? - [/for] notation should be hard-coded in parser
   I think. Also remove #end method of BlockCommand and subclasses.
   
 * Get rid of method_separator_regexp (Compiler, ContextItem#get)

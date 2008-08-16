@@ -1,3 +1,7 @@
+#
+# FIXME
+#
+
 require File.dirname(__FILE__)+'/test_helper'
 
 require 'command/base'
@@ -109,7 +113,7 @@ Expectations do
   begin
     # modifiee is not a BlockCommand
     expect nil do
-      Papyrus::Lexicon.modifier_on("", Papyrus::Command::Base.new)
+      Papyrus::Lexicon.modifier_on("", Papyrus::Command.new)
     end
     # modifiee is a BlockCommand but modifiee doesn't respond to modifier
     expect nil do
@@ -163,7 +167,7 @@ Expectations do
   begin
     # modifiee is not a BlockCommand
     expect nil do
-      Papyrus::Lexicon.closer_on("", Papyrus::Command::Base.new)
+      Papyrus::Lexicon.closer_on("", Papyrus::Command.new)
     end
     # closer is nil
     expect nil do

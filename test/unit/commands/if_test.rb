@@ -46,17 +46,17 @@ Expectations do
   # If#add
   begin
     # when @in_else
-    expect Command::Base do
+    expect Command do
       if_cmd = Command::If.new("", [])
       if_cmd.send(:instance_variable_set, "@in_else", true)
-      if_cmd << Command::Base.new("", [])
+      if_cmd << Command.new("", [])
       if_cmd.send(:instance_variable_get, "@false_commands").last
     end
     # when not in @in_else
-    expect Command::Base do
+    expect Command do
       if_cmd = Command::If.new("", [])
       if_cmd.send(:instance_variable_set, "@in_else", false)
-      if_cmd << Command::Base.new("", [])
+      if_cmd << Command.new("", [])
       if_cmd.send(:instance_variable_get, "@true_commands").last.last.last
     end
   end
@@ -133,20 +133,20 @@ Expectations do
     expect "[ If (42) [ Blocks: [foo bar] ] Elsif (foo) [ filter ] Else: [ Blocks: [bar baz] ] ]" do
       if_cmd = Command::If.new("if", [])
       if_cmd.send(:instance_variable_set, "@true_commands", [
-        [ 42,    (Command::CommandBlock.new << Text.new("foo bar")) ],
+        [ 42,    (NodeList.new << Text.new("foo bar")) ],
         [ 'foo', Command::Filter.new("filter", ["unescaped"]) ]
       ])
       if_cmd.send(:instance_variable_set, "@false_commands",
-        (Command::CommandBlock.new << Text.new("bar baz")) )
+        (NodeList.new << Text.new("bar baz")) )
       if_cmd.to_s
     end
     # when @called_as 'unless'
     expect "[ Unless (42): [ Blocks: [bar baz] ] Else: [ Blocks: [foo bar] ] ]" do
       if_cmd = Command::If.new("unless", [42])
       if_cmd.send(:instance_variable_set, "@false_commands",
-        (Command::CommandBlock.new << Text.new("bar baz")) )
+        (NodeList.new << Text.new("bar baz")) )
       if_cmd.send(:instance_variable_set, "@true_commands", [
-        [ nil, (Command::CommandBlock.new << Text.new("foo bar")) ]
+        [ nil, (NodeList.new << Text.new("foo bar")) ]
       ])
       if_cmd.to_s
     end

@@ -35,7 +35,7 @@ Expectations do
     end
     # template is not nil, but is a Command
     locally do
-      cmd = Papyrus::Command::Base.new("", [])
+      cmd = Papyrus::Command.new("", [])
       expect ["foo", cmd] do
         include_cmd = Papyrus::Command::Include.new("", [])
         include_cmd.stubs(:get_compiled_or_uncompiled_template).returns(["foo", cmd])
