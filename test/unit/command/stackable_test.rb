@@ -11,16 +11,16 @@ end
 Expectations do
   
   expect ArgumentError do
-    Papyrus::Command::Stackable.new
+    Papyrus::Command::Stackable.new("", [])
   end
   
   expect ArgumentError do
-    StackableChild.new << nil
+    StackableChild.new("", []) << nil
   end
   
   expect "[ whatever ]" do
     stackable = StackableChild.new
-    stackable.send(:instance_variable_set, "@called_as", "whatever")
+    stackable.send(:instance_variable_set, "@name", "whatever")
     stackable.to_s
   end
   

@@ -8,18 +8,15 @@ module Papyrus
     # [% else %]
     # [% end %]
     class Case < Stackable
-      self.modifier = :when
-      self.closer   = :end
-
       attr_reader :current_case
       
       # +value+ should be a literal value or a variable that will be evaluated into a
       # literal value within the context on execution. The literal value will be
       # tested against the literals supplied for each 'when' command following
       # (or an optional 'else' command).
-      def initialize(lexicon, called_as, value)
+      def initialize(*args)
         super
-        @value = value
+        @value = @args.first
         @blocks = {}
         @current_case = nil
         @default = Block.new

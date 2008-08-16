@@ -16,15 +16,12 @@ module Papyrus
     # [% else %] may be specified, modifying Loop to print out
     # @else_commands in case +variable+ is false, or empty.
     class Loop < Stackable
-      self.modifier = :else
-      self.closer   = :end
-
       # [% in variable %] or [% loop variable %]
       # Or [% in variable: name %]
-      def initialize(lexicon, called_as, value, block_params)
+      def initialize(*args)
         super
-        @value = value
-        @block_params = block_params && block_params.strip.gsub(/\s+/, ' ').split
+        @value, @block_params = @args
+        @block_params = @block_params.strip.gsub(/\s+/, ' ').split if @block_params
         @switched = false
         @commands = Block.new
         @else_commands = Block.new

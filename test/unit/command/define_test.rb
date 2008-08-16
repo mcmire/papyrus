@@ -7,22 +7,22 @@ Expectations do
   
   begin
     expect "foo" do
-      define = Papyrus::Command::Define.new(nil, "", "foo", "bar")
-      define.send(:instance_variable_get, "@name")
+      define = Papyrus::Command::Define.new("", ["foo", "bar"])
+      define.send(:instance_variable_get, "@var_name")
     end
     expect "bar" do
-      define = Papyrus::Command::Define.new(nil, "", "foo", "bar")
-      define.send(:instance_variable_get, "@value")
+      define = Papyrus::Command::Define.new("", ["foo", "bar"])
+      define.send(:instance_variable_get, "@var_value")
     end
   end
   
   begin
-    expect nil do
-      define = Papyrus::Command::Define.new(nil, "", "foo", "bar")
+    expect "" do
+      define = Papyrus::Command::Define.new("", ["foo", "bar"])
       define.output({})
     end
     expect "bar" do
-      define = Papyrus::Command::Define.new(nil, "", "foo", "bar")
+      define = Papyrus::Command::Define.new("", ["foo", "bar"])
       context = {}
       define.output(context)
       context["foo"]

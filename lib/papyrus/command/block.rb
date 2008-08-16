@@ -3,11 +3,13 @@ module Papyrus
     # Command::Block provides a single interface to multiple Command objects.
     # This should probably never be called by the designer or a programmer,
     # but by Stackables.
-    class Block < Base
+    #
+    # This is not a subclass of Command::Base because this isn't really a command
+    # Maybe we should rename this to CommandBlock?
+    class Block
       attr_reader :commands
       
-      def initialize(*args)
-        super
+      def initialize
         @commands = []
       end
       
@@ -39,7 +41,7 @@ module Papyrus
       # object.  The output is returned as a single string.  If no output
       # is generated, returns an empty string.
       def output(context = nil)
-        @commands.map {|cmd| cmd.output(context) }.join('')
+        @commands.inject("") {|str, cmd| str << cmd.output(context) }
       end
       
       # Returns Commands held, as a string

@@ -5,9 +5,9 @@ module Papyrus
     # Papyrus-style comments as well.
     class Comment < Base
       # Save the +comment+ for to_s
-      def initialize(lexicon, called_as, comment='')
+      def initialize(*args)
         super
-        @comment = comment
+        @comment = @args.first
       end
       
       # output returns nothing.

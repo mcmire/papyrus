@@ -20,8 +20,7 @@ module Papyrus
       # context when the command is output; +processor+ is the name of the filter
       # (specifically, the method in the Preprocessor tied to the context) that will
       # be applied on the text.
-      def initialize(lexicon, called_as, value, processor=nil)
-        super
+      def initialize(value, processor)
         @value = value
         @processor = processor
       end
@@ -35,7 +34,7 @@ module Papyrus
 
       def to_s
         str = "[ Value: #{@value} "
-        str << ":#{@processor} " if @processor
+        str << ":#{@processor} " unless @processor.blank?
         str << ']'
         str
       end

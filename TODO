@@ -1,12 +1,21 @@
 TODO
 
-* Modify all Command subclasses to accept three args: lexicon, command_name, args
+* Modify all Command subclasses to accept two args: command_name and args
+* Modifier methods (e.g. Case#when) should just get passed their args
+* Support [/for] notation
 * Get rid of method_separator_regexp (Compiler, ContextItem#get)
 * Lexicon
   * define can be a lot simpler - no regexp option, no aliases - just keep an array
     of available commands
   * Remove closer_on, adv_define, global_var, global_modifier, closer
 * DefaultLexicon - do we even need this anymore? Maybe we need just a YAML file...
+  Or, push all definition stuff into the classes themselves.. that would work.
 * Remove :source option for Compiler. #compile should accept a filename; #parse should
   accept raw template content. That's it.
 * DefaultPreprocessor - rename to Filters or something
+* All subclasses of Stackable should not override initialize() or add() unless necessary
+* Should we add attr_accessors for all instance variables for easier access during
+  testing?
+* Should Command::Text even be a command (seems like it could be grouped with Block,
+  Stackable, and Value)? The only thing it has in common is the #output method... 
+* We probably don't need UnknownCommand anymore

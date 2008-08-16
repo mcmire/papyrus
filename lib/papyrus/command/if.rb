@@ -61,18 +61,15 @@ module Papyrus
     # block. Note that if there's no 'else' block given, then the output will be
     # the output of an empty block (since that's what @true_commands is set to initially).
     class If < Stackable
-      self.modifier = :elsif
-      self.closer   = :end
-
-      # Creates a new If command, storing what the command was called_as
+      # Creates a new If command, storing what the command was called as
       # ("if" or "unless"), and the value that will get evaluated when the
       # command is executed.
-      def initialize(lexicon, called_as, value)
+      def initialize(*args)
         super
-        @value = value
-        @true_commands = [ [value, Block.new] ]
+        @value = @args.first
+        @true_commands = [ [@value, Block.new] ]
         @false_commands = Block.new
-        @in_else = (called_as == 'unless')
+        @in_else = (@name == 'unless')
         @switched = false
       end
       
@@ -125,7 +122,7 @@ module Papyrus
       
       def to_s
         str = '['
-        if @called_as == 'if'
+        if @name == 'if'
           label = 'If'
           @true_commands.each do |value, block|
             str << " #{label} (#{value}) #{block}"

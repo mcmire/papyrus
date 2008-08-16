@@ -77,27 +77,27 @@ Expectations do
   
   # Filter#initialize
   begin
-    expect :foo do
-      filter = Papyrus::Command::Filter.new(nil, "", :foo)
-      filter.send(:instance_variable_get, "@processor")
+    expect "foo" do
+      filter = Papyrus::Command::Filter.new("", ["foo"])
+      filter.processor
     end
     expect [] do
-      filter = Papyrus::Command::Filter.new(nil, "", nil)
-      filter.send(:instance_variable_get, "@text")
+      filter = Papyrus::Command::Filter.new("", [])
+      filter.text
     end
   end
   
   # Filter#add
   expect Papyrus::Command::Base do
-    filter = Papyrus::Command::Filter.new(nil, "", nil)
-    filter << Papyrus::Command::Base.new
-    filter.send(:instance_variable_get, "@text").last
+    filter = Papyrus::Command::Filter.new("", [])
+    filter << Papyrus::Command::Base.new("", [])
+    filter.text.last
   end
   
   # Filter#output
-  expect Papyrus::Command::Filter.to.receive(:filter).with(:context, :unescaped, Papyrus::Command::Filter) do |filter_klass|
-    filter = filter_klass.new(nil, "", nil)
-    filter.send(:instance_variable_set, "@processor", :unescaped)
+  expect Papyrus::Command::Filter.to.receive(:filter).with(:context, "unescaped", Papyrus::Command::Filter) do |filter_klass|
+    filter = filter_klass.new("", [])
+    filter.processor = "unescaped"
     filter.output(:context)
   end
   

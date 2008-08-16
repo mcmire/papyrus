@@ -4,19 +4,13 @@ module Papyrus
     # between each class. Command::Base provides an abstract base class to show
     # interface.
     class Base
-      attr_reader :lexicon, :called_as
-      class << self
-        attr_accessor :modifier
-        attr_accessor :closer
-      end
+      attr_reader :name, :args
       
-      self.modifier = nil
-      self.closer   = nil
-      
-      # Creates a new instance of the Command. The first argument is assumed to
-      # be the name that this command was called as, and stored.
-      def initialize(*args)
-        @lexicon, @called_as = args
+      # Creates a new instance of the Command.
+      # Stores the name this command was called as and the arguments.
+      def initialize(name, args)
+        @name = name
+        @args = args
       end
       
       # If this command is a Stackable, and +raw_command+ refers to a valid modifier

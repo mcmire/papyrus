@@ -5,8 +5,6 @@ module Papyrus
     #    This text will be filtered through the :processor filter
     #  [% end %]
     class Filter < Stackable
-      self.closer = :end
-      
       # XXX: Hmm, I'm not so sure these should go here. This might be a better place
       # for Preprocessor.
       class << self
@@ -38,9 +36,11 @@ module Papyrus
         end
       end
       
-      def initialize(lexicon, called_as, processor)
+      attr_accessor :processor, :text
+      
+      def initialize(*args)
         super
-        @processor = processor
+        @processor = @args.first
         @text = []
       end
 
