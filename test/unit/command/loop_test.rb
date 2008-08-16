@@ -259,13 +259,13 @@ Expectations do
   expect "[ Loop: foobarbazquux [ Blocks: [[ filter ]] [blah blah] ] Else: [ Blocks: [[ filter ]] [blah blah] ] ]" do
     loop_cmd = Command::Loop.new("", [])
     loop_cmd.send(:instance_variable_set, "@value", %w(foo bar baz quux))
-    main_block = Command::Block.new
+    main_block = Command::CommandBlock.new
     main_block << Command::Filter.new("filter", %w(unescaped))
-    main_block << Command::Text.new("blah blah")
+    main_block << Text.new("blah blah")
     loop_cmd.send(:instance_variable_set, "@commands", main_block)
-    else_block = Command::Block.new
+    else_block = Command::CommandBlock.new
     else_block << Command::Filter.new("filter", %w(unescaped))
-    else_block << Command::Text.new("blah blah")
+    else_block << Text.new("blah blah")
     loop_cmd.send(:instance_variable_set, "@else_commands", else_block)
     loop_cmd.to_s
   end

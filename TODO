@@ -1,35 +1,25 @@
 TODO
 
-* Remove DefaultLexicon
-* Add Papyrus.command_list to store an array of commands to load
-* Redefine Lexicon - when Papyrus is loaded (or the first time a command is looked up, or something),
+* Add Papyrus.available_commands to store an array of commands to load
+* Rewrite Lexicon - when Papyrus is loaded (or the first time a command is looked up, or something),
   introspect Command classes in Command::Available (or something) and gather information
   (name, modifiers, aliases), and cache info. We'll probably have a few methods in
   Lexicon to do this
-
-* Modifier methods (e.g. Case#when) should just get passed their args
-* Add Command::Base.modifier to define a modifier method. This ensures that modifiers
-  are safe.
-* Modify Base#modified_by? to access the @modifiers set
+* Move stuff in DefaultLexicon to Command subclasses
 * Add alias_modifier that +alias_method+s the modifier method and adds another entry
   to @modifiers
+
+* Remove UnknownCommand
+
+* Currently we don't support [foo] variables
   
 * Remove Command::Base#closed_by? - [/for] notation should be hard-coded in parser
-  I think. Also remove #end method of Stackable and subclasses.
+  I think. Also remove #end method of BlockCommand and subclasses.
   
 * Get rid of method_separator_regexp (Compiler, ContextItem#get)
-* Lexicon
-  * define can be a lot simpler - no regexp option, no aliases - just keep an array
-    of available commands
-  * Remove closer_on, adv_define, global_var, global_modifier, closer
-* DefaultLexicon - do we even need this anymore? Maybe we need just a YAML file...
-  Or, push all definition stuff into the classes themselves.. that would work.
 * Remove :source option for Compiler. #compile should accept a filename; #parse should
   accept raw template content. That's it.
 * DefaultPreprocessor - rename to Filters or something
-* All subclasses of Stackable should not override initialize() or add() unless necessary
+* All subclasses of BlockCommand should not override initialize() or add() unless necessary
 * Should we add attr_accessors for all instance variables for easier access during
   testing?
-* Should Command::Text even be a command (seems like it could be grouped with Block,
-  Stackable, and Value)? The only thing it has in common is the #output method... 
-* We probably don't need UnknownCommand anymore

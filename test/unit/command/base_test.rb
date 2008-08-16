@@ -5,7 +5,7 @@ require 'command/stackable'
 
 module Papyrus
   module Command
-    class Foo < Stackable
+    class Foo < BlockCommand
     end
   end
 end
@@ -52,7 +52,7 @@ Expectations do
   
   # Base#modified_by?
   begin
-    # when command is not a Stackable
+    # when command is not a BlockCommand
     expect false do
       Command::Base.new("", []).modified_by?('')
     end
@@ -89,7 +89,7 @@ Expectations do
   
   # Base#closed_by?
   begin
-    # when command is not a Stackable
+    # when command is not a BlockCommand
     expect false do
       Command::Base.new("", []).closed_by?('')
     end

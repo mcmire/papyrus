@@ -5,9 +5,16 @@
 
 ##############################################################################
 
+$LOAD_PATH.unshift Dir.dirname(__FILE__)
+
 require 'ruby_ext'
 
+require 'papyrus/node'
+require 'papyrus/command_block'
+require 'papyrus/text'
+require 'papyrus/variable'
 require 'papyrus/command'
+require 'papyrus/block_command'
 
 require 'papyrus/context_item'
 require 'papyrus/context'
@@ -15,7 +22,7 @@ require 'papyrus/context'
 require 'papyrus/lexicon'
 require 'papyrus/default_lexicon'
 
-require 'papyrus/preprocessor'
+#require 'papyrus/preprocessor'
 require 'papyrus/default_preprocessor'
 
 require 'papyrus/source'
@@ -24,18 +31,33 @@ require 'papyrus/string_source'
 
 require 'papyrus/compiler'
 require 'papyrus/parser'
-
 require 'papyrus/template'
 
 ##############################################################################
 
-# Papyrus is just the namespace for all of its real code, so as
-# not to caues confusion or clashes with the programmer's code.
 module Papyrus
   VERSION = "2.2.3-modified"
+  
+  class << self
+    attr_accessor :available_commands
 
-  # Passes arguments straight to Compiler.new. Returns a Compiler object.
-  def self.new(*args)
-    Compiler.new(*args)
+    # Loads command classes and creates a new instance of Compiler
+    def new(*args)
+      load_command_classes
+      introspect_command_classes
+      Compiler.new(*args)
+    end
+
+    # Load commands based on available_commands, or load all
+    def load_command_classes
+      if Papyrus.available_commands
+        Papyrus.available_commands.each {|command| require "papyrus/commands/#{command}" }
+      else
+        Dir[File.dirname(__FILE__)+"/papyrus/commands/*.rb"].each {|file| require file }
+      end
+    end
+    
+    # Gathers and stores info about each command class
+    
   end
 end

@@ -86,7 +86,7 @@ Expectations do
       parser.commandify
       parser.stack == stack
     end
-    # left bracket present and handle_command returns Stackable
+    # left bracket present and handle_command returns BlockCommand
     expect Command::If do
       parser = Parser.new("", nil)
       parser.stubs(:tokens).returns TokenList.new([Token::LeftBracket.new])
@@ -94,7 +94,7 @@ Expectations do
       parser.commandify
       parser.stack.last
     end
-    # left bracket present and handle_command doesn't return Stackable
+    # left bracket present and handle_command doesn't return BlockCommand
     expect Command::Base do
       parser = Parser.new("", nil)
       parser.stubs(:tokens).returns TokenList.new([Token::LeftBracket.new])

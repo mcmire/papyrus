@@ -67,7 +67,7 @@ module Papyrus
         end
       else
         #template = Template.new(@options)
-        #template << Command::Text.new("[ Template '#{name}' not found ]")
+        #template << Text.new("[ Template '#{name}' not found ]")
         #template
         raise "Template '#{name}' not found!"
       end

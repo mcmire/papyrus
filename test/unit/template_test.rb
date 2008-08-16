@@ -69,8 +69,8 @@ Expectations do
   # Template#to_s
   expect "[ Template: [[ Blocks:  ]] [blah] ]" do
     template = Papyrus::Template.new("parser")
-    template << Papyrus::Command::Block.new
-    template << Papyrus::Command::Text.new("blah")
+    template << Papyrus::Command::CommandBlock.new
+    template << Papyrus::Text.new("blah")
     template.to_s
   end
   

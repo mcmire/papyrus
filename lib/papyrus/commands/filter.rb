@@ -4,7 +4,7 @@ module Papyrus
     #  [% filter :processor %]
     #    This text will be filtered through the :processor filter
     #  [% end %]
-    class Filter < Stackable
+    class Filter < BlockCommand
       # XXX: Hmm, I'm not so sure these should go here. This might be a better place
       # for Preprocessor.
       class << self

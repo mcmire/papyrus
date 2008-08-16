@@ -10,7 +10,7 @@ module Papyrus
     # file, the content of the file is retrieved and passed through the Parser
     # and compiled into a Template. Otherwise the 'include' tag is replaced with
     # an error message.
-    class Include < Base
+    class Include < Command
       def initialize(*args)
         super
         @value = @args.first

@@ -133,20 +133,20 @@ Expectations do
     expect "[ If (42) [ Blocks: [foo bar] ] Elsif (foo) [ filter ] Else: [ Blocks: [bar baz] ] ]" do
       if_cmd = Command::If.new("if", [])
       if_cmd.send(:instance_variable_set, "@true_commands", [
-        [ 42,    (Command::Block.new << Command::Text.new("foo bar")) ],
+        [ 42,    (Command::CommandBlock.new << Text.new("foo bar")) ],
         [ 'foo', Command::Filter.new("filter", ["unescaped"]) ]
       ])
       if_cmd.send(:instance_variable_set, "@false_commands",
-        (Command::Block.new << Command::Text.new("bar baz")) )
+        (Command::CommandBlock.new << Text.new("bar baz")) )
       if_cmd.to_s
     end
     # when @called_as 'unless'
     expect "[ Unless (42): [ Blocks: [bar baz] ] Else: [ Blocks: [foo bar] ] ]" do
       if_cmd = Command::If.new("unless", [42])
       if_cmd.send(:instance_variable_set, "@false_commands",
-        (Command::Block.new << Command::Text.new("bar baz")) )
+        (Command::CommandBlock.new << Text.new("bar baz")) )
       if_cmd.send(:instance_variable_set, "@true_commands", [
-        [ nil, (Command::Block.new << Command::Text.new("foo bar")) ]
+        [ nil, (Command::CommandBlock.new << Text.new("foo bar")) ]
       ])
       if_cmd.to_s
     end

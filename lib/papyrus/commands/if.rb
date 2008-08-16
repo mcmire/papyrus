@@ -1,6 +1,6 @@
 module Papyrus
   module Command
-    # An If command is a Stackable command. It requires an opening:
+    # An If command is a BlockCommand command. It requires an opening:
     # [% if +variable+ %] or [% unless +variable+ %].
     #
     # When the command is executed, if +variable+ is true, then the contents of
@@ -29,10 +29,10 @@ module Papyrus
     # is codified as follows:
     #
     #  @true_commands = [
-    #    ['foo', Papyrus::Block.new ],
-    #    ['bar', Papyrus::Block.new ]
+    #    ['foo', Papyrus::CommandBlock.new ],
+    #    ['bar', Papyrus::CommandBlock.new ]
     #  ]
-    #  @false_commands = Papyrus::Block.new
+    #  @false_commands = Papyrus::CommandBlock.new
     #
     # The output of the whole command, as you would expect, will be the output of the
     # 'if' block if its value evaluates to true, otherwise the output of the 'elsif'
@@ -52,23 +52,23 @@ module Papyrus
     # would be stored as follows:
     #
     #  @true_commands = [
-    #    [ 'foo', Papyrus::Block.new ]
+    #    [ 'foo', Papyrus::CommandBlock.new ]
     #  ]
-    #  @false_commands = Papyrus::Block.new
+    #  @false_commands = Papyrus::CommandBlock.new
     #
     # In this case, the output of the whole command will be the output of the 'else'
     # block if foo evaluates to true, otherwise it's the output of the 'unless'
     # block. Note that if there's no 'else' block given, then the output will be
     # the output of an empty block (since that's what @true_commands is set to initially).
-    class If < Stackable
+    class If < BlockCommand
       # Creates a new If command, storing what the command was called as
       # ("if" or "unless"), and the value that will get evaluated when the
       # command is executed.
       def initialize(*args)
         super
         @value = @args.first
-        @true_commands = [ [@value, Block.new] ]
-        @false_commands = Block.new
+        @true_commands = [ [@value, CommandBlock.new] ]
+        @false_commands = CommandBlock.new
         @in_else = (@name == 'unless')
         @switched = false
       end
@@ -93,7 +93,7 @@ module Papyrus
       modifier(:elsif) do |args|
         raise ArgumentError, "'elsif' cannot be passed after 'else' or in an 'unless'" if @switched || @in_else
         value = args.first
-        @true_commands << [ value, Block.new ]
+        @true_commands << [ value, CommandBlock.new ]
         true
       end
       

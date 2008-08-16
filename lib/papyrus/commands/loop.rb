@@ -1,6 +1,6 @@
 module Papyrus
   module Command
-    # A Loop command is a Stackable command. It requires an opening:
+    # A Loop command is a block command. It requires an opening:
     # [% in variable %] or [% loop variable %].
     #
     # +variable+ is fetched from the context.
@@ -15,7 +15,7 @@ module Papyrus
     #
     # [% else %] may be specified, modifying Loop to print out
     # @else_commands in case +variable+ is false, or empty.
-    class Loop < Stackable
+    class Loop < BlockCommand
       # [% in variable %] or [% loop variable %]
       # Or [% in variable: name %]
       def initialize(*args)
@@ -23,8 +23,8 @@ module Papyrus
         @value, @block_params = @args
         @block_params = @block_params.strip.gsub(/\s+/, ' ').split if @block_params
         @switched = false
-        @commands = Block.new
-        @else_commands = Block.new
+        @commands = CommandBlock.new
+        @else_commands = CommandBlock.new
         @in_else = false
       end
       

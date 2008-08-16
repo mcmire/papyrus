@@ -13,7 +13,7 @@ module Papyrus
   module Command
     class Bar < Base
     end
-    class Baz < Stackable
+    class Baz < BlockCommand
     end
   end
 end
@@ -107,11 +107,11 @@ Expectations do
   
   # .modifier_on
   begin
-    # modifiee is not a Stackable
+    # modifiee is not a BlockCommand
     expect nil do
       Papyrus::Lexicon.modifier_on("", Papyrus::Command::Base.new)
     end
-    # modifiee is a Stackable but modifiee doesn't respond to modifier
+    # modifiee is a BlockCommand but modifiee doesn't respond to modifier
     expect nil do
       lex = Papyrus::Lexicon
       lex.modifier_on("", Papyrus::Command::Bar.new)
@@ -161,7 +161,7 @@ Expectations do
   
   # closer_on
   begin
-    # modifiee is not a Stackable
+    # modifiee is not a BlockCommand
     expect nil do
       Papyrus::Lexicon.closer_on("", Papyrus::Command::Base.new)
     end

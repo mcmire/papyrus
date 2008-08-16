@@ -3,7 +3,7 @@ module Papyrus
     # An Unknown command is a command that could not be found in the parser's lexicon.
     # We keep the raw version of the command that was called and save it for future
     # use in case it becomes a real command before it is output.
-    class Unknown < Base
+    class Unknown < Command
       # Creates a new Unknown command, storing the raw command that could not be
       # found so that we can look it up later.
       def initialize(lexicon, full_command)

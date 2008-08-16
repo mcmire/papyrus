@@ -10,18 +10,18 @@ Expectations do
   # Value#initialize
   begin
     expect "foobar" do
-      value = Papyrus::Command::Value.new("foobar", "unescaped")
+      value = Papyrus::Variable.new("foobar", "unescaped")
       value.send(:instance_variable_get, "@value")
     end
     expect "unescaped" do
-      value = Papyrus::Command::Value.new("foobar", "unescaped")
+      value = Papyrus::Variable.new("foobar", "unescaped")
       value.send(:instance_variable_get, "@processor")
     end
   end
   
   # Value#output
   expect Papyrus::Command::Filter.to.receive(:filter).with(:context, "unescaped", Papyrus::Command::Value) do |filter|
-    value = Papyrus::Command::Value.new("", "")
+    value = Papyrus::Variable.new("", "")
     value.send(:instance_variable_set, "@processor", "unescaped")
     value.output(:context)
   end
@@ -30,14 +30,14 @@ Expectations do
   begin
     # when @processor present
     expect "[ Value: foobar :unescaped ]" do
-      value = Papyrus::Command::Value.new("", "")
+      value = Papyrus::Variable.new("", "")
       value.send(:instance_variable_set, "@value", "foobar")
       value.send(:instance_variable_set, "@processor", "unescaped")
       value.to_s
     end
     # when @processor nil
     expect "[ Value: foobar ]" do
-      value = Papyrus::Command::Value.new("", "")
+      value = Papyrus::Variable.new("", "")
       value.send(:instance_variable_set, "@value", "foobar")
       value.send(:instance_variable_set, "@processor", "")
       value.to_s

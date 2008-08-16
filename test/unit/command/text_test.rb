@@ -6,18 +6,18 @@ require 'command/text'
 Expectations do
   
   expect "Some text and stuff" do
-    text = Papyrus::Command::Text.new("Some text and stuff")
+    text = Papyrus::Text.new("Some text and stuff")
     text.send(:instance_variable_get, "@text")
   end
   
   expect "Some text and stuff" do
-    text = Papyrus::Command::Text.new("")
+    text = Papyrus::Text.new("")
     text.send(:instance_variable_set, "@text", "Some text and stuff")
     text.output
   end
   
   expect "Some text and stuff" do
-    text = Papyrus::Command::Text.new("")
+    text = Papyrus::Text.new("")
     text.send(:instance_variable_set, "@text", "Some text and stuff")
     text.to_s
   end

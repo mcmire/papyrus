@@ -1,5 +1,5 @@
 module Papyrus
-  module Command
+  module Commands
     # A Case command provides switch-command functionality.
     # [% case variable %]
     # [% when literal1 %]
@@ -7,7 +7,7 @@ module Papyrus
     # [% when literal3 %]
     # [% else %]
     # [% end %]
-    class Case < Stackable
+    class Case < BlockCommand
       attr_reader :current_case
       
       # +value+ should be a literal value or a variable that will be evaluated into a
@@ -19,7 +19,7 @@ module Papyrus
         @value = @args.first
         @blocks = {}
         @current_case = nil
-        @default = Block.new
+        @default = CommandBlock.new
       end
       
       # Adds a command to the current case, or to the 'else' (default) case.
@@ -31,7 +31,7 @@ module Papyrus
       modifier(:when) do |args|
         value = args.first
         @current_case = value
-        @blocks[value] = Block.new unless @blocks.has_key?(value)
+        @blocks[value] = CommandBlock.new unless @blocks.has_key?(value)
         true
       end
       

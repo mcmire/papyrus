@@ -35,7 +35,7 @@ Expectations do
       case_cmd = Papyrus::Command::Case.new("", [])
       case_cmd.send(:instance_variable_set, "@current_case", "foo")
       blocks = case_cmd.send(:instance_variable_get, "@blocks")
-      blocks["foo"] = Papyrus::Command::Block.new
+      blocks["foo"] = Papyrus::Command::CommandBlock.new
       case_cmd.add(cmd)
       blocks["foo"].last.equal?(cmd)
     end

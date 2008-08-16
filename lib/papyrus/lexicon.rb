@@ -41,12 +41,12 @@ module Papyrus
         end
       end
       
-      # Checks to see whether the given command object is a Stackable and if
+      # Checks to see whether the given command object is a BlockCommand and if
       # +full_command+ is a valid modifier of the given command, or is contained in the
       # global hash of modifiers. If so, returns the name of the modifier (a symbol)
       # and a MatchData object, otherwise nil.
       def modifier_on(full_command, modifiee)
-        return unless modifiee.is_a?(Command::Stackable)
+        return unless modifiee.is_a?(Command::BlockCommand)
         if cmd = commands[modifiee.class]
           cmd[:modifiers].each do |modifier, regexp|
             if match = regexp.match(full_command)
@@ -63,13 +63,13 @@ module Papyrus
         nil
       end
       
-      # Checks to see whether the given command object is a Stackable and if
+      # Checks to see whether the given command object is a BlockCommand and if
       # +full_command+ is contained in the global hash of closers. If so, returns the
       # name of the closer (a symbol) and a MatchData object, otherwise nil.
       #---
       # TODO: Don't need this anymore?
       def closer_on(full_command, modifiee)
-        if modifiee.is_a?(Command::Stackable) and \
+        if modifiee.is_a?(Command::BlockCommand) and \
         closer = self.closer and regexp = closer[:block].call(modifiee) and match = regexp.match(full_command)
           [ closer[:name], match ]
         end
@@ -89,7 +89,7 @@ module Papyrus
       #
       # There are three options you can pass:
       # * +modifiers+ - Lets you specify other commands that modify this command
-      #   when called inside it (only effective if this command is a Block or Stackable)
+      #   when called inside it (only effective if this command is a Block or BlockCommand)
       # * +class_name+ - Lets you specify the name of the class in the Command module
       #    that will be used to create the Command. By default this is derived from
       #    the +command_name+.
@@ -169,7 +169,7 @@ module Papyrus
       end
       
       # If passed with arguments, defines a command that can be used to close all
-      # (Stackable) commands in the lexicon. Arguments are same for .global_modifier.
+      # (BlockCommand) commands in the lexicon. Arguments are same for .global_modifier.
       # Note: whereas you can define multiple global modifiers, there can only be one
       # global closer defined, since there is no closers hash. Usually the closer will
       # be 'end'.

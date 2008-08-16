@@ -142,7 +142,7 @@ module Papyrus
     # - Extra right bracket(s): treat as text
     # - Unmatched double quote before eos: treat as text
     # - Unmatched single quote before eos: treat as text
-    # - Stackable command not ended before eos: fudge end
+    # - BlockCommand command not ended before eos: fudge end
     # - Unknown command name: treat as text
     def commandify
       # we set the stack in the constructor instead of here for testing purposes
@@ -151,12 +151,12 @@ module Papyrus
         when Token::LeftBracket
           cmd = handle_command
           if cmd.kind_of?(Command::Base)
-            # create new Context if Stackable command
-            (cmd.kind_of?(Command::Stackable) ? stack : stack.last) << cmd
+            # create new Context if BlockCommand command
+            (cmd.kind_of?(Command::BlockCommand) ? stack : stack.last) << cmd
           end
         else
           # assume token is a Token::Text
-          stack.last << Command::Text.new(token)
+          stack.last << Text.new(token)
         end
       end
       # this is actually never supposed to happen...
@@ -177,7 +177,7 @@ module Papyrus
       rescue TokenList::EndOfListError, Lexicon::CommandNotFoundError,
              UnmatchedSingleQuoteError, UnmatchedDoubleQuoteError => e
         # assume we've reached the end of the command, so don't treat it as a command
-        Command::Text.new(cmd_call[:raw])
+        Text.new(cmd_call[:raw])
       end
     end
     
@@ -235,7 +235,7 @@ module Papyrus
     def handle_quoted_arg(quote_klass)
       arg = []
       # push a dummy value onto the stack in case the top of the stack is a
-      # Stackable and we come across, say, 'else' - we don't want that
+      # BlockCommand and we come across, say, 'else' - we don't want that
       # interpreted as a modifier
       # TODO: Test?
       stack.last << Command::Base.new

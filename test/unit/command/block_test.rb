@@ -8,46 +8,46 @@ require 'command/block'
 Expectations do
   
   expect [] do
-    Papyrus::Command::Block.new.send(:instance_variable_get, "@commands")
+    Papyrus::Command::CommandBlock.new.send(:instance_variable_get, "@commands")
   end
   
   locally do
-    block = Papyrus::Command::Block.new
+    block = Papyrus::Command::CommandBlock.new
     expect block.send(:commands).to.receive(:length) do
       block.length
     end
   end
   
   locally do
-    block = Papyrus::Command::Block.new
+    block = Papyrus::Command::CommandBlock.new
     expect block.send(:commands).to.receive(:size) do
       block.size
     end
   end
   
   locally do
-    block = Papyrus::Command::Block.new
+    block = Papyrus::Command::CommandBlock.new
     expect block.send(:commands).to.receive(:first) do
       block.first
     end
   end
   
   locally do
-    block = Papyrus::Command::Block.new
+    block = Papyrus::Command::CommandBlock.new
     expect block.send(:commands).to.receive(:last) do
       block.last
     end
   end
   
   locally do
-    block = Papyrus::Command::Block.new
+    block = Papyrus::Command::CommandBlock.new
     expect block.send(:commands).to.receive(:empty?) do
       block.empty?
     end
   end
   
   locally do
-    block = Papyrus::Command::Block.new
+    block = Papyrus::Command::CommandBlock.new
     expect block.send(:commands).to.receive(:[]).with(0) do
       block[0]
     end
@@ -57,11 +57,11 @@ Expectations do
   begin
     # when argument is not a Command
     expect TypeError do
-      Papyrus::Command::Block.new.add("something else")
+      Papyrus::Command::CommandBlock.new.add("something else")
     end
     # when argument is a Command
     expect true do
-      block = Papyrus::Command::Block.new
+      block = Papyrus::Command::CommandBlock.new
       cmd = Papyrus::Command::Base.new
       block.add(cmd)
       block.send(:commands).include?(cmd)
@@ -69,22 +69,22 @@ Expectations do
   end
   
   locally do
-    expect Papyrus::Command::Block.new.to.receive(:add) do |block|
+    expect Papyrus::Command::CommandBlock.new.to.receive(:add) do |block|
       block << "blah"
     end
   end
   
   expect "foobar" do
-    block = Papyrus::Command::Block.new
-    block << Papyrus::Command::Text.new("foo")
-    block << Papyrus::Command::Text.new("bar")
+    block = Papyrus::Command::CommandBlock.new
+    block << Papyrus::Text.new("foo")
+    block << Papyrus::Text.new("bar")
     block.output
   end
   
   expect "[ Blocks: [foo] [bar] ]" do
-    block = Papyrus::Command::Block.new
-    block << Papyrus::Command::Text.new("foo")
-    block << Papyrus::Command::Text.new("bar")
+    block = Papyrus::Command::CommandBlock.new
+    block << Papyrus::Text.new("foo")
+    block << Papyrus::Text.new("bar")
     block.to_s
   end
     

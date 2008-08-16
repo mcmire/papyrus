@@ -1,7 +1,7 @@
 module Papyrus
-  module Command
+  module Commands
     # A Define command will set a variable within the enclosing context
-    class Define < Base
+    class Define < Command
       def initialize(*args)
         super
         @var_name, @var_value = @args
