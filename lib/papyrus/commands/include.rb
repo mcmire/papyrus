@@ -43,7 +43,7 @@ module Papyrus
     private
       def get_template_from_value(context)
         fn, template = get_compiled_or_uncompiled_template(context)
-        template = compile_template(context, fn, template) if template && !template.kind_of?(Base)
+        template = compile_template(context, fn, template) if template && !template.kind_of?(Command)
         [fn, template]
       end
     

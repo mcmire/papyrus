@@ -102,7 +102,7 @@ Expectations do
     expect Commands::If do
       parser = Parser.new("", nil)
       parser.stubs(:tokens).returns TokenList.new([Token::LeftBracket.new])
-      parser.stubs(:handle_command).returns Commands::If.new(nil, 'if', nil)
+      parser.stubs(:handle_command).returns Commands::If.new('if', [])
       parser.commandify
       parser.stack.last
     end
@@ -110,7 +110,7 @@ Expectations do
     expect Command do
       parser = Parser.new("", nil)
       parser.stubs(:tokens).returns TokenList.new([Token::LeftBracket.new])
-      parser.stubs(:handle_command).returns Command.new
+      parser.stubs(:handle_command).returns Command.new("", [])
       parser.commandify
       parser.stack.last.last
     end
@@ -120,7 +120,7 @@ Expectations do
       parser.stubs(:tokens).returns TokenList.new([Token::Text.new("foo"), Token::LeftBracket.new, Token::Text.new("bar") ])
       parser.stubs(:handle_command)
       parser.commandify
-      parser.stack.last.commands.map {|cmd| cmd.class }
+      parser.stack.last.nodes.map {|cmd| cmd.class }
     end
     # stack is too big
     #expect RuntimeError do
@@ -145,7 +145,7 @@ Expectations do
     # unknown command
     expect Text do
       parser = Parser.new("", nil)
-      parser.stubs(:gather_command_name_and_args).raises(CommandNotFoundError)
+      parser.stubs(:gather_command_name_and_args).raises(Parser::CommandNotFoundError)
       parser.handle_command
     end
     # modifier
@@ -194,7 +194,7 @@ Expectations do
     # active command is a Command but is not modified by given command
     expect false do
       parser = Parser.new("", nil)
-      cmd = Command.new
+      cmd = Command.new("", [])
       cmd.stubs(:modified_by?).returns(false)
       parser.stubs(:stack).returns([ cmd ])
       parser.modify_active_cmd("")
@@ -202,7 +202,7 @@ Expectations do
     # active command is a Command and is modified by given command
     expect true do
       parser = Parser.new("", nil)
-      cmd = Command.new
+      cmd = Command.new("", [])
       cmd.stubs(:modified_by?).returns(true)
       parser.stubs(:stack).returns([ cmd ])
       parser.modify_active_cmd("")
@@ -220,7 +220,7 @@ Expectations do
     # active command is a Command but is not closed by given command
     expect false do
       parser = Parser.new("", nil)
-      cmd = Command.new
+      cmd = Command.new("", [])
       cmd.stubs(:closed_by?).returns(false)
       parser.stubs(:stack).returns([ cmd ])
       parser.close_active_cmd("")
@@ -230,7 +230,7 @@ Expectations do
       # stack should be popped
       expect 1 do
         parser = Parser.new("", nil)
-        cmd = Command.new
+        cmd = Command.new("", [])
         cmd.stubs(:closed_by?).returns(true)
         parser.stubs(:stack).returns([ [], cmd ])
         parser.close_active_cmd("")
@@ -239,7 +239,7 @@ Expectations do
       # active command should be moved to the one before it
       expect true do
         parser = Parser.new("", nil)
-        cmd = Command.new
+        cmd = Command.new("", [])
         cmd.stubs(:closed_by?).returns(true)
         parser.stubs(:stack).returns([ [], cmd ])
         parser.close_active_cmd("")
@@ -248,7 +248,7 @@ Expectations do
       # return value
       expect true do
         parser = Parser.new("", nil)
-        cmd = Command.new
+        cmd = Command.new("", [])
         cmd.stubs(:closed_by?).returns(true)
         parser.stubs(:stack).returns([ [], cmd ])
         parser.close_active_cmd("")

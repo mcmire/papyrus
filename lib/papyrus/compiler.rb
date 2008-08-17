@@ -29,15 +29,12 @@ module Papyrus
     # Compiler.new() accepts a hash as an argument, and looks for these
     # keys: (with defaults)
     #
-    #  
-    #  :lexicon  => A Lexicon object. (a dup of DefaultLexicon)
     #  :context => A context object. (A new context)
     #  :preprocessor => The preprocessor. (DefaultPreprocessor)
     #  :default_processor => The processor. (:process)
     #  :source => The type of input ('file')
     def initialize(options = {})
       @options  = options.symbolize_keys
-      @lexicon = options.delete(:lexicon) || DefaultLexicon
       @preprocessor = options.delete(:preprocessor) || DefaultPreprocessor
       @default_processor = options.delete(:default_processor) || :unescaped
       @method_separator_regexp = if seps = options.delete(:method_separators)
@@ -63,7 +60,7 @@ module Papyrus
         if content.kind_of?(Command)
           content
         else
-          parse(filename, content)
+          parse(name, content)
         end
       else
         #template = Template.new(@options)

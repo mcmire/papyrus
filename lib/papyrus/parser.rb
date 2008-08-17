@@ -240,7 +240,7 @@ module Papyrus
       # BlockCommand and we come across, say, 'else' - we don't want that
       # interpreted as a modifier
       # TODO: Test?
-      stack.last << Command.new
+      stack.last << Command.new("", [])
       reached_eoq = false
       unmatched_error = (quote_klass == Token::SingleQuote) ? UnmatchedSingleQuoteError : UnmatchedDoubleQuoteError
       while token = tokens.next

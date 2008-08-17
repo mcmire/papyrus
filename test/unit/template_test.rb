@@ -5,6 +5,7 @@
 require File.dirname(__FILE__)+'/test_helper'
 
 require 'node'
+require 'node_list'
 require 'command'
 require 'block_command'
 require 'text'
@@ -74,7 +75,7 @@ Expectations do
   end
   
   # Template#to_s
-  expect "[ Template: [[ Blocks:  ]] [blah] ]" do
+  expect "[ Template: [[ NodeList:  ]] [blah] ]" do
     template = Template.new("parser")
     template << NodeList.new
     template << Text.new("blah")

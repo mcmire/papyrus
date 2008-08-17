@@ -1,7 +1,3 @@
-#
-# FIXME
-#
-
 require File.dirname(__FILE__)+'/test_helper'
 
 require 'papyrus'
@@ -15,10 +11,6 @@ Expectations do
     expect(:foo => 'bar') do
       compiler = Compiler.new(:foo => 'bar')
       compiler.send(:instance_variable_get, "@options")
-    end
-    expect DefaultLexicon do
-      compiler = Compiler.new
-      compiler.send(:instance_variable_get, "@lexicon")
     end
     expect DefaultPreprocessor do
       compiler = Compiler.new
@@ -70,7 +62,7 @@ Expectations do
     # when body is a instance of Command
     expect Command do
       compiler = Compiler.new
-      compiler.source.stubs(:get).returns(Command.new)
+      compiler.source.stubs(:get).returns(Command.new("", []))
       compiler.compile("")
     end
     # when body is not an instance of Command
