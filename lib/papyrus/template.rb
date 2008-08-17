@@ -1,23 +1,18 @@
 module Papyrus
-  # Template is the top-level Block object.
-  # It is what is returned on Parser#load or Parser#parse.
+  # Template holds the top-level list of nodes assembled during the parsing process.
+  # It is what is returned on Parser#parse.
   #
   # A Template should only be created by the Parser, and never by anything else.
-  #---
-  # Should this be a NodeList instead of a BlockCommand?
-  class Template < BlockCommand
+  class Template < NodeList
     
     # Template is a context object
     include ContextItem
     
-    @modifier = nil
-    @closer   = nil
-    
     # Template must know about the parser so it can access its context.
     def initialize(parser)
+      super()
       @parser = parser
       @parent = self
-      super()
     end
     
     # Template#output is a special case for a Command. Because

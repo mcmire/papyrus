@@ -20,7 +20,7 @@ require 'papyrus/context_item'
 require 'papyrus/context'
 
 require 'papyrus/lexicon'
-require 'papyrus/default_lexicon'
+#require 'papyrus/default_lexicon'
 
 #require 'papyrus/preprocessor'
 require 'papyrus/default_preprocessor'
@@ -40,24 +40,25 @@ module Papyrus
   
   class << self
     attr_accessor :available_commands
+    attr_reader :lexicon
 
     # Loads command classes and creates a new instance of Compiler
-    def new(*args)
+    def new(options = {})
+      @lexicon = {}
       load_command_classes
-      introspect_command_classes
-      Compiler.new(*args)
+      Compiler.new(options)
     end
 
     # Load commands based on available_commands, or load all
     def load_command_classes
-      if Papyrus.available_commands
-        Papyrus.available_commands.each {|command| require "papyrus/commands/#{command}" }
-      else
-        Dir[File.dirname(__FILE__)+"/papyrus/commands/*.rb"].each {|file| require file }
+      available_commands = Papyrus.available_commands || Dir[File.dirname(__FILE__)+"/papyrus/commands/*.rb"].map {|file| File.basename(file, '.rb') }
+      available_commands.each do |name|
+        name = name.to_s
+        require "papyrus/commands/#{name}"
+        klass = Commands.const_get(name.camelize)
+        names = [name] + klass.aliases.map {|x| x.to_s }
+        names.each {|n| @lexicon[n] = klass }
       end
     end
-    
-    # Gathers and stores info about each command class
-    
   end
 end

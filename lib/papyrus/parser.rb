@@ -72,6 +72,7 @@ module Papyrus
   class Parser
     class UnmatchedSingleQuoteError < StandardError; end
     class UnmatchedDoubleQuoteError < StandardError; end
+    class CommandNotFoundError < StandardError; end
     
     # Parser is a context object
     include ContextItem
@@ -174,7 +175,7 @@ module Papyrus
         return if modify_active_cmd(cmd_call[:full])
         return if close_active_cmd(cmd_call[:full])
         lookup_command(cmd_call[:name], cmd_call[:args])
-      rescue TokenList::EndOfListError, Lexicon::CommandNotFoundError,
+      rescue TokenList::EndOfListError, CommandNotFoundError,
              UnmatchedSingleQuoteError, UnmatchedDoubleQuoteError => e
         # assume we've reached the end of the command, so don't treat it as a command
         Text.new(cmd_call[:raw])
@@ -197,8 +198,9 @@ module Papyrus
       end
     end
     
-    def lookup_command
-      lexicon.lookup(name, args)
+    def lookup_command(name, args)
+      #lexicon.lookup(name, args)
+      command_klass = Papyrus.lexicon[name] and command_klass.new(name, args)
     end
     
     def gather_command_name_and_args(cmd_call)

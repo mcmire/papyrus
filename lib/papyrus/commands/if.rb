@@ -1,5 +1,5 @@
 module Papyrus
-  module Command
+  module Commands
     # An If command is a BlockCommand command. It requires an opening:
     # [% if +variable+ %] or [% unless +variable+ %].
     #
@@ -61,6 +61,8 @@ module Papyrus
     # block. Note that if there's no 'else' block given, then the output will be
     # the output of an empty block (since that's what @true_commands is set to initially).
     class If < BlockCommand
+      aka :unless
+      
       # Creates a new If command, storing what the command was called as
       # ("if" or "unless"), and the value that will get evaluated when the
       # command is executed.

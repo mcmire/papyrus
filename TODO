@@ -1,20 +1,18 @@
 TODO
 
-* Add Papyrus.available_commands to store an array of commands to load
+D Move stuff in DefaultLexicon to Command subclasses
+D Add @aliases class instance variable and aka class method to Command
 * Rewrite Lexicon - when Papyrus is loaded (or the first time a command is looked up, or something),
-  introspect Command classes in Command::Available (or something) and gather information
+  introspect Command classes in Commands module (or something) and gather information
   (name, modifiers, aliases), and cache info. We'll probably have a few methods in
-  Lexicon to do this
-* Move stuff in DefaultLexicon to Command subclasses
-* Add alias_modifier that +alias_method+s the modifier method and adds another entry
-  to @modifiers
+  Lexicon to do this [ACTUALLY JUST REMOVE]
+D Modify Parser#lookup_command to not use Lexicon
 
-* Remove UnknownCommand
-
-* Currently we don't support [foo] variables
+* Currently we don't support [foo] variables - in Compiler we should treat sub as
+  variable before treating as modifier or closer or command name
   
 * Remove Command#closed_by? - [/for] notation should be hard-coded in parser
-  I think. Also remove #end method of BlockCommand and subclasses.
+  I think. Also be sure #end method of BlockCommand and subclasses is removed.
   
 * Get rid of method_separator_regexp (Compiler, ContextItem#get)
 * Remove :source option for Compiler. #compile should accept a filename; #parse should

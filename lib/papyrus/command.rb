@@ -8,11 +8,18 @@ module Papyrus
       def modifiers
         @modifiers ||= Set.new
       end
-      
       def modifier(name, &block)
         name = name.to_sym
         define_method(name, &block)
-        modifiers << name
+        self.modifiers << name
+      end
+      
+      def aliases
+        @aliases ||= Set.new
+      end
+      def aka(*aliases)
+        self.aliases # init set
+        @aliases += aliases
       end
     end
     
@@ -32,13 +39,10 @@ module Papyrus
     #
     # This is used by Parser to both check and run a modifier on the currently
     # active command.
-    def modified_by?(full_command)
+    def modified_by?(modifier, args)
       is_a?(BlockCommand) or return false
-      ret = lexicon.modifier_on(full_command, self) or return false
-      modifier, match = ret
       respond_to?(modifier) or return false
-      args = match.captures.compact
-      send(modifier, *args)
+      send(modifier, args)
     end
     
     # If this command is a BlockCommand, and +full_command+ refers to a valid closer
@@ -48,6 +52,8 @@ module Papyrus
     #
     # This is used by Parser to both check and run a closer on the currently
     # active command.
+    #---
+    # XXX: Not needed anymore?
     def closed_by?(full_command)
       is_a?(BlockCommand) or return false
       ret = lexicon.closer_on(full_command, self) or return false

@@ -41,6 +41,26 @@ Expectations do
     end
   end
   
+  # Base.aliases
+  begin
+    expect Set.new do
+      Command.send(:instance_variable_set, "@aliases", nil)
+      Command.aliases
+    end
+    expect Set.new(["foo", "bar"]) do
+      Command.send(:instance_variable_set, "@aliases", Set.new(["foo", "bar"]))
+      Command.aliases
+    end
+  end
+  
+  # Base.aka
+  begin
+    expect true do
+      Command.aka :foo
+      Command.aliases.include?(:foo)
+    end
+  end
+  
   # Base#initialize
   begin
     expect "foo" do
@@ -55,36 +75,24 @@ Expectations do
   begin
     # when command is not a BlockCommand
     expect false do
-      Command.new("", []).modified_by?('')
-    end
-    # when not lexicon.modifier_on
-    expect false do
-      foo = Commands::Foo.new("", [])
-      foo.stubs(:lexicon).returns stub('lexicon', :modifier_on => nil)
-      foo.modified_by?('')
+      Command.new("", []).modified_by?("", [])
     end
     # when does not respond_to?(modifier)
     expect false do
       foo = Commands::Foo.new("", [])
-      match = stub('match', :captures => [], :to_a => [])
-      foo.stubs(:lexicon).returns stub('lexicon', :modifier_on => [:foo, match])
-      foo.modified_by?('')
+      foo.modified_by?("foo", [])
     end
     # when method returns false
     expect false do
       foo = Commands::Foo.new("", [])
-      match = stub('match', :captures => [], :to_a => [])
-      foo.stubs(:lexicon).returns stub('lexicon', :modifier_on => [:end, match])
-      foo.stubs(:end).returns(false)
-      foo.modified_by?('')
+      foo.stubs(:else).returns(false)
+      foo.modified_by?("else", [])
     end
     # when method returns true
     expect true do
       foo = Commands::Foo.new("", [])
-      match = stub('match', :captures => [], :to_a => [])
-      foo.stubs(:lexicon).returns stub('lexicon', :modifier_on => [:end, match])
-      foo.stubs(:end).returns(true)
-      foo.modified_by?("")
+      foo.stubs(:else).returns(true)
+      foo.modified_by?("else", [])
     end
   end
   

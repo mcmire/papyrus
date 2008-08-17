@@ -5,8 +5,16 @@
 require File.dirname(__FILE__)+'/test_helper'
 
 require 'papyrus'
+require 'commands/if'
 
 include Papyrus
+
+module Papyrus
+  module Commands
+    class Foo < Command
+    end
+  end
+end
 
 Expectations do
   
@@ -91,10 +99,10 @@ Expectations do
       parser.stack == stack
     end
     # left bracket present and handle_command returns BlockCommand
-    expect Command::If do
+    expect Commands::If do
       parser = Parser.new("", nil)
       parser.stubs(:tokens).returns TokenList.new([Token::LeftBracket.new])
-      parser.stubs(:handle_command).returns Command::If.new(nil, 'if', nil)
+      parser.stubs(:handle_command).returns Commands::If.new(nil, 'if', nil)
       parser.commandify
       parser.stack.last
     end
@@ -107,7 +115,7 @@ Expectations do
       parser.stack.last.last
     end
     # text present
-    expect [Command::Text, Command::Text] do
+    expect [Text, Text] do
       parser = Parser.new("", nil)
       parser.stubs(:tokens).returns TokenList.new([Token::Text.new("foo"), Token::LeftBracket.new, Token::Text.new("bar") ])
       parser.stubs(:handle_command)
@@ -135,9 +143,9 @@ Expectations do
       parser.handle_command
     end
     # unknown command
-    expect Command::Text do
+    expect Text do
       parser = Parser.new("", nil)
-      parser.stubs(:gather_command_name_and_args).raises(Lexicon::CommandNotFoundError)
+      parser.stubs(:gather_command_name_and_args).raises(CommandNotFoundError)
       parser.handle_command
     end
     # modifier
@@ -156,19 +164,19 @@ Expectations do
       parser.handle_command
     end
     # reached end of list before end of command
-    expect Command::Text do
+    expect Text do
       parser = Parser.new("", nil)
       parser.stubs(:gather_command_name_and_args).raises(TokenList::EndOfListError)
       parser.handle_command
     end
     # unmatched single quote
-    expect Command::Text do
+    expect Text do
       parser = Parser.new("", nil)
       parser.stubs(:gather_command_name_and_args).raises(Parser::UnmatchedSingleQuoteError)
       parser.handle_command
     end
     # unmatched double quote
-    expect Command::Text do
+    expect Text do
       parser = Parser.new("", nil)
       parser.stubs(:gather_command_name_and_args).raises(Parser::UnmatchedDoubleQuoteError)
       parser.handle_command
@@ -245,6 +253,22 @@ Expectations do
         parser.stubs(:stack).returns([ [], cmd ])
         parser.close_active_cmd("")
       end
+    end
+  end
+  
+  # Parser#lookup_command
+  begin
+    # when name is not in lexicon
+    expect nil do
+      Papyrus.send(:instance_variable_set, "@lexicon", {})
+      parser = Parser.new("", nil)
+      parser.lookup_command("foo", [])
+    end
+    # when name is in lexicon
+    expect Commands::If do
+      Papyrus.send(:instance_variable_set, "@lexicon", { 'if' => Commands::If })
+      parser = Parser.new("", nil)
+      parser.lookup_command("if", [])
     end
   end
   

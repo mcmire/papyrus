@@ -1,5 +1,5 @@
 module Papyrus
-  module Command
+  module Commands
     # An Include command allows the designer to include a template from
     # another source.
     #

@@ -1,5 +1,5 @@
 module Papyrus
-  module Command
+  module Commands
     # A Loop command is a block command. It requires an opening:
     # [% in variable %] or [% loop variable %].
     #
