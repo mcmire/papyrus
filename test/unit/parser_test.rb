@@ -257,43 +257,50 @@ Expectations do
   
   # Parser#modify_active_cmd
   begin
-    # active command is not a Command
+    # active command is not a BlockCommand
     expect false do
       parser = Parser.new("", nil)
       parser.stubs(:stack).returns([ :not_a_command ])
       parser.modify_active_cmd("")
     end
-    # active command is a Command but is not modified by given command
+    # active command is a BlockCommand but is not modified by given command
     expect false do
       parser = Parser.new("", nil)
-      cmd = Command.new("", [])
+      cmd = Commands::Foo.new("", [])
       cmd.stubs(:modified_by?).returns(false)
       parser.stubs(:stack).returns([ cmd ])
       parser.modify_active_cmd("")
     end
-    # active command is a Command and is modified by given command
+    # active command is a BlockCommand and is modified by given command
     expect true do
       parser = Parser.new("", nil)
-      cmd = Command.new("", [])
+      cmd = Commands::Foo.new("", [])
       cmd.stubs(:modified_by?).returns(true)
       parser.stubs(:stack).returns([ cmd ])
       parser.modify_active_cmd("")
     end
   end
   
-  # Parser#lookup_command
+  # Parser#lookup_var_or_command
   begin
-    # when name is not in lexicon
-    expect nil do
+    # when name is a variable in the active context
+    expect Text.new("some text") do
       Papyrus.send(:instance_variable_set, "@lexicon", {})
       parser = Parser.new("", nil)
-      parser.lookup_command("foo", [])
+      parser.stack.first.stubs(:values).returns("foo" => "some text")
+      parser.lookup_var_or_command("foo", [])
+    end
+    # when name is not in lexicon
+    expect Parser::UnknownCommandError do
+      Papyrus.send(:instance_variable_set, "@lexicon", {})
+      parser = Parser.new("", nil)
+      parser.lookup_var_or_command("foo", [])
     end
     # when name is in lexicon
     expect Commands::If do
       Papyrus.send(:instance_variable_set, "@lexicon", { 'if' => Commands::If })
       parser = Parser.new("", nil)
-      parser.lookup_command("if", [])
+      parser.lookup_var_or_command("if", [])
     end
   end
   

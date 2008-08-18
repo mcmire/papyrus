@@ -42,11 +42,8 @@ module Papyrus
     # If +key+ is a dot-separated list of words, then 'first' is the
     # first part of it.  The remainder of the words are sent to key
     # (and further results) to permit accessing attributes of objects.
-    def get(key, clean_rescue=false)
+    def get(key)
       key = key.to_s
-      options = parser.options
-      clean_rescue = !options[:raise_on_error] if clean_rescue
-
       first, rest = key.split(".", 2)
       
       value = get_primary_part(first, key)
@@ -61,12 +58,6 @@ module Papyrus
         value_so_far = get_secondary_part(key_so_far, k, value_so_far)
       end
       value_so_far
-    rescue Exception => e
-      if clean_rescue
-        "[ Error: #{e.message} ]"
-      else
-        raise e
-      end
     end
     alias_method :[], :get
 

@@ -1,10 +1,8 @@
 TODO
 
-* Currently we don't support [foo] variables - in Compiler we should treat sub as
+D Currently we don't support [foo] variables - in Compiler we should treat sub as
   variable before treating as modifier or closer or command name
-  
-* Remove Command#closed_by? - [/for] notation should be hard-coded in parser
-  I think. Also be sure #end method of BlockCommand and subclasses is removed.
+D ContextItem#get should not return an error string but an empty string
   
 * Remove :source option for Compiler. #compile should accept a filename; #parse should
   accept raw template content. That's it.
@@ -12,3 +10,5 @@ TODO
 * All subclasses of BlockCommand should not override initialize() or add() unless necessary
 * Should we add attr_accessors for all instance variables for easier access during
   testing?
+* Parser should not be a ContextItem - the top-level context should be Template.
+  In that case Template's parent is nil, not the parser.

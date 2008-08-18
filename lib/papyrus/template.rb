@@ -12,7 +12,7 @@ module Papyrus
     def initialize(parser)
       super()
       @parser = parser
-      @parent = self
+      @parent = parser
     end
     
     # Template#output is a special case for a Command. Because
@@ -24,11 +24,10 @@ module Papyrus
     # @parser. Otherwise, a new context is created, a
     # child of @context, and is assigned +object+ as its context.
     def output(object=nil)
-      @parent = @parser
       if object.nil?
         super(self)
       elsif object.is_a?(ContextItem)
-        @parent = object
+        @parent = object  # I don't like this b/c it's destructive
         super(self)
       else
         context = Context.new(self)

@@ -106,7 +106,7 @@ module Papyrus
         else
           name, args = gather_command_name_and_args
           return Text.new("") if modify_active_cmd(tokens.cmd_info[:full]) or close_active_cmd(tokens.cmd_info[:raw])
-          lookup_command(name, args)
+          lookup_var_or_command(name, args)
         end
       rescue UnmatchedLeftBracketError, UnmatchedSingleQuoteError,
              UnmatchedDoubleQuoteError, UnknownCommandError => e
@@ -140,12 +140,18 @@ module Papyrus
     
     def modify_active_cmd(full_command)
       active_cmd = stack.last
-      (active_cmd.is_a?(Command) && active_cmd.modified_by?(full_command)) || false
+      (active_cmd.is_a?(BlockCommand) && active_cmd.modified_by?(full_command)) || false
     end
     
-    def lookup_command(name, args)
-      #lexicon.lookup(name, args)
-      command_klass = Papyrus.lexicon[name] and command_klass.new(name, args)
+    def lookup_var_or_command(name, args)
+      active_cmd = stack.last
+      if val = active_cmd.get(name)
+        Text.new(val)
+      elsif command_klass = Papyrus.lexicon[name]
+        command_klass.new(name, args)
+      else
+        raise UnknownCommandError
+      end
     end
     
     def gather_command_name_and_args
