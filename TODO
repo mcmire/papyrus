@@ -1,8 +1,5 @@
 TODO
 
-D Modify Compiler to not accept DefaultLexicon anymore
-* Get rid of method_separator_regexp (Compiler, ContextItem#get)
-
 * Currently we don't support [foo] variables - in Compiler we should treat sub as
   variable before treating as modifier or closer or command name
   

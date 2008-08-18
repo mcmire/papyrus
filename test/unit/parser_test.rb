@@ -7,14 +7,14 @@ require File.dirname(__FILE__)+'/test_helper'
 require 'papyrus'
 require 'commands/if'
 
-include Papyrus
-
 module Papyrus
   module Commands
-    class Foo < Command
+    class Foo < BlockCommand
     end
   end
 end
+
+include Papyrus
 
 Expectations do
   
@@ -133,9 +133,18 @@ Expectations do
   
   # Parser#handle_command
   begin
+    # end of command
+    expect Parser.new("", nil).to.receive(:handle_command_close) do |parser|
+      tokens = TokenList.new([
+        Token::Slash.new("/")
+      ])
+      parser.stubs(:tokens).returns(tokens)
+      parser.handle_command
+    end
     # valid command
     expect :command do
       parser = Parser.new("", nil)
+      parser.stubs(:tokens).returns(TokenList.new)
       parser.stubs(:gather_command_name_and_args)
       parser.stubs(:modify_active_cmd).returns(false)
       parser.stubs(:close_active_cmd).returns(false)
@@ -145,19 +154,22 @@ Expectations do
     # unknown command
     expect Text do
       parser = Parser.new("", nil)
-      parser.stubs(:gather_command_name_and_args).raises(Parser::CommandNotFoundError)
+      parser.stubs(:tokens).returns(TokenList.new)
+      parser.stubs(:gather_command_name_and_args).raises(Parser::UnknownCommandError)
       parser.handle_command
     end
-    # modifier
-    expect nil do
+    # modifier should modify command and return empty output
+    expect Text.new("") do
       parser = Parser.new("", nil)
+      parser.stubs(:tokens).returns(TokenList.new)
       parser.stubs(:gather_command_name_and_args)
       parser.stubs(:modify_active_cmd).returns(true)
       parser.handle_command
     end
-    # closer
-    expect nil do
+    # closer should end command and return empty output
+    expect Text.new("") do
       parser = Parser.new("", nil)
+      parser.stubs(:tokens).returns(TokenList.new)
       parser.stubs(:gather_command_name_and_args)
       parser.stubs(:modify_active_cmd).returns(false)
       parser.stubs(:close_active_cmd).returns(true)
@@ -166,22 +178,82 @@ Expectations do
     # reached end of list before end of command
     expect Text do
       parser = Parser.new("", nil)
-      parser.stubs(:gather_command_name_and_args).raises(TokenList::EndOfListError)
+      parser.stubs(:tokens).returns(TokenList.new)
+      parser.stubs(:gather_command_name_and_args).raises(Parser::UnmatchedLeftBracketError)
       parser.handle_command
     end
     # unmatched single quote
     expect Text do
       parser = Parser.new("", nil)
+      parser.stubs(:tokens).returns(TokenList.new)
       parser.stubs(:gather_command_name_and_args).raises(Parser::UnmatchedSingleQuoteError)
       parser.handle_command
     end
     # unmatched double quote
     expect Text do
       parser = Parser.new("", nil)
+      parser.stubs(:tokens).returns(TokenList.new)
       parser.stubs(:gather_command_name_and_args).raises(Parser::UnmatchedDoubleQuoteError)
       parser.handle_command
     end
   end
+  
+  # Parser#close_active_cmd
+  begin
+    # command name is not a Text token
+    expect Parser::InvalidEndOfCommandError do
+      parser = Parser.new("", nil)
+      list = [ Token::Slash.new, Token::RightBracket.new ]
+      parser.stubs(:tokens).returns TokenList.new(list)
+      parser.handle_command_close
+    end
+    # active command is not a BlockCommand
+    expect Parser::InvalidEndOfCommandError do
+      parser = Parser.new("", nil)
+      list = [ Token::Slash.new, Token::Text.new, Token::RightBracket.new ]
+      parser.stubs(:tokens).returns TokenList.new(list)
+      parser.stubs(:stack).returns([ :not_a_command ])
+      parser.handle_command_close
+    end
+    # active command is a BlockCommand but is not closed by given command
+    expect Parser::InvalidEndOfCommandError do
+      parser = Parser.new("", nil)
+      list = [ Token::Slash.new, Token::Text.new("bar"), Token::RightBracket.new ]
+      parser.stubs(:tokens).returns TokenList.new(list)
+      parser.stubs(:stack).returns([ Commands::Foo.new("foo", []) ])
+      parser.handle_command_close
+    end
+    # active command is a BlockCommand and is closed by given command
+    begin
+      # stack should be popped
+      expect 1 do
+        parser = Parser.new("", nil)
+        list = [ Token::Slash.new, Token::Text.new("foo"), Token::RightBracket.new ]
+        parser.stubs(:tokens).returns TokenList.new(list)
+        parser.stubs(:stack).returns([ [], Commands::Foo.new("foo", []) ])
+        parser.handle_command_close
+        parser.stack.size
+      end
+      # active command should be moved to the one before it
+      expect true do
+        parser = Parser.new("", nil)
+        list = [ Token::Slash.new, Token::Text.new("foo"), Token::RightBracket.new ]
+        parser.stubs(:tokens).returns TokenList.new(list)
+        cmd = Commands::Foo.new("foo", [])
+        parser.stubs(:stack).returns([ [], cmd ])
+        parser.handle_command_close
+        parser.stack.first == [cmd]
+      end
+    end
+    # right bracket never reached
+    expect Parser::UnmatchedLeftBracketError do
+      parser = Parser.new("", nil)
+      list = [ Token::Slash.new, Token::Text.new("foo") ]
+      parser.stubs(:tokens).returns TokenList.new(list)
+      parser.stubs(:stack).returns([ [], Commands::Foo.new("foo", []) ])
+      parser.handle_command_close
+    end
+  end  
   
   # Parser#modify_active_cmd
   begin
@@ -209,53 +281,6 @@ Expectations do
     end
   end
   
-  # Parser#close_active_cmd
-  begin
-    # active command is not a Command
-    expect false do
-      parser = Parser.new("", nil)
-      parser.stubs(:stack).returns([ :not_a_command ])
-      parser.close_active_cmd("")
-    end
-    # active command is a Command but is not closed by given command
-    expect false do
-      parser = Parser.new("", nil)
-      cmd = Command.new("", [])
-      cmd.stubs(:closed_by?).returns(false)
-      parser.stubs(:stack).returns([ cmd ])
-      parser.close_active_cmd("")
-    end
-    # active command is a Command and is closed by given command
-    begin
-      # stack should be popped
-      expect 1 do
-        parser = Parser.new("", nil)
-        cmd = Command.new("", [])
-        cmd.stubs(:closed_by?).returns(true)
-        parser.stubs(:stack).returns([ [], cmd ])
-        parser.close_active_cmd("")
-        parser.stack.size
-      end
-      # active command should be moved to the one before it
-      expect true do
-        parser = Parser.new("", nil)
-        cmd = Command.new("", [])
-        cmd.stubs(:closed_by?).returns(true)
-        parser.stubs(:stack).returns([ [], cmd ])
-        parser.close_active_cmd("")
-        parser.stack.first == [cmd]
-      end
-      # return value
-      expect true do
-        parser = Parser.new("", nil)
-        cmd = Command.new("", [])
-        cmd.stubs(:closed_by?).returns(true)
-        parser.stubs(:stack).returns([ [], cmd ])
-        parser.close_active_cmd("")
-      end
-    end
-  end
-  
   # Parser#lookup_command
   begin
     # when name is not in lexicon
@@ -274,11 +299,10 @@ Expectations do
   
   # Parser#gather_command_and_args
   begin
-    # successfully parsed command: raw
-    expect "[foo bar baz]" do
+    # successfully parsed command: name and args
+    expect ['foo', ['bar', 'baz']] do
       parser = Parser.new("", nil)
       list = [
-        Token::LeftBracket.new("["),
         Token::Text.new("foo"),
         Token::Whitespace.new(" "),
         Token::Text.new("bar"),
@@ -286,125 +310,71 @@ Expectations do
         Token::Text.new("baz"),
         Token::RightBracket.new("]")
       ]
-      tokens = TokenList.new(list); tokens.next
-      parser.stubs(:tokens).returns(tokens)
-      cmd_call = { :full => "", :raw => "", :name => nil, :args => [] }
-      parser.gather_command_name_and_args(cmd_call)
-      cmd_call[:raw]
-    end
-    # successfully parsed command: full
-    expect "foo bar baz" do
-      parser = Parser.new("", nil)
-      list = [
-        Token::LeftBracket.new("["),
-        Token::Text.new("foo"),
-        Token::Whitespace.new(" "),
-        Token::Text.new("bar"),
-        Token::Whitespace.new(" "),
-        Token::Text.new("baz"),
-        Token::RightBracket.new("]")
-      ]
-      tokens = TokenList.new(list); tokens.next
-      parser.stubs(:tokens).returns(tokens)
-      cmd_call = { :full => "", :raw => "", :name => nil, :args => [] }
-      parser.gather_command_name_and_args(cmd_call)
-      cmd_call[:full]
-    end
-    # successfully parsed command: args
-    expect ['bar', 'baz'] do
-      parser = Parser.new("", nil)
-      list = [
-        Token::LeftBracket.new("["),
-        Token::Text.new("foo"),
-        Token::Whitespace.new(" "),
-        Token::Text.new("bar"),
-        Token::Whitespace.new(" "),
-        Token::Text.new("baz"),
-        Token::RightBracket.new("]")
-      ]
-      tokens = TokenList.new(list); tokens.next
-      parser.stubs(:tokens).returns(tokens)
-      cmd_call = { :full => "", :raw => "", :name => nil, :args => [] }
-      parser.gather_command_name_and_args(cmd_call)
-      cmd_call[:args]
+      parser.stubs(:tokens).returns TokenList.new(list)
+      parser.gather_command_name_and_args
     end
     # single quote found
     expect Parser.new("", nil).to.receive(:handle_quoted_arg).times(2) do |parser|
       list = [
-        Token::LeftBracket.new("["),
         Token::Text.new("foo"),
         Token::SingleQuote.new,
         Token::Text.new("bar"),
         Token::SingleQuote.new,
         Token::RightBracket.new("]")
       ]
-      tokens = TokenList.new(list); tokens.next
-      parser.stubs(:tokens).returns(tokens)
-      cmd_call = { :full => "", :raw => "", :name => nil, :args => [] }
-      parser.gather_command_name_and_args(cmd_call)
+      parser.stubs(:tokens).returns TokenList.new(list)
+      parser.gather_command_name_and_args
     end
     # double quote found
     expect Parser.new("", nil).to.receive(:handle_quoted_arg).times(2) do |parser|
       list = [
-        Token::LeftBracket.new("["),
         Token::Text.new("foo"),
         Token::DoubleQuote.new,
         Token::Text.new("bar"),
         Token::DoubleQuote.new,
         Token::RightBracket.new("]")
       ]
-      tokens = TokenList.new(list); tokens.next
-      parser.stubs(:tokens).returns(tokens)
-      cmd_call = { :full => "", :raw => "", :name => nil, :args => [] }
-      parser.gather_command_name_and_args(cmd_call)
+      parser.stubs(:tokens).returns TokenList.new(list)
+      parser.gather_command_name_and_args
     end
     # we reach end of token list before command ends
-    expect TokenList::EndOfListError do
+    expect Parser::UnmatchedLeftBracketError do
       parser = Parser.new("", nil)
       list = [
-        Token::LeftBracket.new("["),
         Token::Text.new("foo"),
         Token::Whitespace.new(" "),
         Token::Text.new("bar")
       ]
-      tokens = TokenList.new(list); tokens.next
-      parser.stubs(:tokens).returns(tokens)
-      cmd_call = { :full => "", :raw => "", :name => nil, :args => [] }
-      parser.gather_command_name_and_args(cmd_call)
+      parser.stubs(:tokens).returns TokenList.new(list)
+      parser.gather_command_name_and_args
     end
     # UnmatchedSingleQuoteError is caught and re-thrown
     expect Parser::UnmatchedSingleQuoteError do
       parser = Parser.new("", nil)
       list = [
-        Token::LeftBracket.new("["),
         Token::Text.new("foo"),
         Token::Whitespace.new(" "),
         Token::SingleQuote.new("'"),
         Token::Text.new("bar"),
         Token::RightBracket.new("]")
       ]
-      tokens = TokenList.new(list); tokens.next
-      parser.stubs(:tokens).returns(tokens)
-      cmd_call = { :full => "", :raw => "", :name => nil, :args => [] }
+      parser.stubs(:tokens).returns TokenList.new(list)
       parser.stubs(:handle_quoted_arg).raises(Parser::UnmatchedSingleQuoteError)
-      parser.gather_command_name_and_args(cmd_call)
+      parser.gather_command_name_and_args
     end
     # UnmatchedDoubleQuoteError is caught and re-thrown
     expect Parser::UnmatchedDoubleQuoteError do
       parser = Parser.new("", nil)
       list = [
-        Token::LeftBracket.new("["),
         Token::Text.new("foo"),
         Token::Whitespace.new(" "),
         Token::SingleQuote.new("'"),
         Token::Text.new("bar"),
         Token::RightBracket.new("]")
       ]
-      tokens = TokenList.new(list); tokens.next
-      parser.stubs(:tokens).returns(tokens)
-      cmd_call = { :full => "", :raw => "", :name => nil, :args => [] }
+      parser.stubs(:tokens).returns TokenList.new(list)
       parser.stubs(:handle_quoted_arg).raises(Parser::UnmatchedDoubleQuoteError)
-      parser.gather_command_name_and_args(cmd_call)
+      parser.gather_command_name_and_args
     end
   end
   

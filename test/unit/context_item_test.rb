@@ -39,8 +39,7 @@ Expectations do
   # #get when key is symbol
   expect ContextItemWrapper.new.to.receive(:get_primary_part).with('foo', 'foo') do |context_item|
     context_item.stubs(:parser).returns stub("parser",
-      :options => {},
-      :method_separator_regexp => %r|[./]|
+      :options => {}
     )
     context_item.get(:foo)
   end
@@ -48,8 +47,7 @@ Expectations do
   expect "bar" do
     context_item = ContextItemWrapper.new
     context_item.stubs(:parser).returns stub("parser",
-      :options => {},
-      :method_separator_regexp => %r|[./]|
+      :options => {}
     )
     context_item.stubs(:get_primary_part).returns("bar")
     context_item.get("foo")
@@ -58,8 +56,7 @@ Expectations do
   expect "baz" do
     context_item = ContextItemWrapper.new
     context_item.stubs(:parser).returns stub("parser",
-      :options => {},
-      :method_separator_regexp => %r|[./]|
+      :options => {}
     )
     context_item.stubs(:get_primary_part).returns(["baz", true])
     context_item.get("foo.bar")
@@ -68,8 +65,7 @@ Expectations do
   expect "baz" do
     context_item = ContextItemWrapper.new
     context_item.stubs(:parser).returns stub("parser",
-      :options => {},
-      :method_separator_regexp => %r|[./]|
+      :options => {}
     )
     context_item.stubs(:get_primary_part).returns('bar' => 'baz')
     context_item.stubs(:get_secondary_part).returns("baz")
@@ -89,8 +85,7 @@ Expectations do
   expect "bar" do
     context_item = ContextItemWrapper.new
     context_item.stubs(:parser).returns stub('parser',
-      :options => { 'raise_on_error' => false },
-      :method_separator_regexp => %r{[./]}
+      :options => { 'raise_on_error' => false }
     )
     context_item.send(:values=, 'foo' => 'bar')
     context_item.send(:get_primary_part, 'foo', 'foo')

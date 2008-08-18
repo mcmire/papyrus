@@ -46,8 +46,6 @@ module Papyrus
       key = key.to_s
       options = parser.options
       clean_rescue = !options[:raise_on_error] if clean_rescue
-      regexp = parser.method_separator_regexp
-      key.gsub!(regexp, ".")
 
       first, rest = key.split(".", 2)
       
@@ -57,7 +55,7 @@ module Papyrus
       
       key_parts = [first]
       value_so_far = value
-      rest.split(regexp).each do |k|
+      rest.split(".").each do |k|
         key_parts << k
         key_so_far = key_parts.join(".")
         value_so_far = get_secondary_part(key_so_far, k, value_so_far)

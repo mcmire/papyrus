@@ -1,78 +1,10 @@
 module Papyrus
-  module Token
-    class Base < ::String
-      def to_s
-        String.new(self)
-      end
-    end
-    class DoubleQuote < Base; end
-    class SingleQuote < Base; end
-    class LeftBracket < Base; end
-    class RightBracket < Base; end
-    class Slash < Base; end
-    class Whitespace < Base; end
-    class Text < Base; end
-  
-    def self.create(text)
-      klass = case text
-        when '"'    then DoubleQuote
-        when "'"    then SingleQuote
-        when "["    then LeftBracket
-        when "]"    then RightBracket
-        when "/"    then Slash
-        when /^\s$/ then Whitespace
-        else             Text
-      end
-      klass.new(text)
-    end
-  end
-  
-  class TokenList < ::Array
-    class EndOfListError < StandardError; end
-    
-    attr_accessor :pos
-    attr_accessor :raise_eol_error, :skip_whitespace
-    
-    def initialize(array = [])
-      super(array)
-      @pos = -1
-      @raise_eol_error = false
-    end
-    
-    def next
-      @pos += 1
-      tok = self[@pos]
-      raise EndOfListError if @raise_eol_error && @pos > self.size-1
-      tok
-    end
-    
-    def next_nonwhitespace
-      tok = nil
-      begin; tok = self.next; end while tok.is_a?(Token::Whitespace)
-      tok
-    end
-    
-    def curr
-      self[@pos]
-    end
-    
-    def prev
-      self[@pos-1]
-    end
-    
-    def save
-      # ...
-    end
-    
-    def revert
-      # ...
-    end
-  end
-  
   class Parser
+    class UnmatchedLeftBracketError < StandardError; end
     class UnmatchedSingleQuoteError < StandardError; end
     class UnmatchedDoubleQuoteError < StandardError; end
-    class CommandNotFoundError < StandardError; end
+    class UnknownCommandError       < StandardError; end
+    class InvalidEndOfCommandError  < StandardError; end
     
     # Parser is a context object
     include ContextItem
@@ -147,14 +79,12 @@ module Papyrus
     # - Unknown command name: treat as text
     def commandify
       # we set the stack in the constructor instead of here for testing purposes
-      while token = tokens.next
+      while token = tokens.advance
         case token
         when Token::LeftBracket
           cmd = handle_command
-          if cmd.kind_of?(Command)
-            # create new Context if BlockCommand command
-            (cmd.kind_of?(Command::BlockCommand) ? stack : stack.last) << cmd
-          end
+          # create new Context if BlockCommand
+          (cmd.kind_of?(Command::BlockCommand) ? stack : stack.last) << cmd
         else
           # assume token is a Token::Text
           stack.last << Text.new(token)
@@ -169,16 +99,42 @@ module Papyrus
     # nil if we're dealing with a modifier of a command, or the raw command as a
     # Text command if we had a syntax error or unknown command.
     def handle_command
-      cmd_call = { :full => "", :raw => "", :name => nil, :args => [] }
+      tokens.start_recording!
       begin
-        gather_command_name_and_args(cmd_call)
-        return if modify_active_cmd(cmd_call[:full])
-        return if close_active_cmd(cmd_call[:full])
-        lookup_command(cmd_call[:name], cmd_call[:args])
-      rescue TokenList::EndOfListError, CommandNotFoundError,
-             UnmatchedSingleQuoteError, UnmatchedDoubleQuoteError => e
+        if tokens.next.is_a?(Token::Slash)
+          handle_command_close
+        else
+          name, args = gather_command_name_and_args
+          return Text.new("") if modify_active_cmd(tokens.cmd_info[:full]) or close_active_cmd(tokens.cmd_info[:raw])
+          lookup_command(name, args)
+        end
+      rescue UnmatchedLeftBracketError, UnmatchedSingleQuoteError,
+             UnmatchedDoubleQuoteError, UnknownCommandError => e
         # assume we've reached the end of the command, so don't treat it as a command
-        Text.new(cmd_call[:raw])
+        Text.new(tokens.cmd_info[:raw])
+      ensure
+        tokens.stop_recording!
+      end
+    end
+    
+    def handle_command_close
+      tokens.advance # slash
+      command_name = tokens.advance
+      active_cmd = stack.last
+      if command_name.is_a?(Token::Text) && active_cmd.is_a?(BlockCommand) && active_cmd.name == command_name
+        cmd = stack.pop
+        stack.last << cmd
+        # get the rest of the command
+        reached_eoc = false
+        while token = tokens.advance
+          if token.is_a?(Token::RightBracket)
+            reached_eoc = true
+            break
+          end
+        end
+        raise UnmatchedLeftBracketError unless reached_eoc
+      else
+        raise InvalidEndOfCommandError
       end
     end
     
@@ -187,51 +143,34 @@ module Papyrus
       (active_cmd.is_a?(Command) && active_cmd.modified_by?(full_command)) || false
     end
     
-    def close_active_cmd(full_command)
-      active_cmd = stack.last
-      if active_cmd.is_a?(Command) && active_cmd.closed_by?(full_command)
-        cmd = stack.pop
-        stack.last << cmd
-        true
-      else
-        false
-      end
-    end
-    
     def lookup_command(name, args)
       #lexicon.lookup(name, args)
       command_klass = Papyrus.lexicon[name] and command_klass.new(name, args)
     end
     
-    def gather_command_name_and_args(cmd_call)
-      curr = tokens.curr # left bracket
-      cmd_call[:raw]  += curr
-      name = tokens.next_nonwhitespace
-      cmd_call[:name]  = name
-      cmd_call[:raw]  += name
-      cmd_call[:full] += name
+    def gather_command_name_and_args
+      name = tokens.advance
+      args = []
       error = nil
       reached_eoc = false
-      while token = tokens.next
-        cmd_call[:raw] += token
-        if token.is_a?(Token::RightBracket)
+      while token = tokens.advance
+        case token
+        when Token::RightBracket
           reached_eoc = true
           break
-        end
-        cmd_call[:full] += token
-        next if token.is_a?(Token::Whitespace)
-        if token.is_a?(Token::SingleQuote) || token.is_a?(Token::DoubleQuote)
+        when Token::SingleQuote, Token::DoubleQuote
           begin
-            cmd_call[:args] << handle_quoted_arg(token.class)
+            args << handle_quoted_arg(token.class)
           rescue UnmatchedSingleQuoteError, UnmatchedDoubleQuoteError => error
             # keep going until we reach the end of the command or the token list
           end
         else
-          cmd_call[:args] << token
+          args << token
         end
       end
       raise error if error
-      raise TokenList::EndOfListError unless reached_eoc
+      raise UnmatchedLeftBracketError unless reached_eoc
+      [name, args]
     end
     
     def handle_quoted_arg(quote_klass)
@@ -243,7 +182,7 @@ module Papyrus
       stack.last << Command.new("", [])
       reached_eoq = false
       unmatched_error = (quote_klass == Token::SingleQuote) ? UnmatchedSingleQuoteError : UnmatchedDoubleQuoteError
-      while token = tokens.next
+      while token = tokens.advance
         case token
         when quote_klass
           reached_eoq = true

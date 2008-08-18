@@ -20,10 +20,6 @@ Expectations do
       compiler = Compiler.new
       compiler.send(:instance_variable_get, "@default_processor")
     end
-    expect %r|[./]| do
-      compiler = Compiler.new
-      compiler.send(:instance_variable_get, "@method_separator_regexp")
-    end
     begin
       expect FileSource do
         compiler = Compiler.new

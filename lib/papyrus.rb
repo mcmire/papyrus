@@ -29,9 +29,11 @@ require 'papyrus/source'
 require 'papyrus/file_source'
 require 'papyrus/string_source'
 
-require 'papyrus/compiler'
-require 'papyrus/parser'
 require 'papyrus/template'
+require 'papyrus/token'
+require 'papyrus/token_list'
+require 'papyrus/parser'
+require 'papyrus/compiler'
 
 ##############################################################################
 

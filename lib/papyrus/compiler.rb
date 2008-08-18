@@ -37,12 +37,6 @@ module Papyrus
       @options  = options.symbolize_keys
       @preprocessor = options.delete(:preprocessor) || DefaultPreprocessor
       @default_processor = options.delete(:default_processor) || :unescaped
-      @method_separator_regexp = if seps = options.delete(:method_separators)
-        re_seps = seps.map {|sep| Regexp.escape(sep) }
-        /#{re_seps.join('|')}/
-      else
-        %r|[./]|
-      end
       @source = (options.delete(:source) || FileSource).new(options)
       @commands = nil
     end
