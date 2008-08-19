@@ -15,7 +15,8 @@ module Papyrus
     
     def parse(content)
       tokenize(content)
-      commandify
+      make_template
+      @template
     end
     
     def tokenize(content)
@@ -49,14 +50,12 @@ module Papyrus
       @tokens << tok if tok
     end
     
-    # Errors that can occur:
-    # - Unmatched left bracket before eos: treat as text
-    # - Extra right bracket(s): treat as text
-    # - Unmatched double quote before eos: treat as text
-    # - Unmatched single quote before eos: treat as text
-    # - BlockCommand command not ended before eos: fudge end
-    # - Unknown command name: treat as text
-    def commandify
+    def make_template
+      populate_template
+      close_open_block_commands
+    end
+    
+    def populate_template
       # we set the stack in the constructor instead of here for testing purposes
       while token = tokens.advance
         case token
@@ -70,20 +69,27 @@ module Papyrus
             stack.last << cmd
           end
         else
-          # assume token is a Token::Text
+          # we can safely assume token is a Token::Text
           stack.last << Text.new(token)
         end
       end
-      # this is actually never supposed to happen...
-      #raise "Too many items on stack" unless stack.size == 1
-      stack.last
+    end
+    
+    def close_open_block_commands
+      return unless stack.size > 1
+      # Oops, I guess we have BlockCommands that never ended.
+      # That's okay, let's just end them manually.
+      until stack.size == 1
+        cmd = stack.pop
+        stack.last << cmd
+      end
     end
     
     # Returns a command if we're dealing with a command and it exists in the lexicon,
     # nil if we're dealing with a modifier of a command, or the raw command as a
     # Text command if we had a syntax error or unknown command.
     def handle_command
-      tokens.start_recording!
+      tokens.start_recording! # raw and full
       begin
         if tokens.next.is_a?(Token::Slash)
           handle_command_close

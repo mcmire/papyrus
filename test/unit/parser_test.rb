@@ -9,7 +9,7 @@ require 'commands/if'
 
 module Papyrus
   module Commands
-    class Foo < BlockCommand
+    class SomeBlockCommand < BlockCommand
     end
   end
 end
@@ -45,12 +45,12 @@ Expectations do
     end
   end
   
-  # Parser#commandify
+  # Parser#populate_template
   begin
     # left bracket present: handle_command
     expect Parser.new.to.receive(:handle_command).returns(Node.new) do |parser|
       parser.stubs(:tokens).returns TokenList.new([Token::LeftBracket.new])
-      parser.commandify
+      parser.populate_template
     end
     # left bracket present, but handle_command doesn't return a command
     expect true do
@@ -58,7 +58,7 @@ Expectations do
       parser.stubs(:tokens).returns TokenList.new([Token::LeftBracket.new])
       parser.stubs(:handle_command).returns(Node.new)
       stack = parser.stack
-      parser.commandify
+      parser.populate_template
       parser.stack == stack
     end
     # left bracket present and handle_command returns BlockCommand
@@ -68,7 +68,7 @@ Expectations do
         parser = Parser.new
         parser.stubs(:tokens).returns TokenList.new([Token::LeftBracket.new])
         parser.stubs(:handle_command).returns Commands::If.new('if', [])
-        parser.commandify
+        parser.populate_template
         parser.stack.last
       end
       # the command knows where it is contextually
@@ -77,7 +77,7 @@ Expectations do
         parser.stubs(:tokens).returns TokenList.new([Token::LeftBracket.new])
         cmd = Commands::If.new('if', [])
         parser.stubs(:handle_command).returns(cmd)
-        parser.commandify
+        parser.populate_template
         parser.stack.last.parent
       end
     end
@@ -86,7 +86,7 @@ Expectations do
       parser = Parser.new
       parser.stubs(:tokens).returns TokenList.new([Token::LeftBracket.new])
       parser.stubs(:handle_command).returns Command.new("", [])
-      parser.commandify
+      parser.populate_template
       parser.stack.last.last
     end
     # text present
@@ -95,16 +95,24 @@ Expectations do
       parser = Parser.new
       parser.stubs(:tokens).returns TokenList.new([Token::Text.new("foo"), Token::LeftBracket.new, Token::Text.new("bar") ])
       parser.stubs(:handle_command).returns(Node.new)
-      parser.commandify
+      parser.populate_template
       parser.stack.last.nodes.map {|cmd| cmd.class }
     end
-    # stack is too big
-    #expect RuntimeError do
-    #  parser = Parser.new
-    #  parser.stubs(:tokens).returns(TokenList.new)
-    #  parser.send(:instance_variable_set, "@stack", [ :template, :something_else ])
-    #  parser.commandify
-    #end
+  end
+  
+  # Parser#close_open_block_commands
+  begin
+    # unclosed block commands should be autoclosed at end
+    expect Commands::SomeBlockCommand do
+      parser = Parser.new
+      parser.stubs(:tokens).returns(TokenList.new)
+      parser.send(:instance_variable_set, "@stack", [
+        Template.new(parser),
+        Commands::SomeBlockCommand.new("", [])
+      ])
+      parser.close_open_block_commands
+      parser.stack.first.nodes.first
+    end
   end
   
   # Parser#handle_command
@@ -196,7 +204,7 @@ Expectations do
       parser = Parser.new
       list = [ Token::Slash.new, Token::Text.new("bar"), Token::RightBracket.new ]
       parser.stubs(:tokens).returns TokenList.new(list)
-      parser.stubs(:stack).returns([ Commands::Foo.new("foo", []) ])
+      parser.stubs(:stack).returns([ Commands::SomeBlockCommand.new("foo", []) ])
       parser.handle_command_close
     end
     # active command is a BlockCommand and is closed by given command
@@ -206,7 +214,7 @@ Expectations do
         parser = Parser.new
         list = [ Token::Slash.new, Token::Text.new("foo"), Token::RightBracket.new ]
         parser.stubs(:tokens).returns TokenList.new(list)
-        parser.stubs(:stack).returns([ [], Commands::Foo.new("foo", []) ])
+        parser.stubs(:stack).returns([ [], Commands::SomeBlockCommand.new("foo", []) ])
         parser.handle_command_close
         parser.stack.size
       end
@@ -215,7 +223,7 @@ Expectations do
         parser = Parser.new
         list = [ Token::Slash.new, Token::Text.new("foo"), Token::RightBracket.new ]
         parser.stubs(:tokens).returns TokenList.new(list)
-        cmd = Commands::Foo.new("foo", [])
+        cmd = Commands::SomeBlockCommand.new("foo", [])
         parser.stubs(:stack).returns([ [], cmd ])
         parser.handle_command_close
         parser.stack.first == [cmd]
@@ -226,7 +234,7 @@ Expectations do
       parser = Parser.new
       list = [ Token::Slash.new, Token::Text.new("foo") ]
       parser.stubs(:tokens).returns TokenList.new(list)
-      parser.stubs(:stack).returns([ [], Commands::Foo.new("foo", []) ])
+      parser.stubs(:stack).returns([ [], Commands::SomeBlockCommand.new("foo", []) ])
       parser.handle_command_close
     end
   end  
@@ -242,7 +250,7 @@ Expectations do
     # active command is a BlockCommand but is not modified by given command
     expect false do
       parser = Parser.new
-      cmd = Commands::Foo.new("", [])
+      cmd = Commands::SomeBlockCommand.new("", [])
       cmd.stubs(:modified_by?).returns(false)
       parser.stubs(:stack).returns([ cmd ])
       parser.modify_active_cmd("")
@@ -250,7 +258,7 @@ Expectations do
     # active command is a BlockCommand and is modified by given command
     expect true do
       parser = Parser.new
-      cmd = Commands::Foo.new("", [])
+      cmd = Commands::SomeBlockCommand.new("", [])
       cmd.stubs(:modified_by?).returns(true)
       parser.stubs(:stack).returns([ cmd ])
       parser.modify_active_cmd("")

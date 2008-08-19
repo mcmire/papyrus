@@ -1,13 +1,12 @@
 TODO
 
-D Parser should not be a ContextItem - the top-level context should be Template.
-  In that case Template's parent is nil, not the parser.
-D When BlockCommand is created, assign parent to stack.last
-* If block command not ended before end of token list reached, fudge end
+D If block command not ended before end of token list reached, fudge end
 
-* Remove :source option for Compiler. #compile should accept a filename; #parse should
-  accept raw template content. That's it.
+* Remove Compiler options
+* Don't need a :source option - #compile should accept a filename; #parse should accept raw template content. That's it.
 * DefaultPreprocessor - rename to Filters or something
+* Move code in Commands::Filter to Filters
+
 * All subclasses of BlockCommand should not override initialize() or add() unless necessary
 * Should we add attr_accessors for all instance variables for easier access during
   testing?
