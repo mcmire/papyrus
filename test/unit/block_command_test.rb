@@ -1,5 +1,6 @@
 require File.dirname(__FILE__)+'/test_helper'
 
+require 'context_item'
 require 'node'
 require 'command'
 require 'block_command'

@@ -65,7 +65,7 @@ module Papyrus
     end
     
     def parse(name, content)
-      template = Parser.new(@lexicon).parse(content)
+      template = Parser.new.parse(content)
       source.cache(name, template) if source.respond_to?(:cache)
       template
     end

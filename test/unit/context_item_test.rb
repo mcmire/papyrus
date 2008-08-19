@@ -218,23 +218,16 @@ Expectations do
   end
   
   # #parser when #parent not nil
-  expect Mocha::Mock do
+  expect :parser do
     context_item = ContextItemWrapper.new
-    context_item.send(:instance_variable_set, "@parent", stub('parent', :parser => stub('parser')))
-    context_item.parser
-  end
-  # #parser when parent.parser returns nil
-  expect Mocha::Mock do
-    context_item = ContextItemWrapper.new
-    Parser.stubs(:recent_parser).returns stub('parser')
-    context_item.send(:instance_variable_set, "@parent", stub('parent', :parser => nil))
+    context_item.send(:instance_variable_set, "@parent", stub('parent', :parser => :parser))
     context_item.parser
   end
   # #parser when #parent nil
-  expect Mocha::Mock do
+  expect :parser do
     context_item = ContextItemWrapper.new
     context_item.send(:instance_variable_set, "@parent", nil)
-    Parser.stubs(:recent_parser).returns stub('parser')
+    context_item.send(:instance_variable_set, "@parser", :parser)
     context_item.parser
   end
   

@@ -8,11 +8,10 @@ module Papyrus
     # Template is a context object
     include ContextItem
     
-    # Template must know about the parser so it can access its context.
     def initialize(parser)
       super()
       @parser = parser
-      @parent = parser
+      @parent = nil
     end
     
     # Template#output is a special case for a Command. Because
@@ -27,7 +26,7 @@ module Papyrus
       if object.nil?
         super(self)
       elsif object.is_a?(ContextItem)
-        @parent = object  # I don't like this b/c it's destructive
+        @parent = object  # I don't like this b/c it affects future usage of the template object
         super(self)
       else
         context = Context.new(self)

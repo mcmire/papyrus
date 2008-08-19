@@ -18,34 +18,25 @@ include Papyrus
 Expectations do
   
   # Template#initialize
-  expect "whatever" do
-    template = Template.new("whatever")
-    template.send(:instance_variable_get, "@parser")
-  end
-  
-  # Template#parent
-  expect true do
-    template = Template.new(nil)
-    template.send(:parent).equal?(template)
+  begin
+    expect :parser do
+      template = Template.new(:parser)
+      template.send(:instance_variable_get, "@parser")
+    end
+    expect nil do
+      template = Template.new(:parser)
+      template.send(:instance_variable_get, "@parent")
+    end
   end
   
   # Template#output
   begin
     # when object is nil
-    begin
-      # @parent should be set to @parser
-      expect "parser" do
-        template = Template.new("parser")
-        template.class.superclass.any_instance.stubs(:output)
+    # super(self) should be called
+    locally do
+      template = Template.new("parser")
+      expect template.class.superclass.any_instance.to.receive(:output).with(template) do
         template.output(nil)
-        template.send(:instance_variable_get, "@parent")
-      end
-      # super(self) should be called
-      locally do
-        template = Template.new("parser")
-        expect template.class.superclass.any_instance.to.receive(:output).with(template) do
-          template.output(nil)
-        end
       end
     end
     # when object is a ContextItem

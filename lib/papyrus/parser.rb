@@ -6,32 +6,11 @@ module Papyrus
     class UnknownCommandError       < StandardError; end
     class InvalidEndOfCommandError  < StandardError; end
     
-    # Parser is a context object
-    include ContextItem
+    attr_reader :template, :tokens, :stack
     
-    @@recent_parser = nil
-    
-    class << self
-      # Returns the most recently created Parser
-      def recent_parser
-        @@recent_parser
-      end
-    end
-    
-    attr_reader :lexicon, :context
-    attr_reader :tokens, :stack
-    
-    # lexicon  => A Lexicon object. (a dup of DefaultLexicon)
-    # context  => A context object. (A new context)
-    def initialize(lexicon, parent=nil)
-      @@recent_parser = self
-      @context = self
-      if parent
-        @parent = parent.is_a?(ContextItem) ? parent : Context.construct_from(parent)
-      end
-      @parser = self
-      @lexicon = lexicon
-      @stack = [ Template.new(self) ]
+    def initialize
+      @template = Template.new(self)
+      @stack = [ @template ]
     end
     
     def parse(content)
@@ -83,8 +62,13 @@ module Papyrus
         case token
         when Token::LeftBracket
           cmd = handle_command
-          # create new Context if BlockCommand
-          (cmd.kind_of?(Command::BlockCommand) ? stack : stack.last) << cmd
+          if cmd.kind_of?(Command::BlockCommand)
+            # create new context
+            cmd.parent = stack.last
+            stack << cmd
+          else
+            stack.last << cmd
+          end
         else
           # assume token is a Token::Text
           stack.last << Text.new(token)

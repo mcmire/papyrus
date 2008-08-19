@@ -9,15 +9,15 @@ $LOAD_PATH.unshift File.dirname(__FILE__)
 
 require 'ruby_ext'
 
+require 'papyrus/context_item'
+require 'papyrus/context'
+
 require 'papyrus/node'
 require 'papyrus/node_list'
 require 'papyrus/text'
 require 'papyrus/variable'
 require 'papyrus/command'
 require 'papyrus/block_command'
-
-require 'papyrus/context_item'
-require 'papyrus/context'
 
 require 'papyrus/lexicon'
 #require 'papyrus/default_lexicon'

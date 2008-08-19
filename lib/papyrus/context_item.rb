@@ -68,8 +68,10 @@ module Papyrus
 
     # parser: most context objects won't be a parser, but pass this
     # query up to the parser object.
+    #---
+    # FIXME for Template
     def parser
-      (parent && parent.parser) || Parser.recent_parser
+      parent ? parent.parser : @parser
     end
 
     # A convenience method to test whether a variable has a true
@@ -98,8 +100,6 @@ module Papyrus
     def values
       @values ||= {}
     end
-    
-    attr_reader :parent
     
     def get_primary_part(key, whole_key)
       if values.has_key?(key)

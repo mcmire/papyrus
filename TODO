@@ -1,14 +1,13 @@
 TODO
 
-D Currently we don't support [foo] variables - in Compiler we should treat sub as
-  variable before treating as modifier or closer or command name
-D ContextItem#get should not return an error string but an empty string
-  
+D Parser should not be a ContextItem - the top-level context should be Template.
+  In that case Template's parent is nil, not the parser.
+D When BlockCommand is created, assign parent to stack.last
+* If block command not ended before end of token list reached, fudge end
+
 * Remove :source option for Compiler. #compile should accept a filename; #parse should
   accept raw template content. That's it.
 * DefaultPreprocessor - rename to Filters or something
 * All subclasses of BlockCommand should not override initialize() or add() unless necessary
 * Should we add attr_accessors for all instance variables for easier access during
   testing?
-* Parser should not be a ContextItem - the top-level context should be Template.
-  In that case Template's parent is nil, not the parser.
