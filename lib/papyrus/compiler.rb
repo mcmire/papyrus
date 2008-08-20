@@ -1,72 +1,65 @@
+require 'zlib'
+
 module Papyrus
-  # The big ass compiler that does all the dirty work of turning
-  # templates into compiled commands.
-  #
-  # Compiler.new() accepts a hash as an argument, and looks for these
-  # keys: (with defaults)
-  #
-  #  'context' => A context object. (A new context)
-  #  'lexicon'  => A Lexicon class singleton. (DefaultLexicon)
-  #  'preprocessor' => The preprocessor. (DefaultPreprocessor)
-  #  'default_processor' => The processor. (:process)
-  #  'source' => The Source for templates. (FileSource)
-  #
-  # Once the compiler is created, it can compile and parse any number of
-  # templates. 
-  #
-  # It can be treated as a one-template item by using
-  # Compiler#load(template), and calling Compiler.output
-  #
-  # To create separate generated templates from the same engine, use
-  # Compiler#parse, or Compiler#load. (It will still keep the most recent
-  # one it's #load'd, but that will not affect previously parsed or
-  # loaded)
   class Compiler
-    attr_reader :options, :preprocessor, :default_processor, :lexicon, :source,
-                :method_separator_regexp
-    attr_reader :commands
-    
-    # Compiler.new() accepts a hash as an argument, and looks for these
-    # keys: (with defaults)
-    #
-    #  :context => A context object. (A new context)
-    #  :preprocessor => The preprocessor. (DefaultPreprocessor)
-    #  :default_processor => The processor. (:process)
-    #  :source => The type of input ('file')
-    def initialize(options = {})
-      @options  = options.symbolize_keys
-      @preprocessor = options.delete(:preprocessor) || DefaultPreprocessor
-      @default_processor = options.delete(:default_processor) || :unescaped
-      @source = (options.delete(:source) || FileSource).new(options)
-      @commands = nil
-    end
-    
-    # Loads +name+ from a template, and saves it to allow this compiler to
-    # use it for output.
-    def load(name)
-      @commands = compile(name)
-    end
-    
-    # Retrieves the content of the given file, if it exists, possibly passing
-    # it through the tokenizer/compiler.
-    def compile(name)
-      if content = source.get(name)
-        if content.kind_of?(Command)
-          content
-        else
-          parse(name, content)
-        end
-      else
-        #template = Template.new(@options)
-        #template << Text.new("[ Template '#{name}' not found ]")
-        #template
-        raise "Template '#{name}' not found!"
+
+    class << self
+      def compile(name)
+        new(name).compile
       end
     end
     
-    def parse(name, content)
-      template = Parser.new.parse(content)
-      source.cache(name, template) if source.respond_to?(:cache)
+    attr_reader :source_file
+    
+    def initialize(name)
+      @source_file = get_source_path(name)
+      raise "Template '#{name}' not found!" unless @source_file
+    end
+    
+    def get_source_path(name)
+      name = name.gsub("../", "")
+      for path in Papyrus.source_template_dirs
+        file = File.join(path, name)
+        file.untaint
+        return File.expand_path(file) if File.exists?(file)
+      end
+      return nil
+    end
+    
+    def compiled_file
+      @compiled_file ||= File.join(Papyrus.compiled_template_dir, File.basename(source_file))
+    end
+    
+    def source_mtime
+      File.mtime(source_file)
+    end
+    
+    def compiled_mtime
+      File.mtime(compiled_file)
+    end
+
+    # Retrieves the content of the given file, if it exists, possibly passing
+    # it through the tokenizer/compiler.
+    def compile
+      compile_source_template if File.exists?(compiled_file) && source_mtime <= compiled_mtime
+        get_compiled_template
+      else
+        
+      end
+    end
+    
+    def get_compiled_template
+      data = File.open(compiled_file) {|f| f.read }
+      template = Marshal.load(Zlib::Inflate.inflate(data))
+      template.clear_values
+      template
+    end
+    
+    def compile_source_template
+      content = File.open(source_file) {|f| f.read }
+      template = Parser.parse(content)
+      data = Zlib::Deflate.deflate(Marshal.dump(template))
+      File.open(compiled_file, "w") {|f| f.write(data) }
       template
     end
  
