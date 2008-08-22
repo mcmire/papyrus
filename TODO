@@ -1,8 +1,6 @@
 TODO
 
-D Remove Compiler options
-D Add template caching
-* Delete FileSource and StringSource
+* Delete Source, FileSource, StringSource, DefaultLexicon, Lexicon, Compiler
 
 * If doesn't properly work -- what about something like:
 
