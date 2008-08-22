@@ -19,23 +19,21 @@ module Papyrus
     # context when the command is output; +processor+ is the name of the filter
     # (specifically, the method in the Preprocessor tied to the context) that will
     # be applied on the text.
-    def initialize(name, processor)
+    def initialize(name, filter)
       @name = name
-      @processor = processor
+      @filter = filter
     end
 
     # Requests the value of this object's saved value name from 
     # +context+, and returns the string representation of that
     # value to the caller, after passing it through the preprocessor.
-    #---
-    # Update to use Preprocessor instead of Commands::Filter?
     def output(context = nil)
-      Commands::Filter.filter(context, @processor, self.class) {|cxt| cxt[@name] }
+      Filter.filter(@filter, context.get(@name))
     end
 
     def to_s
       str = "[ Variable: #{@name} "
-      str << ":#{@processor} " unless @processor.blank?
+      str << ":#{@filter} " unless @filter.blank?
       str << ']'
       str
     end

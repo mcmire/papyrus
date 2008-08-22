@@ -5,7 +5,7 @@ require 'node'
 require 'command'
 require 'variable'
 require 'block_command'
-require 'commands/filter'
+require 'filter'
 
 include Papyrus
 
@@ -19,24 +19,24 @@ Expectations do
     end
     expect "unescaped" do
       value = Variable.new("foobar", "unescaped")
-      value.send(:instance_variable_get, "@processor")
+      value.send(:instance_variable_get, "@filter")
     end
   end
   
   # Value#output
-  expect Commands::Filter.to.receive(:filter).with(:context, "unescaped", Variable) do |filter|
-    value = Variable.new("", "unescaped")
-    value.output(:context)
+  expect Filter.to.receive(:filter).with("unescaped", "Some text") do
+    context = stub("context", :get => "Some text")
+    Variable.new("", "unescaped").output(context)
   end
   
   # Value#to_s
   begin
-    # when @processor present
+    # when @filter present
     expect "[ Variable: foobar :unescaped ]" do
       value = Variable.new("foobar", "unescaped")
       value.to_s
     end
-    # when @processor blank
+    # when @filter blank
     expect "[ Variable: foobar ]" do
       value = Variable.new("foobar", "")
       value.to_s

@@ -1,6 +1,6 @@
 TODO
 
-* Delete Source, FileSource, StringSource, DefaultLexicon, Lexicon, Compiler
+* Why is context optional? Shouldn't it always be required (except for Template)?
 
 * If doesn't properly work -- what about something like:
 
@@ -16,11 +16,7 @@ TODO
   
   Here, I think we'll have to copy from Liquid.
 
-* DefaultPreprocessor - rename to Filters or something
-* Move code in Commands::Filter to Filters
-
 * Update documentation!!
 
-* All subclasses of BlockCommand should not override initialize() or add() unless necessary
 * Should we add attr_accessors for all instance variables for easier access during
   testing?
