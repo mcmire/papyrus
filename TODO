@@ -1,11 +1,27 @@
 TODO
 
-D If block command not ended before end of token list reached, fudge end
+D Remove Compiler options
+D Add template caching
+* Delete FileSource and StringSource
 
-* Remove Compiler options
-* Don't need a :source option - #compile should accept a filename; #parse should accept raw template content. That's it.
+* If doesn't properly work -- what about something like:
+
+  [if foo == 'bar']  # this line here.. equal sign??
+    aslfkjdsfsd
+  [else]
+    aslkfjsldkfj
+  [/if]
+  
+  In Diary-X, we never had this problem because it was sort of Lispish -- so
+  
+  [if == [foo] 42]
+  
+  Here, I think we'll have to copy from Liquid.
+
 * DefaultPreprocessor - rename to Filters or something
 * Move code in Commands::Filter to Filters
+
+* Update documentation!!
 
 * All subclasses of BlockCommand should not override initialize() or add() unless necessary
 * Should we add attr_accessors for all instance variables for easier access during

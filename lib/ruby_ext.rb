@@ -1,12 +1,6 @@
 require 'pp'
 
 class String
-  def constantize
-    unless /\A(?:::)?([A-Z]\w*(?:::[A-Z]\w*)*)\z/ =~ self
-      raise NameError, "#{self.inspect} is not a valid constant name!"
-    end
-    Object.module_eval("::#{$1}", __FILE__, __LINE__)
-  end
   def camelize(first_letter_in_uppercase = true)
     if first_letter_in_uppercase
       self.to_s.gsub(/\/(.?)/) { "::#{$1.upcase}" }.gsub(/(?:^|_)(.)/) { $1.upcase }
@@ -17,6 +11,7 @@ class String
 end
 
 class Object
+  # Copied from Rails
   def blank?
     (respond_to?(:empty?) && empty?) || nil?
   end
@@ -26,13 +21,6 @@ class Object
 end
 
 module Enumerable
-  def map_with_index
-    result = []
-    self.each_with_index do |elt, idx|
-      result << yield(elt, idx)
-    end
-    result
-  end
   def inject_with_index(injected)
     each_with_index {|obj, index| injected = yield(injected, obj, index) }
     injected
@@ -48,8 +36,12 @@ class Hash
   end
 end
 
-class StringScanner
-  def scan_until_before(pattern)
-    search_full(pattern, true, false)
+class File
+  def self.read(file)
+    File.open(file) {|f| f.read }
+  end
+  def self.write(file, content)
+    File.open(file, "w") {|f| f.write(content) }
   end
 end
+    

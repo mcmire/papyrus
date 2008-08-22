@@ -15,7 +15,7 @@ Expectations do
     expect -1 do
       TokenList.new.send(:instance_variable_get, "@pos")
     end
-    expect Hash.new do
+    expect(:raw => "", :full => "") do
       TokenList.new.send(:instance_variable_get, "@cmd_info")
     end
     expect false do

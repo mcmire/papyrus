@@ -1,7 +1,7 @@
 #!/usr/local/bin/ruby -w
 
-# Papyrus is a heavily modified version of PageTemplate
-# http://coolnamehere.com/products/pagetemplate/
+# Papyrus is a heavily modified version of PageTemplate 2.2.3
+# Original source can be located at http://coolnamehere.com/products/pagetemplate/
 
 ##############################################################################
 
@@ -19,36 +19,35 @@ require 'papyrus/variable'
 require 'papyrus/command'
 require 'papyrus/block_command'
 
-require 'papyrus/lexicon'
+#require 'papyrus/lexicon'
 #require 'papyrus/default_lexicon'
 
 #require 'papyrus/preprocessor'
 require 'papyrus/default_preprocessor'
 
-require 'papyrus/source'
-require 'papyrus/file_source'
-require 'papyrus/string_source'
+#require 'papyrus/source'
+#require 'papyrus/file_source'
+#require 'papyrus/string_source'
 
 require 'papyrus/template'
 require 'papyrus/token'
 require 'papyrus/token_list'
 require 'papyrus/parser'
-require 'papyrus/compiler'
+#require 'papyrus/compiler'
 
 ##############################################################################
 
 module Papyrus
-  VERSION = "2.2.3-modified"
-  
   class << self
-    attr_accessor :available_commands
+    def source_template_dirs; @source_template_dirs ||= %w(.); end
+    attr_accessor :available_commands, :cached_template_dir
     attr_reader :lexicon
 
     # Loads command classes and creates a new instance of Compiler
-    def new(options = {})
+    def new(*args)
       @lexicon = {}
       load_command_classes
-      Compiler.new(options)
+      Compiler.new(*args)
     end
 
     # Load commands based on available_commands, or load all

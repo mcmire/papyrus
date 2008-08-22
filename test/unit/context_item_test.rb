@@ -13,13 +13,11 @@ end
 
 Expectations do
   
-  # #clear/#clear_cache
-  for method in %w(clear clear_cache)
-    expect Hash.new do
-      context_item = ContextItemWrapper.new
-      context_item.send(method)
-      context_item.send(:values)
-    end
+  # #reset_vars
+  expect Hash.new do
+    context_item = ContextItemWrapper.new
+    context_item.reset_vars
+    context_item.send(:vars)
   end
   
   # #set
@@ -27,12 +25,12 @@ Expectations do
     expect "bar" do
       context_item = ContextItemWrapper.new
       context_item.set("foo", "bar")
-      context_item.send(:values)['foo']
+      context_item.send(:vars)['foo']
     end
     expect "bar" do
       context_item = ContextItemWrapper.new
       context_item.set(:foo, "bar")
-      context_item.send(:values)['foo']
+      context_item.send(:vars)['foo']
     end
   end
   
@@ -81,90 +79,90 @@ Expectations do
   #  # ...
   #end
   
-  # #get_primary_part when @values has key
+  # #get_primary_part when @vars has key
   expect "bar" do
     context_item = ContextItemWrapper.new
     context_item.stubs(:parser).returns stub('parser',
       :options => { 'raise_on_error' => false }
     )
-    context_item.send(:values=, 'foo' => 'bar')
+    context_item.send(:vars=, 'foo' => 'bar')
     context_item.send(:get_primary_part, 'foo', 'foo')
   end
-  # #get_primary_part when @values has key (as symbol)
+  # #get_primary_part when @vars has key (as symbol)
 =begin
   expect "bar" do
     context_item = ContextItemWrapper.new
-    context_item.send(:values=, :foo => 'bar')
+    context_item.send(:vars=, :foo => 'bar')
     context_item.send(:get_primary_part, 'foo', 'foo')
   end
 =end
-  # #get_primary_part when @values doesn't have key and @object undefined, but parent has value
+  # #get_primary_part when @vars doesn't have key and @object undefined, but parent has value
   expect "bar" do
     context_item = ContextItemWrapper.new
     context_item.stubs(:parent).returns stub('parent', :get => 'bar')
-    context_item.send(:values=, {})
+    context_item.send(:vars=, {})
     context_item.send(:get_primary_part, 'foo', 'foo')
   end
-  # #get_primary_part when @values doesn't have key, @object undefined, @parent undefined
+  # #get_primary_part when @vars doesn't have key, @object undefined, @parent undefined
   expect nil do
     context_item = ContextItemWrapper.new
     context_item.stubs(:parent).returns(nil)
-    context_item.send(:values=, {})
+    context_item.send(:vars=, {})
     context_item.send(:get_primary_part, 'foo', 'foo')
   end
-  # #get_primary_part when @values doesn't have key, but @object has key
+  # #get_primary_part when @vars doesn't have key, but @object has key
   expect ["bar", "bar"] do
     context_item = ContextItemWrapper.new
-    context_item.send(:values=, {})
+    context_item.send(:vars=, {})
     context_item.stubs(:object).returns('foo' => 'bar')
-    [ context_item.send(:get_primary_part, 'foo', 'foo'), context_item.send(:values)['foo'] ]
+    [ context_item.send(:get_primary_part, 'foo', 'foo'), context_item.send(:vars)['foo'] ]
   end
-  # #get_primary_part when @values doesn't have key, and @object doesn't have key, but parent has key
+  # #get_primary_part when @vars doesn't have key, and @object doesn't have key, but parent has key
   expect ["bar", true] do
     context_item = ContextItemWrapper.new
-    context_item.send(:values=, {})
+    context_item.send(:vars=, {})
     context_item.stubs(:object).returns({})
     context_item.stubs(:parent).returns stub('parent', :get => 'bar')
     context_item.send(:get_primary_part, 'foo', 'foo')
   end
-  # #get_primary_part when @values doesn't have key, @object doesn't have key, @parent undefined
+  # #get_primary_part when @vars doesn't have key, @object doesn't have key, @parent undefined
   expect nil do
     context_item = ContextItemWrapper.new
-    context_item.send(:values=, {})
+    context_item.send(:vars=, {})
     context_item.stubs(:object).returns({})
     context_item.stubs(:parent).returns(nil)
     context_item.send(:get_primary_part, 'foo', 'foo')
   end
-  # #get_primary_part when @values doesn't have key, @object doesn't have key or isn't a hash,
+  # #get_primary_part when @vars doesn't have key, @object doesn't have key or isn't a hash,
   # but key is a method of object
   expect "bar" do
     context_item = ContextItemWrapper.new
-    context_item.send(:values=, {})
+    context_item.send(:vars=, {})
     context_item.stubs(:object).returns stub('object', :foo => "bar")
     context_item.send(:get_primary_part, 'foo', 'foo')
   end
-  # #get_primary_part when @values doesn't have key, @object doesn't have key, key is not a method of object,
+  # #get_primary_part when @vars doesn't have key, @object doesn't have key, key is not a method of object,
   # but key is '__ITEM__'
   expect Mocha::Mock do
     context_item = ContextItemWrapper.new
-    context_item.send(:values=, {})
+    context_item.send(:vars=, {})
     context_item.stubs(:object).returns stub('object')
     context_item.send(:get_primary_part, '__ITEM__', '__ITEM__')
   end
-  # #get_primary_part when @values doesn't have key, @object doesn't have key, key is not a method of object,
+  # #get_primary_part when @vars doesn't have key, @object doesn't have key, key is not a method of object,
   # key is not '__ITEM__', but @parent defined
   expect ["bar", true] do
     context_item = ContextItemWrapper.new
-    context_item.send(:values=, {})
+    context_item.send(:vars=, {})
     context_item.stubs(:object).returns stub('object')
     context_item.stubs(:parent).returns stub('parent', :get => 'bar')
     context_item.send(:get_primary_part, 'foo', 'foo')
   end
-  # #get_primary_part when @values doesn't have key, @object doesn't have key, key is not a method of object,
+  # #get_primary_part when @vars doesn't have key, @object doesn't have key, key is not a method of object,
   # key is not '__ITEM__', @parent not defined
   expect nil do
     context_item = ContextItemWrapper.new
-    context_item.send(:values=, {})
+    context_item.send(:vars=, {})
     context_item.stubs(:object).returns stub('object')
     context_item.stubs(:parent).returns(nil)
     context_item.send(:get_primary_part, 'foo', 'foo')
@@ -172,37 +170,37 @@ Expectations do
   
   # #get_secondary_part when only one other secondary method call
   begin
-    # #get_secondary_part if @values has key
+    # #get_secondary_part if @vars has key
     expect ['baz', 'baz'] do
       context_item = ContextItemWrapper.new
-      context_item.send(:values=, 'foo.bar' => 'baz')
+      context_item.send(:vars=, 'foo.bar' => 'baz')
       ret = context_item.send(:get_secondary_part, 'foo.bar', 'bar', nil)
-      [ ret, context_item.send(:values)['foo.bar'] ]
+      [ ret, context_item.send(:vars)['foo.bar'] ]
     end
-    # #get_secondary_part when @values doesn't have key, but value_so_far is a hash
+    # #get_secondary_part when @vars doesn't have key, but value_so_far is a hash
     expect ['baz', 'baz'] do
       context_item = ContextItemWrapper.new
       ret = context_item.send(:get_secondary_part, 'foo.bar', 'bar', { 'bar' => 'baz' })
-      [ ret, context_item.send(:values)['foo.bar'] ]
+      [ ret, context_item.send(:vars)['foo.bar'] ]
     end
-    # #get_secondary_part when @values doesn't have key, but value_so_far is an array
+    # #get_secondary_part when @vars doesn't have key, but value_so_far is an array
     expect ['baz', 'baz'] do
       context_item = ContextItemWrapper.new
       ret = context_item.send(:get_secondary_part, 'foo.1', '1', [ 'quux', 'baz' ])
-      [ ret, context_item.send(:values)['foo.1'] ]
+      [ ret, context_item.send(:vars)['foo.1'] ]
     end
-    # #get_secondary_part when @values doesn't have key, but value_so_far is an object and key is a method
+    # #get_secondary_part when @vars doesn't have key, but value_so_far is an object and key is a method
     expect ['baz', 'baz'] do
       context_item = ContextItemWrapper.new
       ret = context_item.send(:get_secondary_part, 'foo.bar', 'bar', stub("foo", :bar => 'baz'))
-      [ ret, context_item.send(:values)['foo.bar'] ]
+      [ ret, context_item.send(:vars)['foo.bar'] ]
     end
-    # #get_secondary_part when @values doesn't have key, and key is not a method
+    # #get_secondary_part when @vars doesn't have key, and key is not a method
     expect nil do
       context_item = ContextItemWrapper.new
       context_item.send(:get_secondary_part, 'foo.bar', 'bar', stub("foo", :quux => 'baz'))
     end
-    # #get_secondary_part when @values doesn't have key and value_so_far is nil
+    # #get_secondary_part when @vars doesn't have key and value_so_far is nil
     expect nil do
       context_item = ContextItemWrapper.new
       context_item.send(:get_secondary_part, 'foo.bar', 'bar', nil)
@@ -212,9 +210,9 @@ Expectations do
   # #delete
   expect({}) do
     context_item = ContextItemWrapper.new
-    context_item.send(:values=, 'foo' => 'bar')
+    context_item.send(:vars=, 'foo' => 'bar')
     context_item.delete('foo')
-    context_item.send(:values)
+    context_item.send(:vars)
   end
   
   # #parser when #parent not nil
@@ -281,16 +279,16 @@ Expectations do
     context_item.true?("")
   end
   
-  # #values when @values not defined
+  # #vars when @vars not defined
   expect({}) do
     context_item = ContextItemWrapper.new
-    context_item.send(:values)
+    context_item.send(:vars)
   end
-  # #values when @values defined
+  # #vars when @vars defined
   expect(:foo => 'bar') do
     context_item = ContextItemWrapper.new
-    context_item.send(:instance_variable_set, "@values", :foo => 'bar')
-    context_item.send(:values)
+    context_item.send(:instance_variable_set, "@vars", :foo => 'bar')
+    context_item.send(:vars)
   end
   
 end

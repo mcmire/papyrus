@@ -8,7 +8,7 @@ include Papyrus
 Expectations do
   
   expect Hash do
-    Context.new.send :instance_variable_get, '@values'
+    Context.new.send :instance_variable_get, '@vars'
   end
   expect Context do
     parent_context = Context.new

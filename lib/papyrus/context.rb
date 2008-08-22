@@ -6,7 +6,7 @@ module Papyrus
     def initialize(parent=nil, object=nil)
       @parent = parent
       @object = object
-      @values = Hash.new
+      @vars = Hash.new
     end
 
     # Create a new top-level Context with a Hash-like object

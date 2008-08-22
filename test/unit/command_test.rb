@@ -2,6 +2,7 @@ require File.dirname(__FILE__)+'/test_helper'
 
 require 'node'
 require 'command'
+require 'context_item'
 require 'block_command'
 
 module Papyrus

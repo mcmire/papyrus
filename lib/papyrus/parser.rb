@@ -6,20 +6,75 @@ module Papyrus
     class UnknownCommandError       < StandardError; end
     class InvalidEndOfCommandError  < StandardError; end
     
-    attr_reader :template, :tokens, :stack
+    class << self
+      def parse_file(name, vars)
+        file = find_template(name) or raise "Couldn't find template '#{name}'!"
+        cached = cached_path(file)
+        if File.exists?(cached) && cached_mtime(cached) >= file_mtime(file)
+          read_cached(cached)
+        else
+          parse_and_cache_file(file, vars, cached)
+        end
+      end
+      
+      def parse(content)
+        new(content).parse
+      end
+      
+    ## can't set private, otherwise Ruby complains the method's not there for some reason
+    #private
+      def find_template(name)
+        name = name.gsub("../", "")
+        for path in Papyrus.source_template_dirs
+          file = File.join(path, name)
+          file.untaint
+          return File.expand_path(file) if File.exists?(file)
+        end
+        return nil
+      end
+      
+      def cached_path(file)
+        File.join(Papyrus.cached_template_dir, File.basename(file))
+      end
+      
+      def cached_mtime(cached)
+        File.mtime(cached)
+      end
+      
+      def file_mtime(file)
+        File.mtime(file)
+      end
+      
+      def read_cached(cached)
+        File.read(cached)
+      end
+      
+      def parse_and_cache_file(file, vars, cached)
+        content = File.read(file)
+        template = parse(content)
+        template.vars = vars
+        output = template.output
+        File.write(cached, output)
+        output
+      end
+    end
     
-    def initialize
+    attr_reader :content, :template
+    attr_reader :stack, :tokens
+    
+    def initialize(content)
+      @content = content
       @template = Template.new(self)
       @stack = [ @template ]
     end
     
-    def parse(content)
-      tokenize(content)
+    def parse
+      tokenize
       make_template
       @template
     end
     
-    def tokenize(content)
+    def tokenize
       @tokens = TokenList.new
       tok = nil
       brackets_open = 0

@@ -4,12 +4,12 @@
 
 require File.dirname(__FILE__)+'/test_helper'
 
+require 'context_item'
 require 'node'
 require 'node_list'
 require 'command'
 require 'block_command'
 require 'text'
-require 'context_item'
 require 'context'
 require 'template'
 

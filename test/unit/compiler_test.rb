@@ -4,6 +4,8 @@ require 'papyrus'
 
 include Papyrus
 
+require 'compiler'
+
 this_dir = File.dirname(__FILE__)
 
 require 'tempfile'

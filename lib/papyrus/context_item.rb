@@ -4,7 +4,7 @@ module Papyrus
   # parent: A parent object to get a value from if the context
   # does not 'know' a value.
   #
-  # object: An object is a hash or list that contains the values that
+  # object: An object is a hash or list that contains the vars that
   # this context will refer to. It may also be an object, in which
   # case, its methods are treated as a hash, with respond_to? and
   # send()
@@ -12,18 +12,16 @@ module Papyrus
   # Cache: A cache ensures that a method on an object will only be
   # called once.
   module ContextItem
-    attr_accessor :parent, :object
+    attr_accessor :parent, :object, :vars
 
-    # Clears the cache
-    def clear
-      @values = Hash.new
+    def reset_vars
+      @vars = Hash.new
     end
-    alias_method :clear_cache, :clear
 
     # Saves a variable +key+ as the string +value+ in the global 
     # context.
     def set(key, value)
-      values[key.to_s] = value
+      vars[key.to_s] = value
     end
     alias_method :[]=, :set
 
@@ -63,7 +61,7 @@ module Papyrus
 
     # Removes an entry from the Context
     def delete(key)
-      values.delete(key)
+      vars.delete(key)
     end
 
     # parser: most context objects won't be a parser, but pass this
@@ -96,26 +94,25 @@ module Papyrus
     end
     
   private
-    attr_writer :values
-    def values
-      @values ||= {}
+    def vars
+      @vars ||= {}
     end
     
     def get_primary_part(key, whole_key)
-      if values.has_key?(key)
-        values[key]
-      #elsif values.has_key?(key.to_sym)
-      #  values[key.to_sym]
+      if vars.has_key?(key)
+        vars[key]
+      #elsif vars.has_key?(key.to_sym)
+      #  vars[key.to_sym]
       elsif !object && parent
         parent.get(whole_key)
       elsif object.respond_to?(:has_key?)
         if object.has_key?(key)
-          values[key] = object[key]
+          vars[key] = object[key]
         elsif parent
           [parent.get(whole_key), true]
         end
       elsif object.respond_to?(sym = key.to_sym)
-        values[key] = object.send(sym)
+        vars[key] = object.send(sym)
       elsif key == '__ITEM__'
         object
       elsif parent
@@ -125,9 +122,9 @@ module Papyrus
     
     def get_secondary_part(key_so_far, key, value_so_far)
       begin
-        values[key_so_far] =
-          if values.has_key?(key_so_far)
-            values[key_so_far]
+        vars[key_so_far] =
+          if vars.has_key?(key_so_far)
+            vars[key_so_far]
           elsif value_so_far.respond_to?(:has_key?) # Hash
             value_so_far[key]
           elsif value_so_far.respond_to?(:[]) && key =~ /^\d+$/ # Array
