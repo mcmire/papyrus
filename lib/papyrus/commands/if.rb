@@ -75,16 +75,8 @@ module Papyrus
         @switched = false
       end
       
-      # Adds the given command to @true_commands or @false_commands,
-      # depending on if the command is an 'if' or 'unless' and if 'else'
-      # has been called. (See the documentation for the If class for more.)
-      def add(cmd)
-        if @in_else
-          @false_commands << cmd
-        else
-          @true_commands.last.last << cmd
-        end
-        self
+      def active_block
+        in_else ? false_commands : true_commands.last.last
       end
       
       # Adds the given value to the list of @true_commands.
@@ -139,6 +131,9 @@ module Papyrus
         str << ' ]'
         str
       end
+      
+    private
+      attr_reader :in_else, :true_commands, :false_commands
     end 
   end
 end

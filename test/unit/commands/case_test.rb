@@ -28,25 +28,22 @@ Expectations do
       Papyrus::Commands::Case.new(nil, "", []).send(:instance_variable_get, "@default")
     end
   end
-   
-  # Case#add
+  
+  # Case#active_block
   begin
-    # when @current_case defined
-    expect true do
-      cmd = Papyrus::Command.new("", [])
+    # when @current_case not nil
+    expect :named_case do
       case_cmd = Papyrus::Commands::Case.new(nil, "", [])
-      case_cmd.send(:instance_variable_set, "@current_case", "foo")
-      blocks = case_cmd.send(:instance_variable_get, "@blocks")
-      blocks["foo"] = Papyrus::NodeList.new(case_cmd)
-      case_cmd.add(cmd)
-      blocks["foo"].last.equal?(cmd)
+      case_cmd.stubs(:current_case).returns("foo")
+      case_cmd.stubs(:blocks).returns("foo" => :named_case)
+      case_cmd.active_block
     end
-    # when @current_case not defined
-    expect true do
-      cmd = Papyrus::Command.new("", [])
+    # when @current_case nil
+    expect :default_case do
       case_cmd = Papyrus::Commands::Case.new(nil, "", [])
-      case_cmd.add(cmd)
-      case_cmd.send(:instance_variable_get, "@default").last.equal?(cmd)
+      case_cmd.stubs(:current_case).returns(nil)
+      case_cmd.stubs(:default).returns(:default_case)
+      case_cmd.active_block
     end
   end
    

@@ -19,7 +19,7 @@ Expectations do
       TokenList.new.send(:instance_variable_get, "@cmd_info")
     end
     expect false do
-      TokenList.new.send(:instance_variable_get, "@record")
+      TokenList.new.send(:instance_variable_get, "@stash_curr_on_advance")
     end
   end
   
@@ -47,29 +47,10 @@ Expectations do
       tokens.pos = 0
       tokens.advance
     end
-    # raw and full should be stored when @record
-    expect(:raw => "foo/bar", :full => "foo/bar") do
-      list = [
-        Token::Text.new("foo"),
-        Token::Slash.new,
-        Token::Text.new("bar")
-      ]
-      tokens = TokenList.new(list)
-      tokens.start_recording!
-      3.times { tokens.advance }
-      tokens.cmd_info
-    end
-    # raw should include left and right brackets, but full should not
-    expect(:raw => "[foo]", :full => "foo") do
-      list = [
-        Token::LeftBracket.new,
-        Token::Text.new("foo"),
-        Token::RightBracket.new
-      ]
-      tokens = TokenList.new(list)
-      tokens.start_recording!
-      3.times { tokens.advance }
-      tokens.cmd_info
+    # #stash_curr should be called on advance when @stash_curr_on_advance
+    expect TokenList.new([]).to.receive(:stash_curr) do |tokens|
+      tokens.send(:instance_variable_set, "@stash_curr_on_advance", true)
+      tokens.advance
     end
   end
   
@@ -109,25 +90,67 @@ Expectations do
     tokens.prev
   end
   
-  # TokenList#start_recording!
-  expect true do
-    tokens = TokenList.new
-    tokens.start_recording!
-    tokens.send(:instance_variable_get, "@record")
-  end
-  
-  # TokenList#stop_recording!
+  # TokenList#start_stashing!
   begin
-    expect false do
+    expect true do
       tokens = TokenList.new
-      tokens.stop_recording!
-      tokens.send(:instance_variable_get, "@record")
+      tokens.start_stashing!
+      tokens.send(:instance_variable_get, "@stash_curr_on_advance")
     end
     expect ["", ""] do
       tokens = TokenList.new
-      tokens.stop_recording!
+      tokens.start_stashing!
       cmd_info = tokens.send(:instance_variable_get, "@cmd_info")
       [ cmd_info[:raw], cmd_info[:full] ]
+    end
+  end
+  
+  # TokenList#stop_stashing!
+  begin
+    expect false do
+      tokens = TokenList.new
+      tokens.stop_stashing!
+      tokens.send(:instance_variable_get, "@stash_curr_on_advance")
+    end
+  end
+  
+  # TokenList#stash_curr
+  begin
+    # raw should be added to, always
+    expect "foo/bar" do
+      tokens = TokenList.new
+      cmd_info = { :raw => "foo/", :full => "foo/" }
+      tokens.stubs(:cmd_info).returns(cmd_info)
+      tokens.stubs(:curr).returns(Token::Text.new("bar"))
+      tokens.stash_curr
+      cmd_info[:raw]
+    end
+    # full should be added to when token is not a left or right bracket
+    expect "foo/bar" do
+      tokens = TokenList.new
+      cmd_info = { :raw => "foo/", :full => "foo/" }
+      tokens.stubs(:cmd_info).returns(cmd_info)
+      tokens.stubs(:curr).returns(Token::Text.new("bar"))
+      tokens.stash_curr
+      cmd_info[:full]
+    end
+    # full should NOT be added to when token IS a left bracket
+    expect "" do
+      tokens = TokenList.new
+      cmd_info = { :raw => "", :full => "" }
+      tokens.stubs(:cmd_info).returns(cmd_info)
+      tokens.stubs(:curr).returns(Token::LeftBracket.new)
+      tokens.stash_curr
+      cmd_info[:full]
+    end
+    # full should NOT be added to when token IS a right bracket
+    expect "foo" do
+      tokens = TokenList.new
+      cmd_info = { :raw => "foo", :full => "foo" }
+      tokens.stubs(:cmd_info).returns(cmd_info)
+      tokens.stubs(:curr).returns(Token::RightBracket.new)
+      tokens.stash_curr
+      cmd_info[:full]
     end
   end
   

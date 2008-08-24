@@ -6,12 +6,19 @@ module Papyrus
     include ContextItem
     
     def initialize(*args)
-      raise ArgumentError, 'BlockCommand.new should not be called directly' if self.class == BlockCommand
+      raise NotImplementedError, 'BlockCommand.new should not be called directly' if self.class == BlockCommand
       super
     end
     
-    def add(block)
-      raise ArgumentError, 'BlockCommand#add should not be called directly'
+    def active_block
+      raise NotImplementedError, 'BlockCommand#active_block should not be called directly' if self.class == BlockCommand
+      raise 'BlockCommand#active_block: @active_block should have been set in constructor' unless @active_block
+      @active_block
+    end
+    
+    def add(cmd)
+      active_block << cmd
+      self
     end
     def <<(cmd)
       add(cmd)

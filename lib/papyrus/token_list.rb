@@ -6,28 +6,19 @@ module Papyrus
       super(array)
       @pos = -1
       @cmd_info = { :raw => "", :full => "" }
-      @record = false
+      @stash_curr_on_advance = false
     end
     
     def advance
-      tok = nil
+      token = nil
       # skip whitespace, but still record it
       begin
         @pos += 1
-        tok = self[@pos]
-        if @record
-          @cmd_info[:raw] << tok
-          @cmd_info[:full] << tok unless tok.is_a?(Token::LeftBracket) or tok.is_a?(Token::RightBracket)
-        end
-      end while tok.is_a?(Token::Whitespace)
-      tok
+        token = self[@pos]
+        stash_curr if @stash_curr_on_advance
+      end while token.is_a?(Token::Whitespace)
+      token
     end
-    
-    #def skip(klass)
-    #  tok = nil
-    #  begin; tok = self.next; end while tok.is_a?(klass)
-    #  tok
-    #end
     
     def curr
       self[@pos]
@@ -41,21 +32,19 @@ module Papyrus
       self[@pos-1]
     end
     
-    def start_recording!
-      @record = true
-    end
-    
-    def stop_recording!
-      @record = false
+    def start_stashing!
+      @stash_curr_on_advance = true
       @cmd_info = { :raw => "", :full => "" }
     end
     
-    def save
-      # ...
+    def stop_stashing!
+      @stash_curr_on_advance = false
     end
     
-    def revert
-      # ...
+    def stash_curr
+      token = self.curr
+      cmd_info[:raw] << token
+      cmd_info[:full] << token unless token.is_a?(Token::LeftBracket) or token.is_a?(Token::RightBracket)
     end
   end
 end

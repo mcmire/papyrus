@@ -22,8 +22,16 @@ Expectations do
   
   # Parser.parse_file
   begin
+    # Papyrus.cache_templates is false
+    expect Parser.to.receive(:parse_and_cache_file).with("/source/file", {}, "/cached/file") do
+      Parser.stubs(:find_template).returns("/source/file")
+      Parser.stubs(:cached_path).returns("/cached/file")
+      Papyrus.stubs(:cache_templates?).returns(false)
+      Parser.parse_file("", {})
+    end
     # file has not been parsed yet
     expect Parser.to.receive(:parse_and_cache_file).with("/source/file", {}, "/cached/file") do
+      Papyrus.cache_templates = true
       Parser.stubs(:find_template).returns("/source/file")
       Parser.stubs(:cached_path).returns("/cached/file")
       File.stubs(:exists?).returns(false)
@@ -31,6 +39,7 @@ Expectations do
     end
     # cache file exists, but source has been modified since being cached
     expect Parser.to.receive(:parse_and_cache_file).with("/source/file", {}, "/cached/file") do
+      Papyrus.cache_templates = true
       Parser.stubs(:find_template).returns("/source/file")
       Parser.stubs(:cached_path).returns("/cached/file")
       File.stubs(:exists?).returns(true)
@@ -40,6 +49,7 @@ Expectations do
     end
     # cache file exists and source has not been modified since being cached
     expect Parser.to.receive(:read_cached).with("/cached/file") do
+      Papyrus.cache_templates = true
       Parser.stubs(:find_template).returns("/source/file")
       Parser.stubs(:cached_path).returns("/cached/file")
       File.stubs(:exists?).returns(true)
@@ -85,8 +95,9 @@ Expectations do
       File.stubs(:write)
       Parser.send(:parse_and_cache_file, src.path, {}, "/cached/file")
     end
-    # cached file should contain template output
+    # cached file should contain template output if Papyrus.cache_templates?
     expect "Some template output" do
+      Papyrus.cache_templates = true
       File.stubs(:read)
       Parser.stubs(:parse)
       template = Template.new(nil)
@@ -95,6 +106,16 @@ Expectations do
       cached = Tempfile.new("cached")
       Parser.send(:parse_and_cache_file, "", [], cached.path)
       cached.read
+    end
+    # File.write should not be called if not Papyrus.cache_templates?
+    expect File.to.receive(:write).never do
+      Papyrus.cache_templates = false
+      File.stubs(:read)
+      Parser.stubs(:parse)
+      template = Template.new(nil)
+      template.stubs(:output).returns("Some template output")
+      Parser.stubs(:parse).returns(template)
+      Parser.send(:parse_and_cache_file, "", [], "")
     end
   end
   
@@ -221,15 +242,6 @@ Expectations do
       parser.stubs(:modify_active_cmd).returns(true)
       parser.handle_command
     end
-    # closer should end command and return empty output
-    expect Text.new("") do
-      parser = Parser.new("")
-      parser.stubs(:tokens).returns(TokenList.new)
-      parser.stubs(:gather_command_name_and_args)
-      parser.stubs(:modify_active_cmd).returns(false)
-      parser.stubs(:close_active_cmd).returns(true)
-      parser.handle_command
-    end
     # reached end of list before end of command
     expect Text do
       parser = Parser.new("")
@@ -253,7 +265,7 @@ Expectations do
     end
   end
   
-  # Parser#close_active_cmd
+  # Parser#handle_command_close
   begin
     # command name is not a Text token
     expect Parser::InvalidEndOfCommandError do
@@ -316,7 +328,7 @@ Expectations do
     expect false do
       parser = Parser.new("")
       parser.stubs(:stack).returns([ :not_a_command ])
-      parser.modify_active_cmd("")
+      parser.modify_active_cmd("", [])
     end
     # active command is a BlockCommand but is not modified by given command
     expect false do
@@ -324,7 +336,7 @@ Expectations do
       cmd = Commands::SomeBlockCommand.new("", [])
       cmd.stubs(:modified_by?).returns(false)
       parser.stubs(:stack).returns([ cmd ])
-      parser.modify_active_cmd("")
+      parser.modify_active_cmd("", [])
     end
     # active command is a BlockCommand and is modified by given command
     expect true do
@@ -332,7 +344,7 @@ Expectations do
       cmd = Commands::SomeBlockCommand.new("", [])
       cmd.stubs(:modified_by?).returns(true)
       parser.stubs(:stack).returns([ cmd ])
-      parser.modify_active_cmd("")
+      parser.modify_active_cmd("", [])
     end
   end
   

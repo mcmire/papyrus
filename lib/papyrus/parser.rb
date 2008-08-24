@@ -10,7 +10,7 @@ module Papyrus
       def parse_file(name, vars)
         file = find_template(name) or raise "Couldn't find template '#{name}'!"
         cached = cached_path(file)
-        if File.exists?(cached) && cached_mtime(cached) >= file_mtime(file)
+        if Papyrus.cache_templates? and File.exists?(cached) && cached_mtime(cached) >= file_mtime(file)
           read_cached(cached)
         else
           parse_and_cache_file(file, vars, cached)
@@ -54,7 +54,7 @@ module Papyrus
         template = parse(content)
         template.vars = vars
         output = template.output
-        File.write(cached, output)
+        File.write(cached, output) if Papyrus.cache_templates?
         output
       end
     end
@@ -63,6 +63,7 @@ module Papyrus
     attr_reader :stack, :tokens
     
     def initialize(content)
+      Papyrus.load_command_classes
       @content = content
       @template = Template.new(self)
       @stack = [ @template ]
@@ -116,7 +117,7 @@ module Papyrus
         case token
         when Token::LeftBracket
           cmd = handle_command
-          (cmd.kind_of?(Command::BlockCommand) ? stack : stack.last) << cmd
+          (cmd.kind_of?(BlockCommand) ? stack : stack.last) << cmd if cmd
         else
           # we can safely assume token is a Token::Text
           stack.last << Text.new(token)
@@ -138,13 +139,14 @@ module Papyrus
     # nil if we're dealing with a modifier of a command, or the raw command as a
     # Text command if we had a syntax error or unknown command.
     def handle_command
-      tokens.start_recording! # raw and full
+      tokens.start_stashing! # raw and full
+      tokens.stash_curr # left bracket
       begin
         if tokens.next.is_a?(Token::Slash)
           handle_command_close
         else
           name, args = gather_command_name_and_args
-          return Text.new("") if modify_active_cmd(tokens.cmd_info[:full]) or close_active_cmd(tokens.cmd_info[:raw])
+          return Text.new("") if modify_active_cmd(name, args)
           lookup_var_or_command(name, args)
         end
       rescue UnmatchedLeftBracketError, UnmatchedSingleQuoteError,
@@ -152,7 +154,7 @@ module Papyrus
         # assume we've reached the end of the command, so don't treat it as a command
         Text.new(tokens.cmd_info[:raw])
       ensure
-        tokens.stop_recording!
+        tokens.stop_stashing!
       end
     end
     
@@ -177,9 +179,9 @@ module Papyrus
       end
     end
     
-    def modify_active_cmd(full_command)
+    def modify_active_cmd(name, args)
       active_cmd = stack.last
-      (active_cmd.is_a?(BlockCommand) && active_cmd.modified_by?(full_command)) || false
+      (active_cmd.is_a?(BlockCommand) && active_cmd.modified_by?(name, args)) || false
     end
     
     def lookup_var_or_command(name, args)
@@ -187,8 +189,7 @@ module Papyrus
       if (active_cmd.is_a?(BlockCommand) and val = active_cmd.active_block.get(name)) or val = active_cmd.get(name)
         Text.new(val)
       elsif command_klass = Papyrus.lexicon[name]
-        cmd = command_klass.new(active_cmd, name, args)
-        cmd
+        command_klass.new(active_cmd, name, args)
       else
         raise UnknownCommandError
       end

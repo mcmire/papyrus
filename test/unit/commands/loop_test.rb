@@ -46,6 +46,24 @@ Expectations do
     end
   end
   
+  # Loop#active_block
+  begin
+    # when @in_else
+    expect :else_commands do
+      loop_cmd = Commands::Loop.new(nil, "", [])
+      loop_cmd.stubs(:in_else).returns(true)
+      loop_cmd.stubs(:else_commands).returns(:else_commands)
+      loop_cmd.active_block
+    end
+    # when not @in_else
+    expect :commands do
+      loop_cmd = Commands::Loop.new(nil, "", [])
+      loop_cmd.stubs(:in_else).returns(false)
+      loop_cmd.stubs(:commands).returns(:commands)
+      loop_cmd.active_block
+    end
+  end
+  
   # Loop#else
   begin
     expect ArgumentError do
@@ -63,22 +81,6 @@ Expectations do
       loop_cmd = Commands::Loop.new(nil, "", [])
       loop_cmd.else([])
       loop_cmd.send(:instance_variable_get, "@switched")
-    end
-  end
-  
-  # Loop#add
-  begin
-    expect Command do
-      loop_cmd = Commands::Loop.new(nil, "", [])
-      loop_cmd.send(:instance_variable_set, "@in_else", true)
-      loop_cmd << Command.new("", [])
-      loop_cmd.send(:else_commands).last
-    end
-    expect Command do
-      loop_cmd = Commands::Loop.new(nil, "", [])
-      loop_cmd.send(:instance_variable_set, "@in_else", false)
-      loop_cmd << Command.new("", [])
-      loop_cmd.send(:commands).last
     end
   end
   
@@ -137,14 +139,14 @@ Expectations do
       loop_cmd = Commands::Loop.new(nil, "", [])
       loop_cmd.stubs(:block_params).returns(nil)
       loop_cmd.send(:set_block_params, :item)
-      loop_cmd.object
+      loop_cmd.send(:commands).object
     end
     # @block_params empty
     expect :item do
       loop_cmd = Commands::Loop.new(nil, "", [])
       loop_cmd.stubs(:block_params).returns([])
       loop_cmd.send(:set_block_params, :item)
-      loop_cmd.object
+      loop_cmd.send(:commands).object
     end
     # item is an array and has more than one item
     begin
@@ -153,21 +155,21 @@ Expectations do
         loop_cmd = Commands::Loop.new(nil, "", [])
         loop_cmd.stubs(:block_params).returns(['foo', 'bar'])
         loop_cmd.send(:set_block_params, ['one', 'two'])
-        loop_cmd.vars
+        loop_cmd.send(:commands).vars
       end
       # @block_params.size > item.size
       expect('foo' => 'one', 'bar' => 'two', 'baz' => nil) do
         loop_cmd = Commands::Loop.new(nil, "", [])
         loop_cmd.stubs(:block_params).returns(['foo', 'bar', 'baz'])
         loop_cmd.send(:set_block_params, ['one', 'two'])
-        loop_cmd.vars
+        loop_cmd.send(:commands).vars
       end
       # @block_params.size < item.size
       expect('foo' => 'one', 'bar' => 'two') do
         loop_cmd = Commands::Loop.new(nil, "", [])
         loop_cmd.stubs(:block_params).returns(['foo', 'bar'])
         loop_cmd.send(:set_block_params, ['one', 'two', 'three'])
-        loop_cmd.vars
+        loop_cmd.send(:commands).vars
       end
     end
     # item is an array, but has only one item
@@ -175,14 +177,14 @@ Expectations do
       loop_cmd = Commands::Loop.new(nil, "", [])
       loop_cmd.stubs(:block_params).returns(['foo'])
       loop_cmd.send(:set_block_params, ['one'])
-      loop_cmd.vars
+      loop_cmd.send(:commands).vars
     end
     # item is not an array
     expect('foo' => {'key' => 'value'}) do
       loop_cmd = Commands::Loop.new(nil, "", [])
       loop_cmd.stubs(:block_params).returns(['foo'])
       loop_cmd.send(:set_block_params, { 'key' => 'value' })
-      loop_cmd.vars
+      loop_cmd.send(:commands).vars
     end
   end
   
@@ -192,7 +194,7 @@ Expectations do
     expect nil do
       loop_cmd = Commands::Loop.new(nil, "", [])
       loop_cmd.send(:set_metavariables, { 'key' => 'value'}, nil)
-      loop_cmd['iter']
+      loop_cmd.send(:commands).vars['iter']
     end
     # enum is an array
     begin
@@ -202,13 +204,13 @@ Expectations do
         expect true do
           loop_cmd = Commands::Loop.new(nil, "", [])
           loop_cmd.send(:set_metavariables, [], 0)
-          loop_cmd['iter']['is_first']
+          loop_cmd.send(:commands).vars['iter']['is_first']
         end
         # false when not 0
         expect false do
           loop_cmd = Commands::Loop.new(nil, "", [])
           loop_cmd.send(:set_metavariables, [], 3)
-          loop_cmd['iter']['is_first']
+          loop_cmd.send(:commands).vars['iter']['is_first']
         end
       end
       # is_last
@@ -217,13 +219,13 @@ Expectations do
         expect true do
           loop_cmd = Commands::Loop.new(nil, "", [])
           loop_cmd.send(:set_metavariables, ['one', 'two', 'three'], 2)
-          loop_cmd['iter']['is_last']
+          loop_cmd.send(:commands).vars['iter']['is_last']
         end
         # false when not -1
         expect false do
           loop_cmd = Commands::Loop.new(nil, "", [])
           loop_cmd.send(:set_metavariables, ['one', 'two', 'three'], 0)
-          loop_cmd['iter']['is_last']
+          loop_cmd.send(:commands).vars['iter']['is_last']
         end
       end
       # is_odd
@@ -232,20 +234,20 @@ Expectations do
         expect true do
           loop_cmd = Commands::Loop.new(nil, "", [])
           loop_cmd.send(:set_metavariables, [], 1)
-          loop_cmd['iter']['is_odd']
+          loop_cmd.send(:commands).vars['iter']['is_odd']
         end
         # false when i % 2 == 0
         expect false do
           loop_cmd = Commands::Loop.new(nil, "", [])
           loop_cmd.send(:set_metavariables, [], 0)
-          loop_cmd['iter']['is_odd']
+          loop_cmd.send(:commands).vars['iter']['is_odd']
         end
       end
       # index, of course
       expect 2 do
         loop_cmd = Commands::Loop.new(nil, "", [])
         loop_cmd.send(:set_metavariables, [], 1)
-        loop_cmd['iter']['index']
+        loop_cmd.send(:commands).vars['iter']['index']
       end
     end
   end

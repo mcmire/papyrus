@@ -3,14 +3,21 @@ require File.dirname(__FILE__)+'/spec_helper'
 describe Papyrus do
 
   it "should successfully parse a template from a file" do
-    Papyrus.source_template_dirs += File.dirname(__FILE__)
-    template = Papyrus::Template.load('sample.txt')
-    template.vars = {
+    this_dir = File.dirname(__FILE__)
+    #Papyrus.cache_templates = true
+    Papyrus.cached_template_dir = File.join(this_dir, 'cached')
+    Papyrus.source_template_dirs.unshift(this_dir)
+    output = Papyrus::Parser.parse_file('sample.txt', {
       :words => %w(red blue orange green yellow),
-      :wanker => "Steve"
-    }
-    expected_content = File.open(File.dirname(__FILE__)+'/sample_compiled.txt') {|f| f.read }
-    template.output.should == expected_content
+      :blah => "Steve"
+    })
+    #puts "ACTUAL"
+    #puts output
+    #puts
+    expected_output = File.open(File.dirname(__FILE__)+'/sample_compiled.txt') {|f| f.read }
+    #puts "EXPECTED"
+    #puts expected_output
+    output.should == expected_output
   end
   
   it "should successfully parse a template from a file" do

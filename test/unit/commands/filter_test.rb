@@ -20,13 +20,9 @@ Expectations do
     expect [] do
       Commands::Filter.new(nil, "", []).send(:instance_variable_get, "@nodes")
     end
-  end
-  
-  # Filter#add
-  expect Command do
-    filter = Commands::Filter.new(nil, "", [])
-    filter << Command.new(nil, "", [])
-    filter.nodes.last
+    expect [] do
+      Commands::Filter.new(nil, "", []).send(:instance_variable_get, "@active_block")
+    end
   end
   
   # Filter#output

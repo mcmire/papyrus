@@ -22,10 +22,8 @@ module Papyrus
         @default = NodeList.new(self)
       end
       
-      # Adds a command to the current case, or to the 'else' (default) case.
-      def add(cmd)
-        (@current_case ? @blocks[@current_case] : @default) << cmd
-        self
+      def active_block
+        current_case ? blocks[current_case] : default
       end
       
       modifier(:when) do |args|
@@ -59,6 +57,9 @@ module Papyrus
         str << " else #{@default.to_s}"
         str << " ]"
       end
+      
+    private
+      attr_reader :blocks, :default
     end
   end
 end

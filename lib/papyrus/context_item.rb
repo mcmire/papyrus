@@ -47,6 +47,13 @@ module Papyrus
     # (and further results) to permit accessing attributes of objects.
     def get(key)
       key = key.to_s
+      return key if key =~ /^\d/
+      
+      if key == 'word'
+        puts "I am a #{self.class}"
+        puts "Vars: #{vars.inspect}"
+      end
+      
       first, rest = key.split(".", 2)
       
       value = get_primary_part(first, key)
@@ -71,8 +78,6 @@ module Papyrus
 
     # parser: most context objects won't be a parser, but pass this
     # query up to the parser object.
-    #---
-    # FIXME for Template
     def parser
       parent ? parent.parser : @parser
     end
@@ -81,29 +86,16 @@ module Papyrus
     # value. Returns nil if +flag+ is not found in the context, 
     # or +flag+ has a nil value attached to it.
     # TODO: Clean up?
-    def true?(flag)
-      options = parser.options
-      val = get(flag, false)
-      case
-      when !val
-        false
-      when options[:empty_is_true]
-        true
-      when val.respond_to?(:empty?)
-        ! val.empty?
-      else
-        true
-      end
-    rescue Exception => er
-      false
+    def true?(var_or_value)
+      !!get(var_or_value)
     end
     
   private
     def get_primary_part(key, whole_key)
       if vars.has_key?(key)
         vars[key]
-      #elsif vars.has_key?(key.to_sym)
-      #  vars[key.to_sym]
+      elsif vars.has_key?(key.to_sym)
+        vars[key.to_sym]
       elsif !object && parent
         parent.get(whole_key)
       elsif object.respond_to?(:has_key?)

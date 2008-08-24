@@ -45,24 +45,24 @@ Expectations do
     end
   end
   
-  # If#add
+  # If#active_block
   begin
-    # when @in_else
-    expect Command do
+    # when in_else
+    expect :false_commands do
       if_cmd = Commands::If.new(nil, "", [])
-      if_cmd.send(:instance_variable_set, "@in_else", true)
-      if_cmd << Command.new(nil, "", [])
-      if_cmd.send(:instance_variable_get, "@false_commands").last
+      if_cmd.stubs(:in_else).returns(true)
+      if_cmd.stubs(:false_commands).returns(:false_commands)
+      if_cmd.active_block
     end
-    # when not in @in_else
-    expect Command do
+    # when not in_else
+    expect :true_command do
       if_cmd = Commands::If.new(nil, "", [])
-      if_cmd.send(:instance_variable_set, "@in_else", false)
-      if_cmd << Command.new(nil, "", [])
-      if_cmd.send(:instance_variable_get, "@true_commands").last.last.last
+      if_cmd.stubs(:in_else).returns(false)
+      if_cmd.stubs(:true_commands).returns([[ nil, :true_command ]])
+      if_cmd.active_block
     end
   end
-  
+    
   # If#elsif
   begin
     # when @switched

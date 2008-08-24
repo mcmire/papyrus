@@ -1,5 +1,3 @@
-Here's some text, in a secondary file.
-
 Here is some sample text. Here's a line that you might typically find in some dinky old template and jazz.
 
 
@@ -7,7 +5,7 @@ Here is some sample text. Here's a line that you might typically find in some di
 I'm about to do some kewl logic, ready, go!
 
 
-  42 suXX0rs!!1
+  42 is the greatest number in the world.
 
 
 

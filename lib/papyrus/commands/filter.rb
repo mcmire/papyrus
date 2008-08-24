@@ -6,16 +6,12 @@ module Papyrus
     #  [% end %]
     class Filter < BlockCommand
       attr_accessor :filter, :nodes
+      attr_reader :active_block
       
       def initialize(*args)
         super
         @filter = @args.first
-        @nodes = []
-      end
-
-      def add(node)
-        @nodes << node
-        self
+        @active_block = @nodes = []
       end
 
       def output

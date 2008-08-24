@@ -1,32 +1,30 @@
-[% include sample2.txt %]
-
 Here is some sample text. Here's a line that you might typically find in some dinky old template and jazz.
 
-[% var foo %]
+[nonexistent_variable]
 
 I'm about to do some kewl logic, ready, go!
 
-[% if 42 %]
+[if 42]
   42 is the greatest number in the world.
-[% else %]
+[else]
   42 suXX0rs!!1
-[% end %]
+[/if]
 
-[% loop words: word %]
-  This is my favorite word: [% var word %]
-[% end %]
+[loop words word]
+  This is my favorite word: [word]
+[/loop]
 
-[% define michael jordan %]
+[define michael jordan]
 
-[% var michael %]
+[michael]
 
-[% filter :unescaped %]
+[filter unescaped]
   Here is some unescaped text.
-[% end %]
+[/filter]
 
-[% case wanker %]
-[% when Steve %]
+[case blah]
+[when Steve]
   I'm egregious
-[% else %]
+[else]
   I'm extemporaneous
-[% end %]
+[/case]

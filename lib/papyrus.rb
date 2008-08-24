@@ -32,24 +32,30 @@ module Papyrus
   class << self
     def source_template_dirs; @source_template_dirs ||= %w(.); end
     attr_accessor :available_commands, :cached_template_dir
-    attr_reader :lexicon
+    attr_writer :cache_templates
 
     # Loads command classes and creates a new instance of Compiler
     def new(*args)
-      @lexicon = {}
-      load_command_classes
-      Compiler.new(*args)
+      Parser.new(*args)
+    end
+    
+    def lexicon
+      @lexicon ||= {}
+    end
+    
+    def cache_templates?
+      @cache_templates
     end
 
     # Load commands based on available_commands, or load all
     def load_command_classes
       available_commands = Papyrus.available_commands || Dir[File.dirname(__FILE__)+"/papyrus/commands/*.rb"].map {|file| File.basename(file, '.rb') }
-      available_commands.each do |name|
+      for name in available_commands
         name = name.to_s
         require "papyrus/commands/#{name}"
         klass = Commands.const_get(name.camelize)
         names = [name] + klass.aliases.map {|x| x.to_s }
-        names.each {|n| @lexicon[n] = klass }
+        names.each {|n| lexicon[n] = klass }
       end
     end
   end

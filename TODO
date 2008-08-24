@@ -1,35 +1,27 @@
 TODO
 
-XT No longer need to pass context to output methods
-XT A NodeList is a ContextItem
-XT Have Node#initialize set @parent
-XT Be sure to pass parent argument every time we create a Node (except for Text and Variable)
-XT Rename ContextItem#reset_vars to #reset_context, and have it set @object to nil too
-XT Remove Template#output (NodeList already provides that), Template is no longer a ContextItem ('cause NodeList is one already)
-X Added NodeTest, seems to have been missing
-XT Remember that when we look for a variable in Parser#lookup_var_or_command, if stack.last is a BlockCommand, we have to do if within its active block, not the whole thing
+* Removed call to modify_close_cmd in Parser#handle_command, and removed modify_close_cmd test in parser_test.rb
+* Load command classes on Parser.new instead of Papyrus.new
+* Add guarded lexicon reader in Papyrus
+* Fix Parser#modify_active_cmd to accept command name and args, not full command
+* Parser#populate_template: only add command from handle_command if not nil (as handle_command_close will return nil)
+* Change BlockCommand#initialize and #add to return NotImplementedError
+* Add BlockCommand#active_block to raise NotImplementedError
+* Implement active_block for BlockCommand subclasses
+* Add BlockCommand#add, remove BlockCommand subclass #add's
+* ContextItem#get should return key if key starts with a number
+* Add Papyrus.cache_templates writer and .cache_templates? reader, modified Parser to only cache the template if this option is true
+* Rename 'recording' methods in TokenList to 'stashing', add #stash_curr to append the current token to the stash
 
-* If doesn't properly work -- what about something like:
-
-  [if foo == 'bar']  # this line here.. equal sign??
-    aslfkjdsfsd
-  [else]
-    aslkfjsldkfj
-  [/if]
-  
-  In Diary-X, we never had this problem because it was sort of Lispish -- so
-  
-  [if == [foo] 42]
-  
-  Here, I think we'll have to copy from Liquid.
-  
-  Hmm, it may not be that difficult -- the if command either accepts one arg (value), or three args (value1, op, value2).
+* Better if statement parsing -- copy from Liquid. The if command either accepts one arg (value), or three args (value1, op, value2).
 
 * Replace Loop with For
 * Do we need Variable anymore? Include?
 * Do we need Comment?
 * Include needs to be fixed
 * Update documentation!!
+
+FUTURE
 
 * Should we add attr_accessors for all instance variables for easier access during
   testing?

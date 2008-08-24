@@ -28,6 +28,10 @@ module Papyrus
         @in_else = false
       end
       
+      def active_block
+        in_else ? else_commands : commands
+      end
+      
       # An 'else' defines a list of commands to call when the loop is
       # empty.
       modifier(:else) do |args|
@@ -35,13 +39,6 @@ module Papyrus
         @in_else = !@in_else
         @switched = true
         true
-      end
-      
-      # Adds the given command to @commands if we're inside a 'loop' block,
-      # otherwise adds it to the @else_commands.
-      def add(cmd)
-        (@in_else ? @else_commands : @commands) << cmd
-        self
       end
       
       # Returns the output of this command.
@@ -112,34 +109,32 @@ module Papyrus
       end
       
     private
-      attr_reader :value, :commands, :else_commands
+      attr_reader :value, :commands, :else_commands, :in_else, :block_params
     
       def set_block_params(item)
-        # Notice that we set variables within the whole BlockCommand -
-        # this makes it possible to access them in both the @commands and @else_commands
+        puts "Block params: #{block_params.inspect}"
+        puts "Item: #{item.inspect}"
         if block_params.blank?
-          # include this item while resolving variables accessed during the block
-          self.object = item
+          commands.object = item
         elsif item.is_a?(Array) && item.size > 1
           # split item into block variables
-          # @block_params may be < subitems, so put it first
-          block_params.zip(item).each {|param, subitem| self[param] = subitem }
+          # the # of @block_params may be < the # of subitems, so put it first
+          block_params.zip(item).each {|param, subitem| commands.set(param, subitem) }
         else
           # now this item is available thru the block variable
-          self[block_params.first] = item
+          commands.set(block_params.first, item)
+          puts "commands.vars = #{commands.vars.inspect}"
         end
       end
       
       def set_metavariables(enum, i)
         return unless enum.is_a?(Array)
-        # Notice that we set variables within the whole BlockCommand -
-        # this makes it possible to access them in both the @commands and @else_commands
-        self['iter'] = {
+        commands.set('iter',
           'is_first' => (i == 0),
           'is_last'  => (i == enum.size-1),
           'is_odd'   => (i % 2 != 0),
           'index'    => i+1
-        }
+        )
       end
     end 
   end
