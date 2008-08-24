@@ -19,23 +19,20 @@ module Papyrus
     # context when the command is output; +processor+ is the name of the filter
     # (specifically, the method in the Preprocessor tied to the context) that will
     # be applied on the text.
-    def initialize(name, filter)
-      @name = name
-      @filter = filter
+    def initialize(*args)
+      args = super
+      @name, @raw_command = args
     end
 
     # Requests the value of this object's saved value name from 
     # +context+, and returns the string representation of that
     # value to the caller, after passing it through the preprocessor.
-    def output(context = nil)
-      Filter.filter(@filter, context.get(@name))
+    def output
+      parent.get(@name) || @raw_command
     end
 
     def to_s
-      str = "[ Variable: #{@name} "
-      str << ":#{@filter} " unless @filter.blank?
-      str << ']'
-      str
+      "[ Variable: #{@name} ]"
     end
   end
 end

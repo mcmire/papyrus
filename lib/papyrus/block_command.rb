@@ -6,14 +6,12 @@ module Papyrus
     include ContextItem
     
     def initialize(*args)
-      raise NotImplementedError, 'BlockCommand.new should not be called directly' if self.class == BlockCommand
+      raise TypeError, 'BlockCommand.new should not be called directly' if self.class == BlockCommand
       super
     end
     
     def active_block
-      raise NotImplementedError, 'BlockCommand#active_block should not be called directly' if self.class == BlockCommand
-      raise 'BlockCommand#active_block: @active_block should have been set in constructor' unless @active_block
-      @active_block
+      raise NotImplementedError, 'BlockCommand#active_block should be overridden by a subclass'
     end
     
     def add(cmd)
@@ -22,6 +20,11 @@ module Papyrus
     end
     def <<(cmd)
       add(cmd)
+    end
+    
+    alias_method :_get, :get
+    def get(key)
+      active_block.get(key)
     end
     
     def to_s

@@ -11,36 +11,35 @@ include Papyrus
 
 Expectations do
   
-  # Value#initialize
+  # Variable#initialize
   begin
     expect "foobar" do
-      value = Variable.new("foobar", "unescaped")
-      value.send(:instance_variable_get, "@name")
+      Variable.new(nil, "foobar", "").send(:instance_variable_get, "@name")
     end
-    expect "unescaped" do
-      value = Variable.new("foobar", "unescaped")
-      value.send(:instance_variable_get, "@filter")
+    expect "[foo]" do
+      Variable.new(nil, "", "[foo]").send(:instance_variable_get, "@raw_command")
     end
   end
   
-  # Value#output
-  expect Filter.to.receive(:filter).with("unescaped", "Some text") do
-    context = stub("context", :get => "Some text")
-    Variable.new("", "unescaped").output(context)
-  end
-  
-  # Value#to_s
+  # Variable#output
   begin
-    # when @filter present
-    expect "[ Variable: foobar :unescaped ]" do
-      value = Variable.new("foobar", "unescaped")
-      value.to_s
+    # when variable exists
+    expect :the_value do
+      var = Variable.new(nil, "", "")
+      var.stubs(:parent).returns stub('parent', :get => :the_value)
+      var.output
     end
-    # when @filter blank
-    expect "[ Variable: foobar ]" do
-      value = Variable.new("foobar", "")
-      value.to_s
+    # when variable doesn't exist
+    expect "[foo]" do
+      var = Variable.new(nil, "", "[foo]")
+      var.stubs(:parent).returns stub('parent', :get => nil)
+      var.output
     end
+  end
+  
+  # Variable#to_s
+  expect "[ Variable: foobar ]" do
+    Variable.new(nil, "foobar", "").to_s
   end
   
 end

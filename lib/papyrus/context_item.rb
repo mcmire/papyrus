@@ -49,11 +49,6 @@ module Papyrus
       key = key.to_s
       return key if key =~ /^\d/
       
-      if key == 'word'
-        puts "I am a #{self.class}"
-        puts "Vars: #{vars.inspect}"
-      end
-      
       first, rest = key.split(".", 2)
       
       value = get_primary_part(first, key)
@@ -97,19 +92,19 @@ module Papyrus
       elsif vars.has_key?(key.to_sym)
         vars[key.to_sym]
       elsif !object && parent
-        parent.get(whole_key)
+        parent_get(whole_key)
       elsif object.respond_to?(:has_key?)
         if object.has_key?(key)
           vars[key] = object[key]
         elsif parent
-          [parent.get(whole_key), true]
+          [parent_get(whole_key), true]
         end
       elsif object.respond_to?(sym = key.to_sym)
         vars[key] = object.send(sym)
       elsif key == '__ITEM__'
         object
       elsif parent
-        [parent.get(whole_key), true]
+        [parent_get(whole_key), true]
       end
     end
     
@@ -127,6 +122,18 @@ module Papyrus
           end
       rescue NoMethodError
         nil
+      end
+    end
+    
+    
+    def parent_get(key)
+      if parent.is_a?(BlockCommand)
+        # Since BlockCommand#get overrides get to use active_block.get,
+        # we need to call the original get, otherwise we may very well have an
+        # infinite loop!
+        parent._get(key)
+      else
+        parent.get(key)
       end
     end
   end

@@ -16,7 +16,7 @@ Expectations do
       TokenList.new.send(:instance_variable_get, "@pos")
     end
     expect(:raw => "", :full => "") do
-      TokenList.new.send(:instance_variable_get, "@cmd_info")
+      TokenList.new.send(:instance_variable_get, "@stash")
     end
     expect false do
       TokenList.new.send(:instance_variable_get, "@stash_curr_on_advance")
@@ -100,8 +100,8 @@ Expectations do
     expect ["", ""] do
       tokens = TokenList.new
       tokens.start_stashing!
-      cmd_info = tokens.send(:instance_variable_get, "@cmd_info")
-      [ cmd_info[:raw], cmd_info[:full] ]
+      stash = tokens.send(:instance_variable_get, "@stash")
+      [ stash[:raw], stash[:full] ]
     end
   end
   
@@ -119,38 +119,38 @@ Expectations do
     # raw should be added to, always
     expect "foo/bar" do
       tokens = TokenList.new
-      cmd_info = { :raw => "foo/", :full => "foo/" }
-      tokens.stubs(:cmd_info).returns(cmd_info)
+      stash = { :raw => "foo/", :full => "foo/" }
+      tokens.stubs(:stash).returns(stash)
       tokens.stubs(:curr).returns(Token::Text.new("bar"))
       tokens.stash_curr
-      cmd_info[:raw]
+      stash[:raw]
     end
     # full should be added to when token is not a left or right bracket
     expect "foo/bar" do
       tokens = TokenList.new
-      cmd_info = { :raw => "foo/", :full => "foo/" }
-      tokens.stubs(:cmd_info).returns(cmd_info)
+      stash = { :raw => "foo/", :full => "foo/" }
+      tokens.stubs(:stash).returns(stash)
       tokens.stubs(:curr).returns(Token::Text.new("bar"))
       tokens.stash_curr
-      cmd_info[:full]
+      stash[:full]
     end
     # full should NOT be added to when token IS a left bracket
     expect "" do
       tokens = TokenList.new
-      cmd_info = { :raw => "", :full => "" }
-      tokens.stubs(:cmd_info).returns(cmd_info)
+      stash = { :raw => "", :full => "" }
+      tokens.stubs(:stash).returns(stash)
       tokens.stubs(:curr).returns(Token::LeftBracket.new)
       tokens.stash_curr
-      cmd_info[:full]
+      stash[:full]
     end
     # full should NOT be added to when token IS a right bracket
     expect "foo" do
       tokens = TokenList.new
-      cmd_info = { :raw => "foo", :full => "foo" }
-      tokens.stubs(:cmd_info).returns(cmd_info)
+      stash = { :raw => "foo", :full => "foo" }
+      tokens.stubs(:stash).returns(stash)
       tokens.stubs(:curr).returns(Token::RightBracket.new)
       tokens.stash_curr
-      cmd_info[:full]
+      stash[:full]
     end
   end
   

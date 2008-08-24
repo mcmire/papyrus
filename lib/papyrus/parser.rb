@@ -147,12 +147,12 @@ module Papyrus
         else
           name, args = gather_command_name_and_args
           return Text.new("") if modify_active_cmd(name, args)
-          lookup_var_or_command(name, args)
+          lookup_var_or_command(name, args, tokens.stash[:raw])
         end
       rescue UnmatchedLeftBracketError, UnmatchedSingleQuoteError,
              UnmatchedDoubleQuoteError, UnknownCommandError => e
         # assume we've reached the end of the command, so don't treat it as a command
-        Text.new(tokens.cmd_info[:raw])
+        Text.new(tokens.stash[:raw])
       ensure
         tokens.stop_stashing!
       end
@@ -184,12 +184,12 @@ module Papyrus
       (active_cmd.is_a?(BlockCommand) && active_cmd.modified_by?(name, args)) || false
     end
     
-    def lookup_var_or_command(name, args)
+    def lookup_var_or_command(name, args, raw_command)
       active_cmd = stack.last
-      if (active_cmd.is_a?(BlockCommand) and val = active_cmd.active_block.get(name)) or val = active_cmd.get(name)
-        Text.new(val)
-      elsif command_klass = Papyrus.lexicon[name]
+      if command_klass = Papyrus.lexicon[name]
         command_klass.new(active_cmd, name, args)
+      elsif args.empty?
+        Variable.new(active_cmd, name, raw_command)
       else
         raise UnknownCommandError
       end

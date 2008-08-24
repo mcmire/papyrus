@@ -350,40 +350,51 @@ Expectations do
   
   # Parser#lookup_var_or_command
   begin
-    # when active_cmd is not a BlockCommand and we have a variable in its context
-    expect Text.new("some text") do
-      parser = Parser.new("")
-      template = Template.new(parser)
-      template.stubs(:get).returns("some text")
-      parser.stubs(:stack).returns stub("stack", :last => template)
-      parser.lookup_var_or_command("", [])
+    # when name refers to a command
+    begin
+      # new command created
+      expect Commands::If do
+        Papyrus.stubs(:lexicon).returns('if' => Commands::If)
+        parser = Parser.new("")
+        parser.lookup_var_or_command("if", [])
+      end
+      # the new command knows where it is contextually
+      expect Template do
+        Papyrus.stubs(:lexicon).returns('if' => Commands::If)
+        parser = Parser.new("")
+        cmd = parser.lookup_var_or_command("if", [])
+        cmd.parent
+      end
+      # commands override variables
+      expect Commands::If do
+        Papyrus.stubs(:lexicon).returns('if' => Commands::If)
+        parser = Parser.new("")
+        template = parser.stack.first
+        template.set('if', 'foo')
+        parser.lookup_var_or_command("if", [])
+      end
     end
-    # when active_cmd is a BlockCommand and we have a variable in its active block's context
-    expect Text.new("some text") do
-      parser = Parser.new("")
-      cmd = Commands::SomeBlockCommand.new(nil, "", [])
-      cmd.stubs(:active_block).returns stub('block', :get => "some text")
-      parser.stubs(:stack).returns stub("stack", :last => cmd)
-      parser.lookup_var_or_command("", [])
+    # when args empty
+    begin
+      # new variable created
+      expect Variable do
+        Papyrus.stubs(:lexicon).returns({})
+        parser = Parser.new("")
+        parser.lookup_var_or_command("", [])
+      end
+      # the new variable knows where it is contextually
+      expect Template do
+        Papyrus.stubs(:lexicon).returns({})
+        parser = Parser.new("")
+        var = parser.lookup_var_or_command("", [])
+        var.parent
+      end
     end
-    # when name is not in lexicon
+    # when name does not refer to a command and args not empty
     expect Parser::UnknownCommandError do
       Papyrus.stubs(:lexicon).returns({})
       parser = Parser.new("")
-      parser.lookup_var_or_command("foo", [])
-    end
-    # when name is in lexicon
-    expect Commands::If do
-      Papyrus.stubs(:lexicon).returns({ 'if' => Commands::If })
-      parser = Parser.new("")
-      parser.lookup_var_or_command("if", [])
-    end
-    # the new command knows where it is contextually
-    expect Template do
-      Papyrus.stubs(:lexicon).returns({ 'if' => Commands::If })
-      parser = Parser.new("")
-      cmd = parser.lookup_var_or_command("if", [])
-      cmd.parent
+      parser.lookup_var_or_command("foo", %w(bar baz))
     end
   end
   

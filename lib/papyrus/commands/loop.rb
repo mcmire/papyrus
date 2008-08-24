@@ -112,8 +112,6 @@ module Papyrus
       attr_reader :value, :commands, :else_commands, :in_else, :block_params
     
       def set_block_params(item)
-        puts "Block params: #{block_params.inspect}"
-        puts "Item: #{item.inspect}"
         if block_params.blank?
           commands.object = item
         elsif item.is_a?(Array) && item.size > 1
@@ -123,7 +121,6 @@ module Papyrus
         else
           # now this item is available thru the block variable
           commands.set(block_params.first, item)
-          puts "commands.vars = #{commands.vars.inspect}"
         end
       end
       

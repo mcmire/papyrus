@@ -1,9 +1,10 @@
 require File.dirname(__FILE__)+'/test_helper'
 
 require 'context_item'
+require 'node'
+require 'command'
+require 'block_command'
 require 'parser'
-
-include Papyrus
 
 module Papyrus
   class ContextItemWrapper
@@ -11,6 +12,15 @@ module Papyrus
     attr_reader :parent
   end
 end
+
+module Papyrus
+  module Commands
+    class SomeBlockCommand < BlockCommand
+    end
+  end
+end
+
+include Papyrus
 
 Expectations do
   
@@ -80,9 +90,6 @@ Expectations do
     # when @vars has key
     expect "bar" do
       context_item = ContextItemWrapper.new
-      context_item.stubs(:parser).returns stub('parser',
-        :options => { 'raise_on_error' => false }
-      )
       context_item.send(:vars=, 'foo' => 'bar')
       context_item.send(:get_primary_part, 'foo', 'foo')
     end
@@ -95,7 +102,8 @@ Expectations do
     # when @vars doesn't have key and @object undefined, but parent has value
     expect "bar" do
       context_item = ContextItemWrapper.new
-      context_item.stubs(:parent).returns stub('parent', :get => 'bar')
+      context_item.stubs(:parent).returns(:parent)
+      context_item.stubs(:parent_get).returns('bar')
       context_item.send(:vars=, {})
       context_item.send(:get_primary_part, 'foo', 'foo')
     end
@@ -118,7 +126,8 @@ Expectations do
       context_item = ContextItemWrapper.new
       context_item.send(:vars=, {})
       context_item.stubs(:object).returns({})
-      context_item.stubs(:parent).returns stub('parent', :get => 'bar')
+      context_item.stubs(:parent).returns(:parent)
+      context_item.stubs(:parent_get).returns('bar')
       context_item.send(:get_primary_part, 'foo', 'foo')
     end
     # when @vars doesn't have key, @object doesn't have key, @parent undefined
@@ -151,7 +160,8 @@ Expectations do
       context_item = ContextItemWrapper.new
       context_item.send(:vars=, {})
       context_item.stubs(:object).returns stub('object')
-      context_item.stubs(:parent).returns stub('parent', :get => 'bar')
+      context_item.stubs(:parent).returns(:parent)
+      context_item.stubs(:parent_get).returns('bar')
       context_item.send(:get_primary_part, 'foo', 'foo')
     end
     # when @vars doesn't have key, @object doesn't have key, key is not a method of object,
@@ -201,6 +211,22 @@ Expectations do
     expect nil do
       context_item = ContextItemWrapper.new
       context_item.send(:get_secondary_part, 'foo.bar', 'bar', nil)
+    end
+  end
+  
+  # parent_get
+  begin
+    # when parent is a BlockCommand
+    expect Commands::SomeBlockCommand.new(nil, "", []).to.receive(:_get) do |parent|
+      context_item = ContextItemWrapper.new
+      context_item.stubs(:parent).returns(parent)
+      context_item.send(:parent_get, "")
+    end
+    # when parent is not a BlockCommand
+    expect stub('parent').to.receive(:get) do |parent|
+      context_item = ContextItemWrapper.new
+      context_item.stubs(:parent).returns(parent)
+      context_item.send(:parent_get, "")
     end
   end
   

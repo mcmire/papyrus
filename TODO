@@ -1,17 +1,15 @@
 TODO
 
-* Removed call to modify_close_cmd in Parser#handle_command, and removed modify_close_cmd test in parser_test.rb
-* Load command classes on Parser.new instead of Papyrus.new
-* Add guarded lexicon reader in Papyrus
-* Fix Parser#modify_active_cmd to accept command name and args, not full command
-* Parser#populate_template: only add command from handle_command if not nil (as handle_command_close will return nil)
-* Change BlockCommand#initialize and #add to return NotImplementedError
-* Add BlockCommand#active_block to raise NotImplementedError
-* Implement active_block for BlockCommand subclasses
-* Add BlockCommand#add, remove BlockCommand subclass #add's
-* ContextItem#get should return key if key starts with a number
-* Add Papyrus.cache_templates writer and .cache_templates? reader, modified Parser to only cache the template if this option is true
-* Rename 'recording' methods in TokenList to 'stashing', add #stash_curr to append the current token to the stash
+Brought Variable back; fixed BlockCommand ancestry lookup. Acceptance test finally works!
+
+Switched order of resolving variables/commands in Parser#lookup_var_or_command (treat commands as unoverridable keywords)
+When treating bracketed construct as variable, defer evaluation of variable until runtime by adding instance of Variable to stack instead of just a Text node
+Redefine BlockCommand#get to return active_block.get
+Added ContextItem#parent_get to use parent._get if BlockCommand, or parent.get otherwise (to prevent an infinite loop); modified #get_primary_part to call #parent_get instead
+Modified Variable to receive raw command so it can return that in #output if the variable doesn't exist
+Renamed TokenList @cmd_info to @stash
+
+* Every output method where we say parent.get -- we really need to say (parent.is_a?(BlockCommand) ? parent.active_block.get : parent.get). This is cumbersome to say; however, we can't just override BlockCommand#get to return active_block.get because its active_block.get might very well call parent.get, and that will cause an infinite loop. What active_block should do in that case is really call the original BlockCommand#get, but active_block is a NodeList, and we don't want all NodeLists to do this.
 
 * Better if statement parsing -- copy from Liquid. The if command either accepts one arg (value), or three args (value1, op, value2).
 

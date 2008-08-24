@@ -1,6 +1,6 @@
 Here is some sample text. Here's a line that you might typically find in some dinky old template and jazz.
 
-
+[nonexistent_variable]
 
 I'm about to do some kewl logic, ready, go!
 

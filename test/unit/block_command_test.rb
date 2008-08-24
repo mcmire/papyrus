@@ -13,6 +13,7 @@ end
 module Papyrus
   module Commands
     class SomeBlockCommand < BlockCommand
+      def active_block; :active_block; end
     end
   end
 end
@@ -20,7 +21,7 @@ end
 Expectations do
   
   # BlockCommand#initialize
-  expect NotImplementedError do
+  expect TypeError do
     BlockCommand.new(nil, "", [])
   end
   
@@ -34,8 +35,8 @@ Expectations do
     expect NotImplementedError do
       BlockCommandChild.new(nil, "", []).active_block
     end
-    expect %r/should have been set in constructor/ do
-      begin; Commands::SomeBlockCommand.new(nil, "", []).active_block; rescue; $!.message; end
+    expect :active_block do
+      Commands::SomeBlockCommand.new(nil, "", []).active_block
     end
   end
   
@@ -47,6 +48,15 @@ Expectations do
       cmd.stubs(:active_block).returns(active_block)
       cmd << :command
       active_block.last
+    end
+  end
+  
+  # BlockCommand#get
+  begin
+    expect stub('active_block').to.receive(:get) do |active_block|
+      cmd = Commands::SomeBlockCommand.new(nil, "", [])
+      cmd.stubs(:active_block).returns(active_block)
+      cmd.get("")
     end
   end
   
