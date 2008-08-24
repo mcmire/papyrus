@@ -8,24 +8,25 @@ require 'block_command'
 include Papyrus
 
 class BlockCommandChild < Papyrus::BlockCommand
-  def initialize
-  end
 end
 
 Expectations do
   
+  # BlockCommand#initialize
   expect ArgumentError do
-    BlockCommand.new("", [])
+    BlockCommand.new(nil, "", [])
   end
   
+  # BlockCommand#add
   expect ArgumentError do
-    BlockCommandChild.new("", []) << nil
+    BlockCommandChild.new(nil, "", []) << nil
   end
   
+  # BlockCommand#to_s
   expect "[ whatever ]" do
-    stackable = BlockCommandChild.new
-    stackable.send(:instance_variable_set, "@name", "whatever")
-    stackable.to_s
+    cmd = BlockCommandChild.new(nil, "", [])
+    cmd.send(:instance_variable_set, "@name", "whatever")
+    cmd.to_s
   end
   
 end

@@ -2,9 +2,12 @@ module Papyrus
   # A NodeList provides a single interface to multiple Node objects. As it is a
   # Node itself, it has an output method.
   class NodeList < Node
+    include ContextItem
+    
     attr_reader :nodes
     
-    def initialize
+    def initialize(*args)
+      super
       @nodes = []
     end
     
@@ -35,8 +38,8 @@ module Papyrus
     # Calls Node#output(context) on each Node contained in this 
     # object.  The output is returned as a single string.  If no output
     # is generated, returns an empty string.
-    def output(context = nil)
-      @nodes.inject("") {|str, node| str << node.output(context) }
+    def output
+      @nodes.inject("") {|str, node| str << node.output }
     end
     
     # Returns Nodes held, as a string

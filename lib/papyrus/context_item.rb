@@ -12,10 +12,15 @@ module Papyrus
   # Cache: A cache ensures that a method on an object will only be
   # called once.
   module ContextItem
-    attr_accessor :parent, :object, :vars
+    attr_accessor :object, :vars
+    
+    def vars
+      @vars ||= {}
+    end
 
-    def reset_vars
+    def reset_context
       @vars = Hash.new
+      @object = nil
     end
 
     # Saves a variable +key+ as the string +value+ in the global 
@@ -94,10 +99,6 @@ module Papyrus
     end
     
   private
-    def vars
-      @vars ||= {}
-    end
-    
     def get_primary_part(key, whole_key)
       if vars.has_key?(key)
         vars[key]

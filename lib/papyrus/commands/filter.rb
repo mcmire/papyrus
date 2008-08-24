@@ -18,8 +18,8 @@ module Papyrus
         self
       end
 
-      def output(context=nil)
-        text = nodes.inject("") {|str, cmd| str << cmd.output(context); str }
+      def output
+        text = nodes.inject("") {|str, cmd| str << cmd.output; str }
         Papyrus::Filter.filter(@filter, text)
       end
     end

@@ -147,25 +147,16 @@ Expectations do
       expect Commands::If do
         parser = Parser.new("")
         parser.stubs(:tokens).returns TokenList.new([Token::LeftBracket.new])
-        parser.stubs(:handle_command).returns Commands::If.new('if', [])
+        parser.stubs(:handle_command).returns Commands::If.new(nil, 'if', [])
         parser.populate_template
         parser.stack.last
-      end
-      # the command knows where it is contextually
-      expect Template do
-        parser = Parser.new("")
-        parser.stubs(:tokens).returns TokenList.new([Token::LeftBracket.new])
-        cmd = Commands::If.new('if', [])
-        parser.stubs(:handle_command).returns(cmd)
-        parser.populate_template
-        parser.stack.last.parent
       end
     end
     # left bracket present and handle_command doesn't return BlockCommand
     expect Command do
       parser = Parser.new("")
       parser.stubs(:tokens).returns TokenList.new([Token::LeftBracket.new])
-      parser.stubs(:handle_command).returns Command.new("", [])
+      parser.stubs(:handle_command).returns Command.new(nil, "", [])
       parser.populate_template
       parser.stack.last.last
     end
@@ -188,7 +179,7 @@ Expectations do
       parser.stubs(:tokens).returns(TokenList.new)
       parser.send(:instance_variable_set, "@stack", [
         Template.new(parser),
-        Commands::SomeBlockCommand.new("", [])
+        Commands::SomeBlockCommand.new(nil, "", [])
       ])
       parser.close_open_block_commands
       parser.stack.first.nodes.first
@@ -284,7 +275,7 @@ Expectations do
       parser = Parser.new("")
       list = [ Token::Slash.new, Token::Text.new("bar"), Token::RightBracket.new ]
       parser.stubs(:tokens).returns TokenList.new(list)
-      parser.stubs(:stack).returns([ Commands::SomeBlockCommand.new("foo", []) ])
+      parser.stubs(:stack).returns([ Commands::SomeBlockCommand.new(nil, "foo", []) ])
       parser.handle_command_close
     end
     # active command is a BlockCommand and is closed by given command
@@ -294,7 +285,7 @@ Expectations do
         parser = Parser.new("")
         list = [ Token::Slash.new, Token::Text.new("foo"), Token::RightBracket.new ]
         parser.stubs(:tokens).returns TokenList.new(list)
-        parser.stubs(:stack).returns([ [], Commands::SomeBlockCommand.new("foo", []) ])
+        parser.stubs(:stack).returns([ [], Commands::SomeBlockCommand.new(nil, "foo", []) ])
         parser.handle_command_close
         parser.stack.size
       end
@@ -303,7 +294,7 @@ Expectations do
         parser = Parser.new("")
         list = [ Token::Slash.new, Token::Text.new("foo"), Token::RightBracket.new ]
         parser.stubs(:tokens).returns TokenList.new(list)
-        cmd = Commands::SomeBlockCommand.new("foo", [])
+        cmd = Commands::SomeBlockCommand.new(nil, "foo", [])
         parser.stubs(:stack).returns([ [], cmd ])
         parser.handle_command_close
         parser.stack.first == [cmd]
@@ -314,7 +305,7 @@ Expectations do
       parser = Parser.new("")
       list = [ Token::Slash.new, Token::Text.new("foo") ]
       parser.stubs(:tokens).returns TokenList.new(list)
-      parser.stubs(:stack).returns([ [], Commands::SomeBlockCommand.new("foo", []) ])
+      parser.stubs(:stack).returns([ [], Commands::SomeBlockCommand.new(nil, "foo", []) ])
       parser.handle_command_close
     end
   end  
@@ -347,24 +338,40 @@ Expectations do
   
   # Parser#lookup_var_or_command
   begin
-    # when name is a variable in the active context
+    # when active_cmd is not a BlockCommand and we have a variable in its context
     expect Text.new("some text") do
-      Papyrus.send(:instance_variable_set, "@lexicon", {})
       parser = Parser.new("")
-      parser.stack.first.stubs(:vars).returns("foo" => "some text")
-      parser.lookup_var_or_command("foo", [])
+      template = Template.new(parser)
+      template.stubs(:get).returns("some text")
+      parser.stubs(:stack).returns stub("stack", :last => template)
+      parser.lookup_var_or_command("", [])
+    end
+    # when active_cmd is a BlockCommand and we have a variable in its active block's context
+    expect Text.new("some text") do
+      parser = Parser.new("")
+      cmd = Commands::SomeBlockCommand.new(nil, "", [])
+      cmd.stubs(:active_block).returns stub('block', :get => "some text")
+      parser.stubs(:stack).returns stub("stack", :last => cmd)
+      parser.lookup_var_or_command("", [])
     end
     # when name is not in lexicon
     expect Parser::UnknownCommandError do
-      Papyrus.send(:instance_variable_set, "@lexicon", {})
+      Papyrus.stubs(:lexicon).returns({})
       parser = Parser.new("")
       parser.lookup_var_or_command("foo", [])
     end
     # when name is in lexicon
     expect Commands::If do
-      Papyrus.send(:instance_variable_set, "@lexicon", { 'if' => Commands::If })
+      Papyrus.stubs(:lexicon).returns({ 'if' => Commands::If })
       parser = Parser.new("")
       parser.lookup_var_or_command("if", [])
+    end
+    # the new command knows where it is contextually
+    expect Template do
+      Papyrus.stubs(:lexicon).returns({ 'if' => Commands::If })
+      parser = Parser.new("")
+      cmd = parser.lookup_var_or_command("if", [])
+      cmd.parent
     end
   end
   

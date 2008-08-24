@@ -23,8 +23,8 @@ module Papyrus
         @value, @block_params = @args
         @block_params = @block_params.strip.gsub(/\s+/, ' ').split if @block_params
         @switched = false
-        @commands = NodeList.new
-        @else_commands = NodeList.new
+        @commands = NodeList.new(self)
+        @else_commands = NodeList.new(self)
         @in_else = false
       end
       
@@ -91,51 +91,50 @@ module Papyrus
       # The very last thing we do is take the @commands in the 'loop' block itself
       # and execute them in the context we've set up, and add the content to a string
       # that we then return at the very end.
-      def output(context)
-        enum = context.get(@value)
+      def output
+        enum = parent.get(@value)
         
-        return @else_commands.output(context) if enum.blank?
+        return else_commands.output if enum.blank?
         
-        enum = [enum] unless enum.is_a?(Enumerable)
+        enum = [enum] if enum.is_a?(String) || !enum.is_a?(Enumerable)
         enum.inject_with_index("") do |output, item, i|
-          subcontext = create_subcontext(context, enum, item, i)
-          output << @commands.output(subcontext)
+          set_block_params(item)
+          set_metavariables(enum, i)
+          output << commands.output
         end
       end
 
       def to_s
-        str = "[ Loop: #{@value} #{@commands}"
-        str << " Else: #{@else_commands}" unless @else_commands.empty?
+        str = "[ Loop: #{value} #{commands}"
+        str << " Else: #{else_commands}" unless else_commands.empty?
         str << " ]"
         str
       end
       
     private
-      def create_subcontext(context, enum, item, i)
-        subcxt = Context.new(context)
-        set_block_params(subcxt, item)
-        set_metavariables(subcxt, enum, i)
-        subcxt
-      end
-      
-      def set_block_params(subcxt, item)
-        if @block_params.blank?
+      attr_reader :value, :commands, :else_commands
+    
+      def set_block_params(item)
+        # Notice that we set variables within the whole BlockCommand -
+        # this makes it possible to access them in both the @commands and @else_commands
+        if block_params.blank?
           # include this item while resolving variables accessed during the block
-          subcxt.object = item
+          self.object = item
         elsif item.is_a?(Array) && item.size > 1
           # split item into block variables
           # @block_params may be < subitems, so put it first
-          @block_params.zip(item).each {|param, subitem| subcxt[param] = subitem }
+          block_params.zip(item).each {|param, subitem| self[param] = subitem }
         else
           # now this item is available thru the block variable
-          subcxt[@block_params.first] = item
+          self[block_params.first] = item
         end
       end
       
-      def set_metavariables(subcxt, enum, i)
+      def set_metavariables(enum, i)
         return unless enum.is_a?(Array)
-        # set metavariables
-        subcxt['iter'] = {
+        # Notice that we set variables within the whole BlockCommand -
+        # this makes it possible to access them in both the @commands and @else_commands
+        self['iter'] = {
           'is_first' => (i == 0),
           'is_last'  => (i == enum.size-1),
           'is_odd'   => (i % 2 != 0),

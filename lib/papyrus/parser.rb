@@ -111,18 +111,12 @@ module Papyrus
     end
     
     def populate_template
-      # we set the stack in the constructor instead of here for testing purposes
+      # we set the stack in the constructor b/c that works better for testing
       while token = tokens.advance
         case token
         when Token::LeftBracket
           cmd = handle_command
-          if cmd.kind_of?(Command::BlockCommand)
-            # create new context
-            cmd.parent = stack.last
-            stack << cmd
-          else
-            stack.last << cmd
-          end
+          (cmd.kind_of?(Command::BlockCommand) ? stack : stack.last) << cmd
         else
           # we can safely assume token is a Token::Text
           stack.last << Text.new(token)
@@ -190,10 +184,11 @@ module Papyrus
     
     def lookup_var_or_command(name, args)
       active_cmd = stack.last
-      if val = active_cmd.get(name)
+      if (active_cmd.is_a?(BlockCommand) and val = active_cmd.active_block.get(name)) or val = active_cmd.get(name)
         Text.new(val)
       elsif command_klass = Papyrus.lexicon[name]
-        command_klass.new(name, args)
+        cmd = command_klass.new(active_cmd, name, args)
+        cmd
       else
         raise UnknownCommandError
       end

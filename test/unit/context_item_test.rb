@@ -8,16 +8,24 @@ include Papyrus
 module Papyrus
   class ContextItemWrapper
     include ContextItem
+    attr_reader :parent
   end
 end
 
 Expectations do
   
-  # #reset_vars
-  expect Hash.new do
-    context_item = ContextItemWrapper.new
-    context_item.reset_vars
-    context_item.send(:vars)
+  # #reset_context
+  begin
+    expect Hash.new do
+      context_item = ContextItemWrapper.new
+      context_item.reset_context
+      context_item.vars
+    end
+    expect nil do
+      context_item = ContextItemWrapper.new
+      context_item.reset_context
+      context_item.object
+    end
   end
   
   # #set
@@ -69,15 +77,6 @@ Expectations do
     context_item.stubs(:get_secondary_part).returns("baz")
     context_item.get("foo.bar")
   end
-  # #get when error is raised during method
-  #expect "[ Error: ]" do
-  #  context_item = ContextItemWrapper.new
-  #  context_item.stubs(:parser).returns stub("parser",
-  #    :options => {},
-  #    :method_separator_regexp => %r|[./]|
-  #  )
-  #  # ...
-  #end
   
   # #get_primary_part when @vars has key
   expect "bar" do

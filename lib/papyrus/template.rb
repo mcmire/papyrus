@@ -4,35 +4,9 @@ module Papyrus
   #
   # A Template should only be created by the Parser, and never by anything else.
   class Template < NodeList
-    
-    # Template is a context object
-    include ContextItem
-    
     def initialize(parser)
       super()
       @parser = parser
-      @parent = nil
-    end
-    
-    # Template#output is a special case for a Command. Because
-    # Template is what's returned by Parser#load or Parser#parse,
-    # the programmer may well call Template#output(anything).
-    #
-    # If +object+ is a Context, then treat output as a typical
-    # Block command. If +object+ is nil, then context is
-    # @parser. Otherwise, a new context is created, a
-    # child of @context, and is assigned +object+ as its context.
-    def output(object=nil)
-      if object.nil?
-        super(self)
-      elsif object.is_a?(ContextItem)
-        @parent = object  # I don't like this b/c it affects future usage of the template object
-        super(self)
-      else
-        context = Context.new(self)
-        context.object = object
-        super(context)
-      end
     end
     
     def to_s

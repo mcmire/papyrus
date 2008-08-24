@@ -27,9 +27,8 @@ module Papyrus
     
     # Creates a new instance of the Command.
     # Stores the name this command was called as and the arguments.
-    def initialize(name, args)
-      @name = name
-      @args = args
+    def initialize(*args)
+      @name, @args = super
     end
     
     # If this command is a BlockCommand, and +full_command+ refers to a valid modifier

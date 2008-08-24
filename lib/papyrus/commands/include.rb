@@ -31,7 +31,7 @@ module Papyrus
       #
       # If Context#get or Source#get fails to give us anything, then the output of
       # this command will be an error message.
-      def output(context)
+      def output
         fn, template = get_template_from_value(context)
         template ? template.output(context) : "[ Template '#{fn}' not found ]"
       end

@@ -1,6 +1,13 @@
 TODO
 
-* Why is context optional? Shouldn't it always be required (except for Template)?
+XT No longer need to pass context to output methods
+XT A NodeList is a ContextItem
+XT Have Node#initialize set @parent
+XT Be sure to pass parent argument every time we create a Node (except for Text and Variable)
+XT Rename ContextItem#reset_vars to #reset_context, and have it set @object to nil too
+XT Remove Template#output (NodeList already provides that), Template is no longer a ContextItem ('cause NodeList is one already)
+X Added NodeTest, seems to have been missing
+XT Remember that when we look for a variable in Parser#lookup_var_or_command, if stack.last is a BlockCommand, we have to do if within its active block, not the whole thing
 
 * If doesn't properly work -- what about something like:
 
@@ -15,7 +22,13 @@ TODO
   [if == [foo] 42]
   
   Here, I think we'll have to copy from Liquid.
+  
+  Hmm, it may not be that difficult -- the if command either accepts one arg (value), or three args (value1, op, value2).
 
+* Replace Loop with For
+* Do we need Variable anymore? Include?
+* Do we need Comment?
+* Include needs to be fixed
 * Update documentation!!
 
 * Should we add attr_accessors for all instance variables for easier access during

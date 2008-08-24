@@ -11,7 +11,7 @@ module Papyrus
       end
       
       # output returns nothing.
-      def output(context=nil)
+      def output
         ''
       end
       

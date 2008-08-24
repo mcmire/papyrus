@@ -8,8 +8,8 @@ module Papyrus
       end
 
       # Doesn't return any output
-      def output(context)
-        context[@var_name] = @var_value
+      def output
+        parent[@var_name] = @var_value
         return ""
       end
     end

@@ -29,10 +29,10 @@ module Papyrus
     # is codified as follows:
     #
     #  @true_commands = [
-    #    ['foo', Papyrus::NodeList.new ],
-    #    ['bar', Papyrus::NodeList.new ]
+    #    ['foo', Papyrus::NodeList.new(self) ],
+    #    ['bar', Papyrus::NodeList.new(self) ]
     #  ]
-    #  @false_commands = Papyrus::NodeList.new
+    #  @false_commands = Papyrus::NodeList.new(self)
     #
     # The output of the whole command, as you would expect, will be the output of the
     # 'if' block if its value evaluates to true, otherwise the output of the 'elsif'
@@ -52,9 +52,9 @@ module Papyrus
     # would be stored as follows:
     #
     #  @true_commands = [
-    #    [ 'foo', Papyrus::NodeList.new ]
+    #    [ 'foo', Papyrus::NodeList.new(self) ]
     #  ]
-    #  @false_commands = Papyrus::NodeList.new
+    #  @false_commands = Papyrus::NodeList.new(self)
     #
     # In this case, the output of the whole command will be the output of the 'else'
     # block if foo evaluates to true, otherwise it's the output of the 'unless'
@@ -69,8 +69,8 @@ module Papyrus
       def initialize(*args)
         super
         @value = @args.first
-        @true_commands = [ [@value, NodeList.new] ]
-        @false_commands = NodeList.new
+        @true_commands = [ [@value, NodeList.new(self)] ]
+        @false_commands = NodeList.new(self)
         @in_else = (@name == 'unless')
         @switched = false
       end
@@ -95,7 +95,7 @@ module Papyrus
       modifier(:elsif) do |args|
         raise ArgumentError, "'elsif' cannot be passed after 'else' or in an 'unless'" if @switched || @in_else
         value = args.first
-        @true_commands << [ value, NodeList.new ]
+        @true_commands << [ value, NodeList.new(self) ]
         true
       end
       
@@ -116,11 +116,11 @@ module Papyrus
       # associated value evaluates to true within the given context.
       # If none of the values in @true_commands are true then the output of
       # @false_commands is returned.
-      def output(context)
+      def output
         @true_commands.each do |value, block|
-          return block.output(context) if context.true?(value)
+          return block.output if parent.true?(value)
         end
-        @false_commands.output(context)
+        @false_commands.output
       end
       
       def to_s

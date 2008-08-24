@@ -9,7 +9,7 @@ module Papyrus
     end
 
     # Returns the string provided during this object's creation.
-    def output(context = nil)
+    def output
       @text
     end
     

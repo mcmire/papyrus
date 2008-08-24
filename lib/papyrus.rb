@@ -19,21 +19,12 @@ require 'papyrus/variable'
 require 'papyrus/command'
 require 'papyrus/block_command'
 
-#require 'papyrus/lexicon'
-#require 'papyrus/default_lexicon'
-
-#require 'papyrus/preprocessor'
-require 'papyrus/default_preprocessor'
-
-#require 'papyrus/source'
-#require 'papyrus/file_source'
-#require 'papyrus/string_source'
+require 'papyrus/filter'
 
 require 'papyrus/template'
 require 'papyrus/token'
 require 'papyrus/token_list'
 require 'papyrus/parser'
-#require 'papyrus/compiler'
 
 ##############################################################################
 

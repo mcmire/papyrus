@@ -65,10 +65,10 @@ Expectations do
   # Base#initialize
   begin
     expect "foo" do
-      Command.new("foo", []).send(:instance_variable_get, "@name")
+      Command.new(nil, "foo", []).send(:instance_variable_get, "@name")
     end
     expect ["bar", "baz"] do
-      Command.new("foo", ["bar", "baz"]).send(:instance_variable_get, "@args")
+      Command.new(nil, "foo", ["bar", "baz"]).send(:instance_variable_get, "@args")
     end
   end
   
@@ -76,22 +76,22 @@ Expectations do
   begin
     # when command is not a BlockCommand
     expect false do
-      Command.new("", []).modified_by?("", [])
+      Command.new(nil, "", []).modified_by?("", [])
     end
     # when does not respond_to?(modifier)
     expect false do
-      foo = Commands::Foo.new("", [])
+      foo = Commands::Foo.new(nil, "", [])
       foo.modified_by?("foo", [])
     end
     # when method returns false
     expect false do
-      foo = Commands::Foo.new("", [])
+      foo = Commands::Foo.new(nil, "", [])
       foo.stubs(:else).returns(false)
       foo.modified_by?("else", [])
     end
     # when method returns true
     expect true do
-      foo = Commands::Foo.new("", [])
+      foo = Commands::Foo.new(nil, "", [])
       foo.stubs(:else).returns(true)
       foo.modified_by?("else", [])
     end
@@ -101,24 +101,24 @@ Expectations do
   begin
     # when command is not a BlockCommand
     expect false do
-      Command.new("", []).closed_by?('')
+      Command.new(nil, "", []).closed_by?('')
     end
     # when not lexicon.closer_on
     expect false do
-      foo = Commands::Foo.new("", [])
+      foo = Commands::Foo.new(nil, "", [])
       foo.stubs(:lexicon).returns stub('lexicon', :closer_on => nil)
       foo.closed_by?('')
     end
     # when does not respond_to? modifier
     expect false do
-      foo = Commands::Foo.new("", [])
+      foo = Commands::Foo.new(nil, "", [])
       match = stub('match', :captures => [], :to_a => [])
       foo.stubs(:lexicon).returns stub('lexicon', :closer_on => [:foo, match])
       foo.closed_by?('')
     end
     # when method returns false
     expect false do
-      foo = Commands::Foo.new("", [])
+      foo = Commands::Foo.new(nil, "", [])
       match = stub('match', :captures => [], :to_a => [])
       foo.stubs(:lexicon).returns stub('lexicon', :closer_on => [:end, match])
       foo.stubs(:end).returns(false)
@@ -126,7 +126,7 @@ Expectations do
     end
     # when method returns true
     expect true do
-      foo = Commands::Foo.new("", [])
+      foo = Commands::Foo.new(nil, "", [])
       match = stub('match', :captures => [], :to_a => [])
       foo.stubs(:lexicon).returns stub('lexicon', :closer_on => [:end, match])
       foo.stubs(:end).returns(true)
@@ -136,12 +136,12 @@ Expectations do
   
   # Base#output
   expect NotImplementedError do
-    Command.new("", []).output
+    Command.new(nil, "", []).output
   end
   
   # Base#to_s
   expect "[ Papyrus::Command ]" do
-    Command.new("", []).to_s
+    Command.new(nil, "", []).to_s
   end
   
 end

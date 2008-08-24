@@ -19,7 +19,7 @@ module Papyrus
         @value = @args.first
         @blocks = {}
         @current_case = nil
-        @default = NodeList.new
+        @default = NodeList.new(self)
       end
       
       # Adds a command to the current case, or to the 'else' (default) case.
@@ -31,7 +31,7 @@ module Papyrus
       modifier(:when) do |args|
         value = args.first
         @current_case = value
-        @blocks[value] = NodeList.new unless @blocks.has_key?(value)
+        @blocks[value] = NodeList.new(self) unless @blocks.has_key?(value)
         true
       end
       
@@ -42,12 +42,12 @@ module Papyrus
       
       # If context.get(@value) exists in the 'when' clauses, then
       # print out that block.
-      def output(context)
-        val = context.get(@value, false)
+      def output
+        val = parent.get(@value)
         if @blocks.has_key?(val)
-          @blocks[val].output(context)
+          @blocks[val].output
         else
-          @default.output(context)
+          @default.output
         end
       end
       
