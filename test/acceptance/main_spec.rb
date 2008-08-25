@@ -8,9 +8,11 @@ describe Papyrus do
     Papyrus.cached_template_dir = File.join(this_dir, 'cached')
     Papyrus.source_template_dirs.unshift(this_dir)
     output = Papyrus::Parser.parse_file('sample.txt', {
-      :words => %w(red blue orange green yellow),
-      :blah => "Steve"
+      'words' => %w(red blue orange green yellow),
+      'blah' => "Steve",
+      'hash' => { 'table' => "Wheeeee" }
     })
+    File.open(File.dirname(__FILE__)+'/sample.compiled.txt', "w") {|f| f.write(output) }
     #puts "ACTUAL"
     #puts output
     #puts
@@ -18,10 +20,6 @@ describe Papyrus do
     #puts "EXPECTED"
     #puts expected_output
     output.should == expected_output
-  end
-  
-  it "should successfully parse a template from a file" do
-    
   end
 
 end

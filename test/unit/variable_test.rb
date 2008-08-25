@@ -24,15 +24,21 @@ Expectations do
   # Variable#output
   begin
     # when variable exists
-    expect :the_value do
+    expect "some value" do
       var = Variable.new(nil, "", "")
-      var.stubs(:parent).returns stub('parent', :get => :the_value)
+      var.stubs(:parent).returns stub('parent', :get => "some value")
       var.output
     end
     # when variable doesn't exist
     expect "[foo]" do
       var = Variable.new(nil, "", "[foo]")
       var.stubs(:parent).returns stub('parent', :get => nil)
+      var.output
+    end
+    # value converted to string
+    expect "2" do
+      var = Variable.new(nil, "", "")
+      var.stubs(:parent).returns stub('parent', :get => 2)
       var.output
     end
   end

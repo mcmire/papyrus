@@ -1,15 +1,11 @@
 TODO
 
-Brought Variable back; fixed BlockCommand ancestry lookup. Acceptance test finally works!
+More misc fixes
 
-Switched order of resolving variables/commands in Parser#lookup_var_or_command (treat commands as unoverridable keywords)
-When treating bracketed construct as variable, defer evaluation of variable until runtime by adding instance of Variable to stack instead of just a Text node
-Redefine BlockCommand#get to return active_block.get
-Added ContextItem#parent_get to use parent._get if BlockCommand, or parent.get otherwise (to prevent an infinite loop); modified #get_primary_part to call #parent_get instead
-Modified Variable to receive raw command so it can return that in #output if the variable doesn't exist
-Renamed TokenList @cmd_info to @stash
-
-* Every output method where we say parent.get -- we really need to say (parent.is_a?(BlockCommand) ? parent.active_block.get : parent.get). This is cumbersome to say; however, we can't just override BlockCommand#get to return active_block.get because its active_block.get might very well call parent.get, and that will cause an infinite loop. What active_block should do in that case is really call the original BlockCommand#get, but active_block is a NodeList, and we don't want all NodeLists to do this.
+Ensure that Variable#output returns a string
+ContextItem#get_primary_part should not cache values from objects
+ContextItem#get_secondary_part should not cache values from multipart keys
+Fix value of iter.is_odd in Loop
 
 * Better if statement parsing -- copy from Liquid. The if command either accepts one arg (value), or three args (value1, op, value2).
 

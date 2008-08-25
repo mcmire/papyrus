@@ -97,7 +97,8 @@ module Papyrus
         enum.inject_with_index("") do |output, item, i|
           set_block_params(item)
           set_metavariables(enum, i)
-          output << commands.output
+          str = commands.output
+          output << str
         end
       end
 
@@ -129,7 +130,7 @@ module Papyrus
         commands.set('iter',
           'is_first' => (i == 0),
           'is_last'  => (i == enum.size-1),
-          'is_odd'   => (i % 2 != 0),
+          'is_odd'   => ((i+1) % 2 != 0),
           'index'    => i+1
         )
       end

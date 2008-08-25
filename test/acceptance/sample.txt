@@ -2,29 +2,43 @@ Here is some sample text. Here's a line that you might typically find in some di
 
 [nonexistent_variable]
 
+[hash.table]
+
 I'm about to do some kewl logic, ready, go!
 
 [if 42]
   42 is the greatest number in the world.
+[/if]
+
+[if i_am_a_real_variable]
+  I am a real variable
 [else]
-  42 suXX0rs!!1
+  I am not a real variable
 [/if]
 
 [loop words word]
   This is my favorite word: [word]
+  Loop index: [iter.index]
+  Is odd? [iter.is_odd]
+  Is first? [iter.is_first]
+  Is last? [iter.is_last]
 [/loop]
 
 [define michael jordan]
 
 [michael]
 
-[filter unescaped]
-  Here is some unescaped text.
+[filter reverse]
+  Here is some backwards text.
 [/filter]
 
 [case blah]
 [when Steve]
   I'm egregious
-[else]
+[when James]
   I'm extemporaneous
+[when Ryan]
+  I'm eccentric
+[else]
+  I'm your mom
 [/case]

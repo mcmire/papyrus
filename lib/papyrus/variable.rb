@@ -20,15 +20,14 @@ module Papyrus
     # (specifically, the method in the Preprocessor tied to the context) that will
     # be applied on the text.
     def initialize(*args)
-      args = super
-      @name, @raw_command = args
+      @name, @raw_command = super
     end
 
     # Requests the value of this object's saved value name from 
     # +context+, and returns the string representation of that
     # value to the caller, after passing it through the preprocessor.
     def output
-      parent.get(@name) || @raw_command
+      (value = parent.get(@name)).nil? ? @raw_command : value.to_s
     end
 
     def to_s

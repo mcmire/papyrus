@@ -52,7 +52,6 @@ module Papyrus
       first, rest = key.split(".", 2)
       
       value = get_primary_part(first, key)
-      return value.first if value.is_a?(Array) && value.last === true
       return value unless rest
       
       key_parts = [first]
@@ -95,33 +94,30 @@ module Papyrus
         parent_get(whole_key)
       elsif object.respond_to?(:has_key?)
         if object.has_key?(key)
-          vars[key] = object[key]
+          #vars[key] = object[key]
+          object[key]
         elsif parent
-          [parent_get(whole_key), true]
+          parent_get(whole_key)
         end
       elsif object.respond_to?(sym = key.to_sym)
-        vars[key] = object.send(sym)
-      elsif key == '__ITEM__'
-        object
+        #vars[key] = object.send(sym)
+        object.send(sym)
+      #elsif key == '__ITEM__'
+      #  object
       elsif parent
-        [parent_get(whole_key), true]
+        parent_get(whole_key)
       end
     end
     
     def get_secondary_part(key_so_far, key, value_so_far)
-      begin
-        vars[key_so_far] =
-          if vars.has_key?(key_so_far)
-            vars[key_so_far]
-          elsif value_so_far.respond_to?(:has_key?) # Hash
-            value_so_far[key]
-          elsif value_so_far.respond_to?(:[]) && key =~ /^\d+$/ # Array
-            value_so_far[key.to_i]
-          elsif value_so_far.respond_to?(sym = key.to_sym) # Just a method
-            value_so_far.send(sym)
-          end
-      rescue NoMethodError
-        nil
+      if vars.has_key?(key_so_far)
+        vars[key_so_far]
+      elsif value_so_far.respond_to?(:has_key?) # Hash
+        value_so_far[key]
+      elsif value_so_far.respond_to?(:[]) && key =~ /^\d+$/ # Array
+        value_so_far[key.to_i]
+      elsif value_so_far.respond_to?(sym = key.to_sym) # Just a method
+        value_so_far.send(sym)
       end
     end
     
