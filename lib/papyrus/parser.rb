@@ -7,9 +7,13 @@ module Papyrus
     class InvalidEndOfCommandError  < StandardError; end
     
     class << self
+      # Finds the given template in the source template paths. The template (assuming
+      # it can be found) will be parsed depending on whether Papyrus.cache_templates
+      # is true and we have a cached version of the template, and the cached version
+      # is returned. An error is raised if the template cannot be found.
       def parse_file(name, vars)
         file = find_template(name) or raise "Couldn't find template '#{name}'!"
-        cached = cached_path(file)
+        cached = cached_file(file)
         if Papyrus.cache_templates? and File.exists?(cached) && cached_mtime(cached) >= file_mtime(file)
           read_cached(cached)
         else
@@ -22,10 +26,13 @@ module Papyrus
       end
       
     ## can't set private, otherwise Ruby complains the method's not there for some reason
-    #private
+    
+    private  
+      # Searches for a file by the given name in the source template paths, returning
+      # the full path of the file if one is found, or nil otherwise.
       def find_template(name)
         name = name.gsub("../", "")
-        for path in Papyrus.source_template_dirs
+        for path in Papyrus.source_template_paths
           file = File.join(path, name)
           file.untaint
           return File.expand_path(file) if File.exists?(file)
@@ -33,22 +40,29 @@ module Papyrus
         return nil
       end
       
-      def cached_path(file)
-        File.join(Papyrus.cached_template_dir, File.basename(file))
+      # Returns the path of the file to which the parsed version of the template
+      # will be written when the template is cached.
+      def cached_file(file)
+        File.join(Papyrus.cached_template_path, File.basename(file))
       end
       
+      # Returns the modified time of the given cached file.
       def cached_mtime(cached)
         File.mtime(cached)
       end
       
+      # Returns the modified time of the given source file.
       def file_mtime(file)
         File.mtime(file)
       end
       
+      # Reads the content of the given cached file.
       def read_cached(cached)
         File.read(cached)
       end
       
+      # Reads the given source file, sends it through the parser, caching the output
+      # if necessary. Returns the parsed output.
       def parse_and_cache_file(file, vars, cached)
         content = File.read(file)
         template = parse(content)
@@ -59,9 +73,15 @@ module Papyrus
       end
     end
     
-    attr_reader :content, :template
-    attr_reader :stack, :tokens
+    attr_reader :content, :template, :tokens
+    # Used to keep track of open BlockCommands. As a BlockCommand is encountered,
+    # it's added to the stack. Nodes created while the command is open are
+    # then added to its node list. When the command closes, it's then popped off
+    # the stack.
+    attr_reader :stack
     
+    # Creates a new instance of a Parser, storing the given content.
+    # Command classes will be loaded if they have not already been done so.
     def initialize(content)
       Papyrus.load_command_classes
       @content = content
@@ -69,12 +89,20 @@ module Papyrus
       @stack = [ @template ]
     end
     
+    # Tokenizes the stored content and creates a Template object from the produced
+    # token list. Returns the Template object.
     def parse
       tokenize
       make_template
       @template
     end
     
+  private
+    
+    # Splits the content into tokens by stepping the input through one character at
+    # a time and categorizing each character. Basically, anything that's not a quote,
+    # bracket or slash character will be grouped together. The resulting token list
+    # is stored in @tokens.
     def tokenize
       @tokens = TokenList.new
       tok = nil
@@ -106,11 +134,17 @@ module Papyrus
       @tokens << tok if tok
     end
     
+    # Hey, you look like a smart pup. Why don't you give this a shot.
     def make_template
       populate_template
       close_open_block_commands
     end
     
+    # Stepping through the token list, we create a Command object for anything that
+    # looks like a command, or a Text node otherwise, and add it to the stack, thereby
+    # populating it. BlockCommands are pushed onto the stack, while everything else
+    # is added to whatever's on top of the stack (which will be a BlockCommand or
+    # the Template object).
     def populate_template
       # we set the stack in the constructor b/c that works better for testing
       while token = tokens.advance
@@ -125,10 +159,9 @@ module Papyrus
       end
     end
     
+    # If any BlockCommands weren't closed properly, we just end them manually.
     def close_open_block_commands
       return unless stack.size > 1
-      # Oops, I guess we have BlockCommands that never ended.
-      # That's okay, let's just end them manually.
       until stack.size == 1
         cmd = stack.pop
         stack.last << cmd
@@ -158,6 +191,14 @@ module Papyrus
       end
     end
     
+    # Assuming we've already hit a left bracket and slash, pops off the command on
+    # top of the stack if it looks like that command is being closed.
+    #
+    # An InvalidEndOfCommandError is raised if we hit the end of the token list
+    # and the open command is never closed.
+    #
+    # An UnmatchedLeftBracketError is raised if we hit the end of the token list
+    # before reaching a right bracket. 
     def handle_command_close
       tokens.advance # slash
       command_name = tokens.advance
@@ -179,11 +220,19 @@ module Papyrus
       end
     end
     
+    # If the given name doesn't refer to a command but just modifies the command
+    # on top of the stack (assuming it's a BlockCommand), returns true, otherwise
+    # returns false.
     def modify_active_cmd(name, args)
       active_cmd = stack.last
       (active_cmd.is_a?(BlockCommand) && active_cmd.modified_by?(name, args)) || false
     end
     
+    # Looks up the given name in the global list of commands. If such a command exists,
+    # returns a new instance of the command class. If we can't find the command but
+    # there were no args passed to the command, returns a Variable node.
+    #
+    # Raises an UnknownCommandError if we can't find the command and args is not empty.
     def lookup_var_or_command(name, args, raw_command)
       active_cmd = stack.last
       if command_klass = Papyrus.lexicon[name]
@@ -195,6 +244,16 @@ module Papyrus
       end
     end
     
+    # Assuming that we've already hit a left bracket, gets the name of the command
+    # and then steps through the following tokens to get the arguments of the command.
+    # Arguments enclosed in quotes will be properly grouped together.
+    #
+    # An UnmatchedSingleQuote or UnmatchedDoubleQuoteError will be raised if we've
+    # hit an opening quote mark and we hit the end of the token list before reaching
+    # a closing quote mark.
+    #
+    # An UnmatchedLeftBracketError will be raised if we hit the end of the token list
+    # before reaching a right bracket.
     def gather_command_name_and_args
       name = tokens.advance
       args = []
@@ -220,12 +279,17 @@ module Papyrus
       [name, args]
     end
     
+    # Assuming that we've already hit an opening quote mark, steps through the 
+    # following tokens to collect the tokens before the closing quote mark.
+    # If we encounter a command within the argument, that's handled appropriately.
+    #
+    # Raises an UnmatchedSingleQuoteError or UnmatchedDoubleQuoteError if we hit
+    # the end of the token list before reaching a closing quote mark.
     def handle_quoted_arg(quote_klass)
       arg = []
       # push a dummy value onto the stack in case the top of the stack is a
       # BlockCommand and we come across, say, 'else' - we don't want that
       # interpreted as a modifier
-      # TODO: Test?
       stack.last << Command.new("", [])
       reached_eoq = false
       unmatched_error = (quote_klass == Token::SingleQuote) ? UnmatchedSingleQuoteError : UnmatchedDoubleQuoteError

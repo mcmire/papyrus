@@ -1,23 +1,47 @@
 module Papyrus
   module Commands
-    # A Loop command is a block command. It requires an opening:
-    # [% in variable %] or [% loop variable %].
+    # A Loop command gives you the ability to loop through an Enumerable and do
+    # something for each iteration.
     #
-    # +variable+ is fetched from the context.
+    # *Syntax:* [loop <i>variable_or_literal</i> (<i>block_param1 block_param2 ...</i>)]<br />
+    # *Modifiers:* [else]
     #
-    # On execution, if +variable+ is true, and non-empty, then
-    # @commands is printed once with each item in the list placed in
-    # its own context and passed to the loop commands.
-    # (a list is defined as an object that responds to :map)
+    # When the command is evaluated, _variable_ is fetched from the surrounding
+    # context. The result must be some sort of Enumerable, but not a String. 
+    # The block is then executed for each item in the Enumerable. The block is given
+    # its own context.
     #
-    # If +variable+ is true, but does not respond to :map, then
-    # the list is called once
+    # Inside of the block you are given access to the item that's currently selected
+    # in some way. How this happens depends on whether you supply block parameters
+    # after the variable name.
     #
-    # [% else %] may be specified, modifying Loop to print out
-    # @else_commands in case +variable+ is false, or empty.
+    # * If you do not supply any block parameters, then any subs within the block are
+    #   first treated as method calls on the item.
+    # * If you supply one block parameter, the parameter is set to the item.
+    # * If you supply more than block parameter, the item (assuming it's an Array)
+    #   is split out into each of the block parameters.
+    #
+    # === Examples
+    #
+    #  <ul>
+    #  [loop posts]
+    #    <li>Post title: [title]</li>
+    #    <li>Post body: [body]</li>
+    #  [/loop]
+    #  </ul>
+    #
+    #  <ul>
+    #  [loop hash k v]
+    #    <li><b>[k]</b>: [v]</li>
+    #  [/loop]
+    #  </ul>
     class Loop < BlockCommand
-      # [% in variable %] or [% loop variable %]
-      # Or [% in variable: name %]
+      attr_reader :value, :block_params
+      attr_reader :commands, :else_commands
+      attr_reader :in_else
+      
+      # Creates a new Loop command, storing the given Enumerable and possibly
+      # block parameters.
       def initialize(*args)
         super
         @value, @block_params = @args
@@ -28,12 +52,11 @@ module Papyrus
         @in_else = false
       end
       
+      # Returns @else_commands if we're in the 'else' block, otherwise @commands.
       def active_block
         in_else ? else_commands : commands
       end
       
-      # An 'else' defines a list of commands to call when the loop is
-      # empty.
       modifier(:else) do |args|
         raise ArgumentError, "More than one 'else' to Command::If" if @switched
         @in_else = !@in_else
@@ -43,51 +66,24 @@ module Papyrus
       
       # Returns the output of this command.
       #
-      # First we evaluate the expression passed to 'loop' in the given context
-      # and check that the value that comes out isn't nil or empty. If it is
-      # nil or empty, then the 'else' block is executed, otherwise we start the
-      # loop. We also check that the value we're going to be looping over is,
-      # in fact, loopable -- i.e., that it's an Enumerable object (so an array,
-      # hash, etc.); if not, we wrap it in an array.
+      # First we evaluate the variable passed to 'loop' in the given context.
+      # If it is nil or empty, we execute the 'else' block immediately and return
+      # the result. Otherwise, we check that the value we're going to be
+      # looping over is, in fact, loopable -- i.e., that it's an Enumerable object
+      # (so an array, hash, etc.), but not a String -- wrapping the value in an array
+      # if it's not in the right form.
       #
-      # We then start looping through each item in the enumerable. For each
-      # iteration, a new context is created. We use this context object to set
-      # some local variables inside the block so users can access them.
+      # We then start looping through each item in the enumerable. Each iteration
+      # by design gets its own context. We use this context to set some local
+      # variables inside the block so users can access them. First, we provide some
+      # sort of access to the current item within the block, and this depends on
+      # whether or not block parameters were supplied in the 'loop' call, and how
+      # many. Next we provide access to information about the iteration itself, such
+      # as the index and whether or not we're on the first or last item. Please
+      # consult #set_block_params and #set_metavariables for more.
       #
-      # The first set of local variables we set concerns the item itself, and how we
-      # do so depends on whether or not block parameters were supplied in the 'loop'
-      # call, and how many.
-      #
-      # If there were block parameters supplied and the item is an array and this
-      # array has more than one item, then the array is split out into the block
-      # parameters. For instance, if two parameters were given, 'foo' and 'bar', and
-      # the array == ['red', 'blue'], then 'foo' will be set to 'red' and 'bar' will
-      # be set to 'blue'. If there are more parameters given than values in the array,
-      # the unpairable parameters will be set to nil. If there are less, then the
-      # unpairable values are ignored. (Try it.)
-      #
-      # Otherwise, we set context.object to the item. This means that if a user
-      # accesses a variable inside the loop block Papyrus will check to see
-      # whether the "variable" is really a method on the item.
-      #
-      # Note that if the object we're enumerating over is a hash, then each item
-      # will be a two-value array, storing the key and value.
-      #
-      # The second set of local variables we set only applies if the enumerable is an
-      # array, and they're metavariables that the user can use to access info about
-      # the loop:
-      # 
-      # * loop.index, the index of the item in the array (starts at 1, not 0)
-      # * loop.is_first, a boolean that signifies whether or not the item is
-      #   the first in the array
-      # * loop.is_last, a boolean signifying whether or not the item is the last
-      #   in the array
-      # * loop.is_odd, a boolean signifying whether or not the index is an odd number
-      #   (starts at 0)
-      #
-      # The very last thing we do is take the @commands in the 'loop' block itself
-      # and execute them in the context we've set up, and add the content to a string
-      # that we then return at the very end.
+      # The output is, naturally, the output of the block for as many items as are in the
+      # enumerable.
       def output
         enum = parent.get(@value)
         
@@ -110,8 +106,21 @@ module Papyrus
       end
       
     private
-      attr_reader :value, :commands, :else_commands, :in_else, :block_params
-    
+      # If there were block parameters supplied and the item is a multiple-element
+      # array, the item is split out into the block parameters. For instance,
+      # if two parameters were given, 'foo' and 'bar', and the item is
+      # <tt>['red', 'blue']</tt>, then <tt>[foo]</tt> will evaluate to 'red' and 
+      # <tt>[bar]</tt> will evaluated to 'blue'. If there are more parameters given
+      # than the number of elements in the item, the unpairable parameters will be
+      # set to nil. If there are less, then the unpairable values are ignored.
+      #
+      # If no block parameters were given, then any time a user accesses a variable
+      # inside the loop block Papyrus will check to see whether the "variable" is
+      # really a method on the item.
+      #
+      # Note that if the object we're iterating over is a hash, then each item
+      # will be a two-value array, the key and value, and in that case if you wanted
+      # to access both you'd have to supply two block parameters.
       def set_block_params(item)
         if block_params.blank?
           commands.object = item
@@ -125,6 +134,16 @@ module Papyrus
         end
       end
       
+      # These metavariables will be set inside the current block if enumerable is an
+      # Array:
+      # 
+      # * <tt>iter.index</tt>, the index of the item in the array (starts at 1, not 0)
+      # * <tt>iter.is_first</tt>, a boolean that signifies whether or not the item is
+      #   the first in the array
+      # * <tt>iter.is_last</tt>, a boolean signifying whether or not the item is the
+      #   last in the array
+      # * <tt>iter.is_odd</tt>, a boolean signifying whether or not the index is an
+      #   odd number (starts at 0)
       def set_metavariables(enum, i)
         return unless enum.is_a?(Array)
         commands.set('iter',

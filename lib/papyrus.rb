@@ -1,10 +1,5 @@
 #!/usr/local/bin/ruby -w
 
-# Papyrus is a heavily modified version of PageTemplate 2.2.3
-# Original source can be located at http://coolnamehere.com/products/pagetemplate/
-
-##############################################################################
-
 $LOAD_PATH.unshift File.dirname(__FILE__)
 
 require 'ruby_ext'
@@ -28,27 +23,43 @@ require 'papyrus/parser'
 
 ##############################################################################
 
+# Papyrus is the template engine that powers Codexed. It is a heavily modified
+# version of the PageTemplate Ruby library written by Brian Wisti and Greg Millam.
+#
+# (c) 2008 Elliot Winkler
 module Papyrus
   class << self
-    def source_template_dirs; @source_template_dirs ||= %w(.); end
-    attr_accessor :available_commands, :cached_template_dir
+    # Papyrus will look within these locations, and only these locations,
+    # for templates you want parsed. Includes the current directory by default.
+    def source_template_paths
+      @source_template_paths ||= %w(.)
+    end
+    # When Papyrus comes across a substitution, Papyrus will try to match it
+    # against only these commands
+    attr_accessor :available_commands
+    # The location you want cached (i.e. parsed) templates to go. If not set,
+    # Papyrus will put the cached version in the same directory as the source.
+    attr_accessor :cached_template_path
+    # A boolean indicating whether or not Papyrus should cache templates.
     attr_writer :cache_templates
 
-    # Loads command classes and creates a new instance of Compiler
+    # Just a shortcut for +Papyrus::Parser.new(...)+.
     def new(*args)
       Parser.new(*args)
     end
     
-    def lexicon
-      @lexicon ||= {}
-    end
-    
+    # Should we cache templates?
     def cache_templates?
       @cache_templates
     end
 
-    # Load commands based on available_commands, or load all
+    # Requires command files and creates a mapping of command names (and aliases)
+    # to command classes. We only load commands that are in available_commands, or
+    # we load all commands if that hasn't been defined.
+    #
+    # This will get called the first time a Parser is created.
     def load_command_classes
+      return if @loaded_command_classes
       available_commands = Papyrus.available_commands || Dir[File.dirname(__FILE__)+"/papyrus/commands/*.rb"].map {|file| File.basename(file, '.rb') }
       for name in available_commands
         name = name.to_s
@@ -57,6 +68,12 @@ module Papyrus
         names = [name] + klass.aliases.map {|x| x.to_s }
         names.each {|n| lexicon[n] = klass }
       end
+      @loaded_command_classes = true
+    end
+    
+  private
+    def lexicon
+      @lexicon ||= {}
     end
   end
 end

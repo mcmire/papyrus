@@ -1,15 +1,22 @@
 module Papyrus
   module Commands
-    # An Include command allows the designer to include a template from
-    # another source.
+    # An Include command allows you to include another template into your template.
     #
-    #  [% include ... %]
+    # *Syntax:* [include <i>variable_or_string</i>]
     #
     # The argument to 'include' may be the name of a file, or a variable in a
     # context that evaluates to a filename. If the filename refers to an existing
     # file, the content of the file is retrieved and passed through the Parser
-    # and compiled into a Template. Otherwise the 'include' tag is replaced with
-    # an error message.
+    # and compiled into a Template. Otherwise the 'include' tag is replaced an empty
+    # string.
+    #
+    # === Example ===
+    #
+    #  [include 'shared/header']
+    #
+    #  Some stuff ...
+    #
+    #  [include 'shared/footer']
     class Include < Command
       def initialize(*args)
         super

@@ -1,71 +1,63 @@
 module Papyrus
   module Commands
-    # An If command is a BlockCommand command. It requires an opening:
-    # [% if +variable+ %] or [% unless +variable+ %].
+    # An If command represents an 'if' statement.
     #
-    # When the command is executed, if +variable+ is true, then the contents of
-    # If's @commands are printed. 
+    # *Syntax*: [if <i>variable_or_literal</i>]...[/if],
+    #           [unless <i>variable_or_literal</i>]...[/unless]<br />
+    # *Modifiers*: [elsif <i>variable_or_literal</i>], [else]
     #
-    # [% else %] may be specified for either if or unless, after which
-    # objects are added to @false_commands, and are printed if +variable+
-    # is false, instead.
+    # In the 'if' form, if _variable_ comes out to be true, the output of the whole
+    # command will be the output of the block directly following the 'if' statement,
+    # otherwise it's the output of a matching 'elsif' or 'else' block (if present).
     #
-    # Either @true_commands or @false_commands is used to store the block following
-    # each statement, but it depends on whether the command was called as 'if' or
-    # 'unless'.
+    # In the 'unless' form, if _variable_ comes out to be *false*, the output of the
+    # whole command will be the output of the 'unless' block, otherwise the output
+    # of the 'else' block (if present). Note that you cannot put an 'elsif' statement
+    # following an 'unless' statement.
     #
-    # If the command was called as 'if', then 'if' and 'elsif' blocks will be stored
-    # in @true_commands with their corresponding values to be evaluated, and the
-    # 'else' block will be stored in @false_commands. So this Papyrus code:
+    # === Examples
     #
-    #  [% if foo %]
-    #    ...
-    #  [% elsif bar %]
-    #    ...
-    #  [% else %]
-    #    ...
-    #  [% end %]
+    #  [if foo]
+    #    This will be printed if [foo] is true
+    #  [/if]
     #
-    # is codified as follows:
+    #  [unless bar]
+    #    This will be printed if [bar] is true
+    #  [/unless]
     #
-    #  @true_commands = [
-    #    ['foo', Papyrus::NodeList.new(self) ],
-    #    ['bar', Papyrus::NodeList.new(self) ]
-    #  ]
-    #  @false_commands = Papyrus::NodeList.new(self)
+    #  [if some_variable]
+    #    This will be printed if [some_variable] is true
+    #  [elsif some_other_variable]
+    #    This will be printed if [some_other_variable] is true
+    #  [else]
+    #    This will be printed if neither is true
+    #  [/if]
     #
-    # The output of the whole command, as you would expect, will be the output of the
-    # 'if' block if its value evaluates to true, otherwise the output of the 'elsif'
-    # block if its value evaluates to true, otherwise the output of the 'else' block.
-    #
-    # If the command was called as 'unless', then the 'unless' block will be stored
-    # in @false_commands, and the 'else' @true_commands is used to store
-    # just the 'else' statement, and the value stored with the block is the 'unless'
-    # value. So this Papyrus code:
-    #
-    #  [% unless foo %]
-    #    ...
-    #  [% else %]
-    #    ...
-    #  [% end %]
-    #
-    # would be stored as follows:
-    #
-    #  @true_commands = [
-    #    [ 'foo', Papyrus::NodeList.new(self) ]
-    #  ]
-    #  @false_commands = Papyrus::NodeList.new(self)
-    #
-    # In this case, the output of the whole command will be the output of the 'else'
-    # block if foo evaluates to true, otherwise it's the output of the 'unless'
-    # block. Note that if there's no 'else' block given, then the output will be
-    # the output of an empty block (since that's what @true_commands is set to initially).
+    #  [unless quux]
+    #    This will be printed if [quux] is false
+    #  [else]
+    #    This will be printed if [quux] is true
+    #  [/unless]
     class If < BlockCommand
       aka :unless
       
-      # Creates a new If command, storing what the command was called as
-      # ("if" or "unless"), and the value that will get evaluated when the
-      # command is executed.
+      # An array of value-to-NodeList mappings used to store 'if' and 'elsif' blocks
+      # if the command was called as 'if', or the 'else' block if the command was
+      # called as 'unless'.
+      attr_reader :true_commands
+      # A NodeList used to store the 'else' block if the command was called as 'if',
+      # or the 'unless' block if the command was called as 'unless'.
+      attr_reader :false_commands
+      # A boolean that will be true if we're in an 'unless' block, or if the command
+      # was called as 'if' and we're in an 'else' block.
+      attr_reader :in_else
+      # A boolean that will be true if we're in an 'else' block, false otherwise.
+      # Another way to say this is whether commands are being added to @true_commands
+      # or @false_commands.
+      attr_reader :switched
+      
+      # Creates a new If command, storing the initial variable or value passed
+      # to the command.
       def initialize(*args)
         super
         @value = @args.first
@@ -81,9 +73,9 @@ module Papyrus
       
       # Adds the given value to the list of @true_commands.
       #
-      # An ArgumentError will be thrown if @switched or @in_else is set to true,
-      # which will be the case if you try to put an 'elsif' command following an
-      # 'else' or 'unless' command.
+      # An ArgumentError will be raised if @switched or @in_else is true, which
+      # will be the case if you try to put an 'elsif' command following an 'else'
+      # or 'unless' command.
       modifier(:elsif) do |args|
         raise ArgumentError, "'elsif' cannot be passed after 'else' or in an 'unless'" if @switched || @in_else
         value = args.first
@@ -94,7 +86,7 @@ module Papyrus
       # Switches the list to which new commands will be added (@true_commands or
       # @false_commands).
       #
-      # An ArgumentError will be thrown if @switched is set to true, which will be
+      # An ArgumentError will be raised if @switched is set to true, which will be
       # the case if you try to put an 'else' command following an already existing
       # 'else' command.
       modifier(:else) do |args|
@@ -132,8 +124,6 @@ module Papyrus
         str
       end
       
-    private
-      attr_reader :in_else, :true_commands, :false_commands
     end 
   end
 end

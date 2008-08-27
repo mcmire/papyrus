@@ -1,18 +1,18 @@
 module Papyrus
   module Commands
-    # A Comment command is a command that just returns nothing for its
-    # output, allowing the designer to populate their pages with
-    # Papyrus-style comments as well.
+    # A Comment command is a command that just returns nothing (well, an empty
+    # string) for its output.
     class Comment < Command
-      # Save the +comment+ for to_s
+      # Creates a new Comment, storing the given comment string (for inspection
+      # purposes).
       def initialize(*args)
         super
         @comment = @args.first
       end
       
-      # output returns nothing.
+      # Returns an empty string.
       def output
-        ''
+        ""
       end
       
       def to_s

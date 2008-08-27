@@ -1,31 +1,17 @@
 module Papyrus
-  # A Value command will print out a variable name, possibly passing its
-  # value through a preprocessor.
-  #
-  # [% var variable [:processor] %]
-  #
-  # +variable+ is first plucked out of the Context,
-  #
-  # The to_s of the output from Context#get is passed through
-  # parser's preprocessor. If :processor is defined, then 
-  # parser.preprocessor.send(:processor,body) is called. This allows the
-  # designer to choose a particular format for the output. If
-  # :processor is not given, then parser's default processor is used.
+  # A Variable is a Node that represents a simple substitution (e.g. [foo]) that
+  # could not be interpreted as a Command (because it doesn't exist or whatever).
+  # We don't actually know if the variable exists, however, until we output it.
   class Variable < Node
 
-    # Creates an instance of Variable.
-    #
-    # +value+ is the name of the variable whose value will be fetched from the
-    # context when the command is output; +processor+ is the name of the filter
-    # (specifically, the method in the Preprocessor tied to the context) that will
-    # be applied on the text.
+    # Creates a new Variable, storing the given name and the raw command
+    # (the entire sub).
     def initialize(*args)
       @name, @raw_command = super
     end
 
-    # Requests the value of this object's saved value name from 
-    # +context+, and returns the string representation of that
-    # value to the caller, after passing it through the preprocessor.
+    # Looks for the variable in the parent context and returns the resulting value
+    # if it exists there, or the raw command otherwise.
     def output
       (value = parent.get(@name)).nil? ? @raw_command : value.to_s
     end

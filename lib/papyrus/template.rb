@@ -1,9 +1,8 @@
 module Papyrus
-  # Template holds the top-level list of nodes assembled during the parsing process.
-  # It is what is returned on Parser#parse.
-  #
+  # Parser uses a Template to hold the top-level list of nodes during the parsing process.
   # A Template should only be created by the Parser, and never by anything else.
   class Template < NodeList
+    # Creates a new Template, storing the given Parser.
     def initialize(parser)
       super()
       @parser = parser

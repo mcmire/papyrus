@@ -1,15 +1,23 @@
 module Papyrus
   module Commands
-    # A Define command will set a variable within the enclosing context
+    # A Define command sets a variable within the surrounding context. It doesn't
+    # return any output.
+    #
+    # *Syntax*: [define _name_ _value_]
+    #
+    # === Example ===
+    #
+    #  [define michael "jordan"]
     class Define < Command
+      # Creates a new Define object, storing the given variable name and value.
       def initialize(*args)
         super
         @var_name, @var_value = @args
       end
 
-      # Doesn't return any output
+      # Stores the variable in the parent context, returning an empty string.
       def output
-        parent[@var_name] = @var_value
+        parent.set(@var_name, @var_value)
         return ""
       end
     end

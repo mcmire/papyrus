@@ -1,22 +1,28 @@
 require 'set'
 
 module Papyrus
-  # Commands correspond to tags in the template code. As they are Nodes, they are
-  # evaluated into strings when the template is parsed.
+  # A Command is a Node that represents a substitution (e.g. [foo], or [foo bar]) in
+  # the source template. As a result, it will be evaluated into a string when the
+  # template is parsed.
   class Command < Node
     class << self
+      # Returns the list of command modifiers for this Command class.
       def modifiers
         @modifiers ||= Set.new
       end
+      # Defines a modifier by defining a method by the given name and adding
+      # the modifier to the list of modifiers.
       def modifier(name, &block)
         name = name.to_sym
         define_method(name, &block)
         self.modifiers << name
       end
       
+      # Returns the list of aliases for this Command class.
       def aliases
         @aliases ||= Set.new
       end
+      # Defines aliases for this command.
       def aka(*aliases)
         self.aliases # init set
         @aliases += aliases
@@ -31,9 +37,8 @@ module Papyrus
       @name, @args = super
     end
     
-    # If this command is a BlockCommand, and +full_command+ refers to a valid modifier
-    # of this command, and this command has a method with the same name as the 
-    # modifier, the method is called and its return value is returned.
+    # If this command is a BlockCommand, and this command has a method with the same
+    # name as the given modifier, the method is called and its return value is returned.
     # Otherwise, false is returned.
     #
     # This is used by Parser to both check and run a modifier on the currently
@@ -42,24 +47,6 @@ module Papyrus
       is_a?(BlockCommand) or return false
       respond_to?(modifier) or return false
       send(modifier, args)
-    end
-    
-    # If this command is a BlockCommand, and +full_command+ refers to a valid closer
-    # of this command, and this command has a method with the same name as the
-    # closer, the method is called and its return value is returned.
-    # Otherwise, false is returned.
-    #
-    # This is used by Parser to both check and run a closer on the currently
-    # active command.
-    #---
-    # XXX: Not needed anymore?
-    def closed_by?(full_command)
-      is_a?(BlockCommand) or return false
-      ret = lexicon.closer_on(full_command, self) or return false
-      closer, match = ret
-      respond_to?(closer) or return false
-      args = match.captures.compact
-      send(closer, *args)
     end
   end
 end

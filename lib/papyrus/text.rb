@@ -1,14 +1,14 @@
 module Papyrus
-  # Text is a very simple Node which outputs a static string of text
+  # Text is a very simple Node which outputs a static string of text.
   class Text < Node
     attr_reader :text
     
-    # Creates a Text object, saving +text+ for future output.
+    # Creates a new Text node, storing the given text.
     def initialize(text)
       @text = text
     end
 
-    # Returns the string provided during this object's creation.
+    # Just returns the text given to Text.new.
     def output
       @text
     end

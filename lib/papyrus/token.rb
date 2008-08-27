@@ -1,4 +1,7 @@
 module Papyrus
+  # A Token is used in the parsing process to better distinguish special characters
+  # in the template being parsed and thus make it possible to interpret the template
+  # procedurally.
   module Token
     class Base < ::String
       def to_s
@@ -37,6 +40,7 @@ module Papyrus
     end
     class Text < Base; end
   
+    # Returns a new Token based on the given text.
     def self.create(text)
       klass = case text
         when '"'    then DoubleQuote

@@ -1,21 +1,21 @@
 module Papyrus
   module Filters; end
   class << Filters
-    # Default, unescaped string.
+    # Just returns the string
     def unescaped(string)
       string
     end
-    # Reverse the string. Don't see any use for this :D.
+    # Reverses the string
     def reverse(string)
       string.reverse
     end
-    # escape URIs into %20-style escapes.
+    # Escapes URIs into %20-style escapes
     def escape_uri(string)
       string.gsub(/([^ a-zA-Z0-9_.-]+)/n) do
         '%' + $1.unpack('H2' * $1.size).join('%').upcase
       end.tr(' ', '+')
     end
-    # Escape all HTML
+    # Escapes all HTML
     def escape_html(string)
       string = string.gsub(/&/n, '&amp;')
       string.gsub!(/\"/n, '&quot;')
@@ -23,7 +23,7 @@ module Papyrus
       string.gsub!(/</n, '&lt;')
       string
     end
-    # Escape HTML, but also turn newlines into <br />s
+    # Escapes HTML, but also turn newlines into <br />s
     def nl2br(str)
       escape_html(str).gsub(/\r\n|\n/, "<br />\n")
     end
@@ -31,9 +31,10 @@ module Papyrus
   
   class Filter
     class << self
-      def filter(filter, text, &block)
-        filter = :unescaped unless Filters.respond_to?(filter)
-        Filters.send(filter, text)
+      # Runs the text through the given filter and returns the result, or returns the
+      # original text if +filter+ is not a filter.
+      def filter(filter, text)
+        Filters.respond_to?(filter) ? Filters.send(filter, text) : text
       end
     end
   end

@@ -1,30 +1,26 @@
 module Papyrus
-  # A Context object consists of three things:
-  #
-  # parent: A parent object to get a value from if the context
-  # does not 'know' a value.
-  #
-  # object: An object is a hash or list that contains the vars that
-  # this context will refer to. It may also be an object, in which
-  # case, its methods are treated as a hash, with respond_to? and
-  # send()
-  #
-  # Cache: A cache ensures that a method on an object will only be
-  # called once.
+  # A ContextItem embodies a scope where values are stored. You can retrieve and set
+  # these values inside the ContextItem by name. All ContextItems have a parent,
+  # so if we're looking for a value and can't find it we have another place to try.
+  # An 'object' (either a hash, or an actual object) may also be bound to the
+  # ContextItem which is a bit like using the JavaScript 'with' keyword.
   module ContextItem
-    attr_accessor :object, :vars
+    attr_accessor :object
+    attr_writer :vars
     
+    # Returns the hash of values stored for this context, instantiating the hash
+    # if necessary.
     def vars
       @vars ||= {}
     end
 
+    # Clears the hash of variables, and the associated object.
     def reset_context
-      @vars = Hash.new
+      @vars = {}
       @object = nil
     end
 
-    # Saves a variable +key+ as the string +value+ in the global 
-    # context.
+    # Stores the given value in the context by the given key.
     def set(key, value)
       vars[key.to_s] = value
     end
@@ -45,6 +41,19 @@ module Papyrus
     # If +key+ is a dot-separated list of words, then 'first' is the
     # first part of it.  The remainder of the words are sent to key
     # (and further results) to permit accessing attributes of objects.
+    
+    
+    # Searches for the given key in the values for this context or an ancestor context.
+    # Returns the value if it's found, or nil.
+    #
+    # If the key is a dot-separated set of words, we break the key into parts.
+    # Starting with the first word, we resolve it, then use the resulting value to
+    # resolve the second word (it can either refer to a hash key, array index, or
+    # method of the value). We then use the value we get from that to resolve the next
+    # word, continuing until we've resolved all the words. The final value is returned. 
+    #
+    # If the key starts with a number, then it is just returned, since a variable
+    # cannot start with a number.
     def get(key)
       key = key.to_s
       return key if key =~ /^\d/
@@ -70,21 +79,25 @@ module Papyrus
       vars.delete(key)
     end
 
-    # parser: most context objects won't be a parser, but pass this
-    # query up to the parser object.
+    # Returns the parser of this context's parent, or @parser if this is a Template.
     def parser
       parent ? parent.parser : @parser
     end
 
-    # A convenience method to test whether a variable has a true
-    # value. Returns nil if +flag+ is not found in the context, 
-    # or +flag+ has a nil value attached to it.
-    # TODO: Clean up?
+    # A convenience method to test whether the given variable (or value) has a true
+    # value. Returns false if the given variable is not found in the context or has
+    # a false value.
     def true?(var_or_value)
       !!get(var_or_value)
     end
     
   private
+    # Resolves the given word by trying:
+    # - vars[ key ]
+    # - vars[ key.to_sym ]
+    # - object[ key ]
+    # - object.send(key)
+    # - parent.get(key)
     def get_primary_part(key, whole_key)
       if vars.has_key?(key)
         vars[key]
@@ -109,6 +122,13 @@ module Papyrus
       end
     end
     
+    # Resolves the given word by trying:
+    # - vars[ key_so_far ]
+    # - value_so_far[ key ]
+    # - value_so_far[ key.to_i ]
+    # - value_so_far.send(key)
+    # where +key_so_far+ is the word or dot-separated set of words we've resolved so
+    # far, and +value_so_far+ is the value it resolved to.
     def get_secondary_part(key_so_far, key, value_so_far)
       if vars.has_key?(key_so_far)
         vars[key_so_far]
@@ -121,16 +141,11 @@ module Papyrus
       end
     end
     
-    
+    # Hack to get around the fact that BlockCommand#get overrides get to use
+    # active_block.get. In that case  we need to call the original get, otherwise we
+    # may very well have an infinite loop.
     def parent_get(key)
-      if parent.is_a?(BlockCommand)
-        # Since BlockCommand#get overrides get to use active_block.get,
-        # we need to call the original get, otherwise we may very well have an
-        # infinite loop!
-        parent._get(key)
-      else
-        parent.get(key)
-      end
+      parent.is_a?(BlockCommand) ? parent._get(key) : parent.get(key)
     end
   end
 end

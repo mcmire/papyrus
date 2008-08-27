@@ -1,19 +1,17 @@
 TODO
 
-More misc fixes
-
-Ensure that Variable#output returns a string
-ContextItem#get_primary_part should not cache values from objects
-ContextItem#get_secondary_part should not cache values from multipart keys
-Fix value of iter.is_odd in Loop
+# Add functional tests for all commands
+* Does [unless]...[/unless] work?
+* We need ContextItem#get and family to raise a VariableNotFound error if we never
+  found the variable, which Parser and places will pick up on -- instead of going
+  by whether or not the value is nil. Also, that way stuff like one.two.three will
+  fail if one.two == nil.
+* Test inner subs, within quotes and without
+* Replace Loop with For
+* Do we need Include anymore? Comment?
+* Update documentation!!
 
 * Better if statement parsing -- copy from Liquid. The if command either accepts one arg (value), or three args (value1, op, value2).
-
-* Replace Loop with For
-* Do we need Variable anymore? Include?
-* Do we need Comment?
-* Include needs to be fixed
-* Update documentation!!
 
 FUTURE
 

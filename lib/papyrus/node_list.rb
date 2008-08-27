@@ -1,11 +1,13 @@
 module Papyrus
   # A NodeList provides a single interface to multiple Node objects. As it is a
-  # Node itself, it has an output method.
+  # Node itself, it has output and parent methods. A NodeList is also a context object,
+  # so it can store and retrieve values easily.
   class NodeList < Node
     include ContextItem
     
     attr_reader :nodes
     
+    # Creates a new NodeList. Any arguments passed are dished off to Node's constructor.
     def initialize(*args)
       super
       @nodes = []
@@ -22,10 +24,11 @@ module Papyrus
       @nodes[i]
     end
 
-    # Adds +node+ to the NodeList.
+    # Adds the given node to the NodeList.
+    #
     # A TypeError is raised if the object being added is not a Node.
     #
-    # This is also aliased as <<
+    # Note: This is also aliased as <<
     def add(node)
       raise TypeError, 'NodeList#add: Attempt to add non-Node object' unless node.kind_of?(Node)
       @nodes << node
@@ -35,14 +38,12 @@ module Papyrus
       add(node)
     end
 
-    # Calls Node#output(context) on each Node contained in this 
-    # object.  The output is returned as a single string.  If no output
-    # is generated, returns an empty string.
+    # Calls #output on each Node contained in the NodeList, joining all the output
+    # in a single string.
     def output
       @nodes.inject("") {|str, node| str << node.output }
     end
     
-    # Returns Nodes held, as a string
     def to_s
       '[ NodeList: ' + @nodes.map {|node| "[#{node.to_s}]" }.join(' ') + ' ]'
     end
