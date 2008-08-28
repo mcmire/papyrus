@@ -17,8 +17,10 @@ Expectations do
   # Template#initialize
   begin
     expect :parser do
-      template = Template.new(:parser)
-      template.send(:instance_variable_get, "@parser")
+      Template.new(:parser).send(:instance_variable_get, "@parser")
+    end
+    expect('foo' => 'bar') do
+      Template.new(nil, 'foo' => 'bar').send(:instance_variable_get, "@vars")
     end
   end
   

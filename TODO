@@ -1,15 +1,25 @@
 TODO
 
-# Add functional tests for all commands
-* Does [unless]...[/unless] work?
+X Made Lexicon.parser public again
+XT Add vars argument to Parser.parse, Parser.new and Template.new
+X Add functional tests for all command outputs, specifically [unless]...[/unless]
+X Test [one.two.three] when [one.two] returns nil
+X Test inner subs, within quotes and without
+X Raise error in handle_quoted_arg if char before quote is not whitespace
+XT handle_command if left bracket reached during gather_command_name_and_args
+X handle_quoted_arg doesn't need an argument
+X In handle_quoted_arg, add dummy command to stack, not last item on stack
+
+* Replace Loop with For
+
 * We need ContextItem#get and family to raise a VariableNotFound error if we never
   found the variable, which Parser and places will pick up on -- instead of going
   by whether or not the value is nil. Also, that way stuff like one.two.three will
   fail if one.two == nil.
-* Test inner subs, within quotes and without
-* Replace Loop with For
 * Do we need Include anymore? Comment?
-* Update documentation!!
+
+* Parser#tokenize should group together quoted arguments too?
+* When vars are mass-set, stringify keys?
 
 * Better if statement parsing -- copy from Liquid. The if command either accepts one arg (value), or three args (value1, op, value2).
 

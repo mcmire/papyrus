@@ -48,6 +48,12 @@ module Papyrus
       Parser.new(*args)
     end
     
+    # A mapping of command names to classes that represents which commands
+    # Papyrus knows about.
+    def lexicon
+      @lexicon ||= {}
+    end
+    
     # Should we cache templates?
     def cache_templates?
       @cache_templates
@@ -69,11 +75,6 @@ module Papyrus
         names.each {|n| lexicon[n] = klass }
       end
       @loaded_command_classes = true
-    end
-    
-  private
-    def lexicon
-      @lexicon ||= {}
     end
   end
 end

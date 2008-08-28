@@ -3,6 +3,7 @@ module Papyrus
     class UnmatchedLeftBracketError < StandardError; end
     class UnmatchedSingleQuoteError < StandardError; end
     class UnmatchedDoubleQuoteError < StandardError; end
+    class MisplacedQuoteError       < StandardError; end
     class UnknownCommandError       < StandardError; end
     class InvalidEndOfCommandError  < StandardError; end
     
@@ -21,8 +22,10 @@ module Papyrus
         end
       end
       
-      def parse(content)
-        new(content).parse
+      # Runs the given content through the Parser, returning the evaluated content.
+      # You can supply context variables that will be passed onto the Parser.
+      def parse(content, vars={})
+        new(content, vars).parse.output
       end
       
     ## can't set private, otherwise Ruby complains the method's not there for some reason
@@ -65,9 +68,7 @@ module Papyrus
       # if necessary. Returns the parsed output.
       def parse_and_cache_file(file, vars, cached)
         content = File.read(file)
-        template = parse(content)
-        template.vars = vars
-        output = template.output
+        output = parse(content, vars)
         File.write(cached, output) if Papyrus.cache_templates?
         output
       end
@@ -80,12 +81,13 @@ module Papyrus
     # the stack.
     attr_reader :stack
     
-    # Creates a new instance of a Parser, storing the given content.
-    # Command classes will be loaded if they have not already been done so.
-    def initialize(content)
+    # Creates a new instance of a Parser, storing the given content and possibly
+    # the given context variables. Command classes will be loaded if they have not
+    # already been done so.
+    def initialize(content, vars={})
       Papyrus.load_command_classes
       @content = content
-      @template = Template.new(self)
+      @template = Template.new(self, vars)
       @stack = [ @template ]
     end
     
@@ -113,7 +115,7 @@ module Papyrus
         if brackets_open == 0
           # not in command, nothing special here
           (tok ||= Token::Text.new) << c
-        else        
+        else
           case c
           when '"', "'", "[", "]", "/"
             @tokens << tok if tok
@@ -261,12 +263,14 @@ module Papyrus
       reached_eoc = false
       while token = tokens.advance
         case token
+        when Token::LeftBracket
+          args << handle_command
         when Token::RightBracket
           reached_eoc = true
           break
         when Token::SingleQuote, Token::DoubleQuote
           begin
-            args << handle_quoted_arg(token.class)
+            args << handle_quoted_arg
           rescue UnmatchedSingleQuoteError, UnmatchedDoubleQuoteError => error
             # keep going until we reach the end of the command or the token list
           end
@@ -285,12 +289,14 @@ module Papyrus
     #
     # Raises an UnmatchedSingleQuoteError or UnmatchedDoubleQuoteError if we hit
     # the end of the token list before reaching a closing quote mark.
-    def handle_quoted_arg(quote_klass)
+    def handle_quoted_arg
+      raise MisplacedQuoteError unless tokens.prev.is_a?(Token::Whitespace)
+      quote_klass = tokens.curr.class
       arg = []
       # push a dummy value onto the stack in case the top of the stack is a
       # BlockCommand and we come across, say, 'else' - we don't want that
       # interpreted as a modifier
-      stack.last << Command.new("", [])
+      stack << Command.new(stack.last, "", [])
       reached_eoq = false
       unmatched_error = (quote_klass == Token::SingleQuote) ? UnmatchedSingleQuoteError : UnmatchedDoubleQuoteError
       while token = tokens.advance
@@ -306,9 +312,10 @@ module Papyrus
           arg << token
         end
       end
-      stack.pop
       raise unmatched_error unless reached_eoq
       arg
+    ensure
+      stack.pop
     end
     
   end

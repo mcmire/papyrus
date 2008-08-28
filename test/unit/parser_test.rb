@@ -476,6 +476,42 @@ Expectations do
       parser.stubs(:handle_quoted_arg).raises(Parser::UnmatchedDoubleQuoteError)
       parser.send(:gather_command_name_and_args)
     end
+    # nested stub
+    expect ["bar", Variable] do
+      parser = Parser.new("", 'baz' => '999')
+      list = [
+        Token::Text.new("foo"),
+        Token::Whitespace.new,
+        Token::Text.new("bar"),
+        Token::Whitespace.new,
+        Token::LeftBracket.new("["),
+        Token::Text.new("baz"),
+        Token::RightBracket.new("]"),
+        Token::RightBracket.new("]")
+      ]
+      parser.stubs(:tokens).returns TokenList.new(list)
+      name, args = parser.send(:gather_command_name_and_args)
+      [ args[0], args[1].class ]
+    end
+    # nested sub inside quote
+    expect ["bar", Variable] do
+      parser = Parser.new("", 'baz' => '999')
+      list = [
+        Token::Text.new("foo"),
+        Token::Whitespace.new,
+        Token::Text.new("bar"),
+        Token::Whitespace.new,
+        Token::SingleQuote.new,
+        Token::LeftBracket.new("["),
+        Token::Text.new("baz"),
+        Token::RightBracket.new("]"),
+        Token::SingleQuote.new,
+        Token::RightBracket.new("]")
+      ]
+      parser.stubs(:tokens).returns TokenList.new(list)
+      name, args = parser.send(:gather_command_name_and_args)
+      [ args[0], args[1][0].class ]
+    end
   end
   
   # Parser#handle_quoted_arg
@@ -497,7 +533,7 @@ Expectations do
       tokens = TokenList.new(list)
       tokens.pos = 3
       parser.stubs(:tokens).returns(tokens)
-      parser.send(:handle_quoted_arg, Token::SingleQuote)
+      parser.send(:handle_quoted_arg)
     end
     # we reach closing double quote
     expect ['bar'] do
@@ -514,7 +550,7 @@ Expectations do
       tokens = TokenList.new(list)
       tokens.pos = 3
       parser.stubs(:tokens).returns(tokens)
-      parser.send(:handle_quoted_arg, Token::DoubleQuote)
+      parser.send(:handle_quoted_arg)
     end
     # we reach right bracket before we find closing single quote
     expect Parser::UnmatchedSingleQuoteError do
@@ -523,14 +559,14 @@ Expectations do
         Token::LeftBracket.new("["),
         Token::Text.new("foo"),
         Token::Whitespace.new(" "),
-        Token::DoubleQuote.new("'"),
+        Token::SingleQuote.new("'"),
         Token::Text.new("bar"),
         Token::RightBracket.new("]")
       ]
       tokens = TokenList.new(list)
       tokens.pos = 3
       parser.stubs(:tokens).returns(tokens)
-      parser.send(:handle_quoted_arg, Token::SingleQuote)
+      parser.send(:handle_quoted_arg)
     end
     # we reach right bracket before we find closing double quote
     expect Parser::UnmatchedDoubleQuoteError do
@@ -546,7 +582,7 @@ Expectations do
       tokens = TokenList.new(list)
       tokens.pos = 3
       parser.stubs(:tokens).returns(tokens)
-      parser.send(:handle_quoted_arg, Token::DoubleQuote)
+      parser.send(:handle_quoted_arg)
     end
     # we reach end of token list before we find closing single quote
     expect Parser::UnmatchedSingleQuoteError do
@@ -560,7 +596,7 @@ Expectations do
       tokens = TokenList.new(list)
       tokens.pos = 3
       parser.stubs(:tokens).returns(tokens)
-      parser.send(:handle_quoted_arg, Token::SingleQuote)
+      parser.send(:handle_quoted_arg)
     end
     # we reach end of token list before we find closing single quote
     expect Parser::UnmatchedDoubleQuoteError do
@@ -574,9 +610,9 @@ Expectations do
       tokens = TokenList.new(list)
       tokens.pos = 3
       parser.stubs(:tokens).returns(tokens)
-      parser.send(:handle_quoted_arg, Token::DoubleQuote)
+      parser.send(:handle_quoted_arg)
     end
-    # left bracket reached
+    # nested subs
     expect Parser.new("").to.receive(:handle_command) do |parser|
       list = [
         Token::LeftBracket.new("["),
@@ -593,9 +629,23 @@ Expectations do
       tokens.pos = 3
       parser.stubs(:tokens).returns(tokens)
       begin
-        parser.send(:handle_quoted_arg, Token::DoubleQuote)
+        parser.send(:handle_quoted_arg)
       rescue Parser::UnmatchedDoubleQuoteError
       end
+    end
+    # first quote not preceded by whitespace
+    expect Parser::MisplacedQuoteError do
+      parser = Parser.new("")
+      list = [
+        Token::Text.new("bar"),
+        Token::SingleQuote.new("'"),
+        Token::Text.new("baz"),
+        Token::SingleQuote.new("'")
+      ]
+      tokens = TokenList.new(list)
+      tokens.pos = 1
+      parser.stubs(:tokens).returns(tokens)
+      parser.send(:handle_quoted_arg)
     end
   end
 end
