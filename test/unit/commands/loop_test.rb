@@ -230,16 +230,16 @@ Expectations do
       end
       # is_odd
       begin
-        # true when i % 2 != 0
+        # true when (i+1) % 2 != 0
         expect true do
           loop_cmd = Commands::Loop.new(nil, "", [])
-          loop_cmd.send(:set_metavariables, [], 1)
+          loop_cmd.send(:set_metavariables, [], 0)
           loop_cmd.send(:commands).vars['iter']['is_odd']
         end
-        # false when i % 2 == 0
+        # false when (i+1) % 2 == 0
         expect false do
           loop_cmd = Commands::Loop.new(nil, "", [])
-          loop_cmd.send(:set_metavariables, [], 0)
+          loop_cmd.send(:set_metavariables, [], 1)
           loop_cmd.send(:commands).vars['iter']['is_odd']
         end
       end

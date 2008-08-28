@@ -97,43 +97,6 @@ Expectations do
     end
   end
   
-  # Base#closed_by?
-  begin
-    # when command is not a BlockCommand
-    expect false do
-      Command.new(nil, "", []).closed_by?('')
-    end
-    # when not lexicon.closer_on
-    expect false do
-      foo = Commands::Foo.new(nil, "", [])
-      foo.stubs(:lexicon).returns stub('lexicon', :closer_on => nil)
-      foo.closed_by?('')
-    end
-    # when does not respond_to? modifier
-    expect false do
-      foo = Commands::Foo.new(nil, "", [])
-      match = stub('match', :captures => [], :to_a => [])
-      foo.stubs(:lexicon).returns stub('lexicon', :closer_on => [:foo, match])
-      foo.closed_by?('')
-    end
-    # when method returns false
-    expect false do
-      foo = Commands::Foo.new(nil, "", [])
-      match = stub('match', :captures => [], :to_a => [])
-      foo.stubs(:lexicon).returns stub('lexicon', :closer_on => [:end, match])
-      foo.stubs(:end).returns(false)
-      foo.closed_by?('')
-    end
-    # when method returns true
-    expect true do
-      foo = Commands::Foo.new(nil, "", [])
-      match = stub('match', :captures => [], :to_a => [])
-      foo.stubs(:lexicon).returns stub('lexicon', :closer_on => [:end, match])
-      foo.stubs(:end).returns(true)
-      foo.closed_by?("")
-    end
-  end
-  
   # Base#output
   expect NotImplementedError do
     Command.new(nil, "", []).output
