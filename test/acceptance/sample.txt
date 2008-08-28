@@ -16,13 +16,13 @@ I'm about to do some kewl logic, ready, go!
   I am not a real variable
 [/if]
 
-[loop words word]
+[for word in words]
   This is my favorite word: [word]
   Loop index: [iter.index]
   Is odd? [iter.is_odd]
   Is first? [iter.is_first]
   Is last? [iter.is_last]
-[/loop]
+[/for]
 
 [define michael jordan]
 

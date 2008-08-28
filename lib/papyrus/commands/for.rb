@@ -1,41 +1,42 @@
 module Papyrus
   module Commands
-    # A Loop command gives you the ability to loop through an Enumerable and do
-    # something for each iteration.
+    # A For command gives you the ability to iterate through an array, hash, or the
+    # like and do something for each iteration.
     #
-    # *Syntax:* [loop <i>variable_or_literal</i> (<i>block_param1 block_param2 ...</i>)]<br />
-    # *Modifiers:* [else]
+    # *Syntax*::     [for|foreach (<i>block_param1 block_param2 ...</i> in) <i>variable_or_value</i>] ... [/for]
+    # *Modifiers*::  [empty]
     #
-    # When the command is evaluated, _variable_ is fetched from the surrounding
-    # context. The result must be some sort of Enumerable, but not a String. 
+    # When the command is evaluated, <i>variable_or_value</i> is fetched from the
+    # surrounding context. The result must be some sort of Enumerable, but not a String. 
     # The block is then executed for each item in the Enumerable. The block is given
-    # its own context.
+    # its own context so that variables set within the context are cleared when
+    # control leaves the block.
     #
-    # Inside of the block you are given access to the item that's currently selected
-    # in some way. How this happens depends on whether you supply block parameters
-    # after the variable name.
+    # You can optionally supply a block parameter or parameters that will be set to
+    # the value of the current item on each iteration. How this happens depends on how
+    # many parameters you supply, whether the item is an array, and if so, how many
+    # elements it contains. See #set_block_params for more.
     #
-    # * If you do not supply any block parameters, then any subs within the block are
-    #   first treated as method calls on the item.
-    # * If you supply one block parameter, the parameter is set to the item.
-    # * If you supply more than block parameter, the item (assuming it's an Array)
-    #   is split out into each of the block parameters.
+    # An 'empty' block may also be supplied, which will get executed if the
+    # enumerable is in fact empty.
     #
     # === Examples
     #
     #  <ul>
-    #  [loop posts]
+    #  [foreach posts]
     #    <li>Post title: [title]</li>
     #    <li>Post body: [body]</li>
-    #  [/loop]
+    #  [/foreach]
     #  </ul>
     #
     #  <ul>
-    #  [loop hash k v]
+    #  [for k v in hash]
     #    <li><b>[k]</b>: [v]</li>
-    #  [/loop]
+    #  [/for]
     #  </ul>
-    class Loop < BlockCommand
+    class For < BlockCommand
+      aka :foreach
+      
       attr_reader :value, :block_params
       attr_reader :commands, :else_commands
       attr_reader :in_else
@@ -44,8 +45,13 @@ module Papyrus
       # block parameters.
       def initialize(*args)
         super
-        @value, @block_params = @args
-        @block_params = @block_params.strip.gsub(/\s+/, ' ').split if @block_params
+        if index = @args.index("in")
+          @block_params = @args[0..index-1]
+          @value = @args[index+1]
+        else
+          @block_params = []
+          @value = @args.first
+        end
         @switched = false
         @commands = NodeList.new(self)
         @else_commands = NodeList.new(self)
@@ -66,7 +72,7 @@ module Papyrus
       
       # Returns the output of this command.
       #
-      # First we evaluate the variable passed to 'loop' in the given context.
+      # First we evaluate the variable passed to 'for' in the given context.
       # If it is nil or empty, we execute the 'else' block immediately and return
       # the result. Otherwise, we check that the value we're going to be
       # looping over is, in fact, loopable -- i.e., that it's an Enumerable object
@@ -77,7 +83,7 @@ module Papyrus
       # by design gets its own context. We use this context to set some local
       # variables inside the block so users can access them. First, we provide some
       # sort of access to the current item within the block, and this depends on
-      # whether or not block parameters were supplied in the 'loop' call, and how
+      # whether or not block parameters were supplied in the 'for' call, and how
       # many. Next we provide access to information about the iteration itself, such
       # as the index and whether or not we're on the first or last item. Please
       # consult #set_block_params and #set_metavariables for more.
@@ -99,7 +105,7 @@ module Papyrus
       end
 
       def to_s
-        str = "[ Loop: #{value} #{commands}"
+        str = "[ For: #{value} #{commands}"
         str << " Else: #{else_commands}" unless else_commands.empty?
         str << " ]"
         str
@@ -115,7 +121,7 @@ module Papyrus
       # set to nil. If there are less, then the unpairable values are ignored.
       #
       # If no block parameters were given, then any time a user accesses a variable
-      # inside the loop block Papyrus will check to see whether the "variable" is
+      # inside the for block Papyrus will check to see whether the "variable" is
       # really a method on the item.
       #
       # Note that if the object we're iterating over is a hash, then each item
